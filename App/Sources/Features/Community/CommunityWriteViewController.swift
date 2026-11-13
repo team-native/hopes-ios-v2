@@ -7,6 +7,10 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     private let bodyPlaceholder = "내용을 입력하세요"
     private var selectedBoard = "10기"
     private let boardValue = AppStyle.label("10기", size: 15, weight: .medium)
+    private let titleErrorLabel = AppStyle.label("", size: 12, color: .systemRed)
+    private let bodyErrorLabel = AppStyle.label("", size: 12, color: .systemRed)
+    private var titleErrorRow: UIStackView?
+    private var bodyErrorRow: UIStackView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,9 +35,15 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
 
         contentStack.addArrangedSubview(makeBoardRow())
         configureTitleField()
-        contentStack.addArrangedSubview(titleField)
+        let titleGroup = UIStackView(arrangedSubviews: [titleField, makeErrorRow(titleErrorLabel)])
+        titleGroup.axis = .vertical
+        titleGroup.spacing = 6
+        contentStack.addArrangedSubview(titleGroup)
         configureBodyView()
-        contentStack.addArrangedSubview(bodyView)
+        let bodyGroup = UIStackView(arrangedSubviews: [bodyView, makeErrorRow(bodyErrorLabel)])
+        bodyGroup.axis = .vertical
+        bodyGroup.spacing = 6
+        contentStack.addArrangedSubview(bodyGroup)
         contentStack.addArrangedSubview(UIView())
         contentStack.addArrangedSubview(makePrivacyNotice())
     }
@@ -81,7 +91,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     }
 
     private func configureTitleField() {
-        titleField.placeholder = "제목을 입력하세요"
+        titleField.placeholder = "제목"
         titleField.font = .systemFont(ofSize: 15)
         titleField.textColor = AppStyle.ink
         titleField.backgroundColor = .white
@@ -92,6 +102,25 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         let padding = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
         titleField.leftView = padding
         titleField.leftViewMode = .always
+        titleField.addTarget(self, action: #selector(titleDidChange), for: .editingChanged)
+    }
+
+    private func makeErrorRow(_ label: UILabel) -> UIStackView {
+        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
+        icon.tintColor = .systemRed
+        icon.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        let row = UIStackView(arrangedSubviews: [icon, label])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 4
+        row.isHidden = true
+        if label === titleErrorLabel {
+            titleErrorRow = row
+        } else {
+            bodyErrorRow = row
+        }
+        return row
     }
 
     private func configureBodyView() {
@@ -129,7 +158,9 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
             textView.text = ""
             textView.textColor = AppStyle.ink
         }
-        bodyView.layer.borderColor = AppStyle.blue.withAlphaComponent(0.55).cgColor
+        if bodyErrorRow?.isHidden != false {
+            bodyView.layer.borderColor = AppStyle.blue.withAlphaComponent(0.55).cgColor
+        }
     }
 
     func textViewDidEndEditing(_ textView: UITextView) {
@@ -137,20 +168,45 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
             textView.text = bodyPlaceholder
             textView.textColor = AppStyle.muted
         }
-        bodyView.layer.borderColor = AppStyle.line.cgColor
+        bodyView.layer.borderColor = bodyErrorRow?.isHidden == false ? UIColor.systemRed.cgColor : AppStyle.line.cgColor
+    }
+
+    func textViewDidChange(_ textView: UITextView) {
+        guard !textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        setBodyError(false)
+    }
+
+    @objc private func titleDidChange() {
+        guard !(titleField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        setTitleError(false)
     }
 
     @objc private func cancel() { navigationController?.popViewController(animated: true) }
 
     private func publish() {
+        view.endEditing(true)
         let titleText = titleField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let bodyText = bodyView.text == bodyPlaceholder ? "" : bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        setTitleError(titleText.isEmpty)
+        setBodyError(bodyText.isEmpty)
         guard !titleText.isEmpty, !bodyText.isEmpty else {
-            showMessage("제목과 내용을 입력해주세요")
             return
         }
         CommunityPostStore.shared.add(title: titleText, body: bodyText, category: "질문", grade: selectedBoard)
-        view.endEditing(true)
         navigationController?.popViewController(animated: true)
+    }
+
+    private func setTitleError(_ isError: Bool) {
+        titleErrorLabel.text = isError ? "제목을 입력해 주세요." : nil
+        titleErrorRow?.isHidden = !isError
+        titleField.layer.borderWidth = isError ? 1.5 : 1
+        titleField.layer.borderColor = isError ? UIColor.systemRed.cgColor : AppStyle.line.cgColor
+    }
+
+    private func setBodyError(_ isError: Bool) {
+        bodyErrorLabel.text = isError ? "내용을 입력해 주세요." : nil
+        bodyErrorRow?.isHidden = !isError
+        bodyView.layer.borderWidth = isError ? 1.5 : 1
+        bodyView.layer.borderColor = isError ? UIColor.systemRed.cgColor : AppStyle.line.cgColor
     }
 }
