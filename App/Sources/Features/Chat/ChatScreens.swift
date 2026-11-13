@@ -58,6 +58,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var locationMapButton: UIButton?
     private var locationCard: UIView?
     private var measuredLocation: CLLocationCoordinate2D?
+    private var measuredLocationAccuracy: CLLocationAccuracy = 15
 
     init(question: String?) {
         initialQuestion = question
@@ -559,11 +560,11 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         composer.backgroundColor = .white
         composer.layer.cornerRadius = 28
         composer.layer.borderWidth = 1
-        composer.layer.borderColor = AppStyle.line.cgColor
-        composer.layer.shadowColor = AppStyle.ink.withAlphaComponent(0.12).cgColor
+        composer.layer.borderColor = LocationMapStyle.subtleBorder.cgColor
+        composer.layer.shadowColor = UIColor(red: 26 / 255.0, green: 64 / 255.0, blue: 128 / 255.0, alpha: 0.09).cgColor
         composer.layer.shadowOpacity = 1
-        composer.layer.shadowRadius = 12
-        composer.layer.shadowOffset = CGSize(width: 0, height: 4)
+        composer.layer.shadowRadius = 14
+        composer.layer.shadowOffset = CGSize(width: 0, height: 8)
         composer.isLayoutMarginsRelativeArrangement = true
         composer.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6)
         composer.translatesAutoresizingMaskIntoConstraints = false
@@ -574,8 +575,12 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         inputField.delegate = self
         inputField.heightAnchor.constraint(equalToConstant: 40).isActive = true
         let attach = UIButton(type: .system)
-        attach.setImage(UIImage(systemName: "plus.circle"), for: .normal)
-        attach.tintColor = AppStyle.blue
+        attach.setImage(UIImage(named: "map-composer-plus"), for: .normal)
+        attach.tintColor = LocationMapStyle.ink
+        attach.backgroundColor = .white
+        attach.layer.cornerRadius = 20
+        attach.layer.borderWidth = 1
+        attach.layer.borderColor = LocationMapStyle.subtleBorder.cgColor
         attach.widthAnchor.constraint(equalToConstant: 40).isActive = true
         attach.heightAnchor.constraint(equalToConstant: 40).isActive = true
         attach.addAction(UIAction { [weak self] _ in
@@ -593,15 +598,17 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             self.present(picker, animated: true)
         }, for: .touchUpInside)
         let send = UIButton(type: .system)
-        send.setImage(UIImage(systemName: "arrow.up.circle.fill"), for: .normal)
-        send.tintColor = AppStyle.blue
+        send.setImage(UIImage(named: "map-composer-up"), for: .normal)
+        send.tintColor = .white
+        send.backgroundColor = LocationMapStyle.brand
+        send.layer.cornerRadius = 20
         send.addAction(UIAction { [weak self] _ in self?.sendMessage() }, for: .touchUpInside)
         send.widthAnchor.constraint(equalToConstant: 40).isActive = true
         send.heightAnchor.constraint(equalToConstant: 40).isActive = true
         let mic = UIButton(type: .system)
-        mic.setImage(UIImage(systemName: "mic"), for: .normal)
-        mic.tintColor = AppStyle.muted
-        mic.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        mic.setImage(UIImage(named: "map-composer-mic"), for: .normal)
+        mic.tintColor = LocationMapStyle.secondary
+        mic.widthAnchor.constraint(equalToConstant: 40).isActive = true
         mic.heightAnchor.constraint(equalToConstant: 40).isActive = true
         mic.addAction(UIAction { [weak self] _ in self?.presentMessage("음성 입력은 추후 지원할 예정이에요") }, for: .touchUpInside)
         composer.addArrangedSubview(attach)
@@ -614,7 +621,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             composer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            composer.heightAnchor.constraint(equalToConstant: 54),
+            composer.heightAnchor.constraint(equalToConstant: 52),
             scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor),
             inputField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
         ])
@@ -753,6 +760,12 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         locationCard = card
     }
 
+    private func openSchoolMap() {
+        guard navigationController != nil else { return }
+        let map = ChatLocationViewController(accuracy: measuredLocationAccuracy)
+        navigationController?.pushViewController(map, animated: true)
+    }
+
     private func makeLowAccuracyCard(accuracy: CLLocationAccuracy) -> UIView {
         let card = AppStyle.card()
         card.layer.cornerRadius = 24
@@ -847,6 +860,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         measuredLocation = location.coordinate
+        measuredLocationAccuracy = location.horizontalAccuracy
         let schoolLocation = CLLocation(latitude: 35.142829306650874, longitude: 126.80021878005266)
         let distanceInMeters = schoolLocation.distance(from: location)
         if distanceInMeters > 250 {
@@ -867,11 +881,11 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             scrollToLatestMessage()
             return
         }
-        updateLocationMeasurement(
-            title: "현재 위치를 확인했어요",
-            subtitle: "위치 정보가 질문에 첨부됐어요.",
-            progress: 1
-        )
+        let result = ChatLocationResultCardView(accuracy: location.horizontalAccuracy) { [weak self] in
+            self?.openSchoolMap()
+        }
+        replaceLocationCard(with: result)
+        scrollToLatestMessage()
     }
 
     private func openMeasuredLocationInMaps() {
