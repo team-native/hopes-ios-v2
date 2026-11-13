@@ -164,6 +164,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var locationProgress: UIProgressView?
     private var locationCardIcon: UIImageView?
     private var locationMapButton: UIButton?
+    private var locationCard: UIView?
     private var measuredLocation: CLLocationCoordinate2D?
 
     init(question: String?) {
@@ -722,9 +723,15 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         ])
     }
 
-    private func beginLocationMeasurement() {
-        addUserMessage("지금 내 위치 알려줘")
-        messagesStack.addArrangedSubview(makeLocationMeasurementCard())
+    private func beginLocationMeasurement(isRetry: Bool = false) {
+        if !isRetry { addUserMessage("지금 내 위치 알려줘") }
+        let card = makeLocationMeasurementCard()
+        if isRetry {
+            replaceLocationCard(with: card)
+        } else {
+            messagesStack.addArrangedSubview(card)
+            locationCard = card
+        }
         scrollToLatestMessage()
 
         switch locationManager.authorizationStatus {
@@ -838,6 +845,93 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         scrollToLatestMessage()
     }
 
+    private func replaceLocationCard(with card: UIView) {
+        if let locationCard, let index = messagesStack.arrangedSubviews.firstIndex(of: locationCard) {
+            messagesStack.removeArrangedSubview(locationCard)
+            locationCard.removeFromSuperview()
+            messagesStack.insertArrangedSubview(card, at: index)
+        } else {
+            messagesStack.addArrangedSubview(card)
+        }
+        locationCard = card
+    }
+
+    private func makeLowAccuracyCard(accuracy: CLLocationAccuracy) -> UIView {
+        let card = AppStyle.card()
+        card.layer.cornerRadius = 24
+        card.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.08).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 14
+        card.layer.shadowOffset = CGSize(width: 0, height: 6)
+
+        let title = AppStyle.label("학교 근처로 보이지만 위치 정확도가 낮아요.", size: 15)
+        let warning = UIStackView()
+        warning.axis = .horizontal
+        warning.alignment = .center
+        warning.spacing = 8
+        warning.isLayoutMarginsRelativeArrangement = true
+        warning.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
+        warning.backgroundColor = UIColor(red: 1, green: 0.94, blue: 0.95, alpha: 1)
+        warning.layer.cornerRadius = 16
+        let alertPath = Bundle.main.path(forResource: "location-low-accuracy-alert", ofType: "png")
+        let alertIcon = UIImageView(image: alertPath.flatMap(UIImage.init(contentsOfFile:)))
+        alertIcon.contentMode = .scaleAspectFit
+        alertIcon.widthAnchor.constraint(equalToConstant: 16).isActive = true
+        alertIcon.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        let accuracyLabel = AppStyle.label(
+            "정확도 약 ±\(Int(accuracy.rounded()))m · 실내에서는 오차가 커질 수 있어요.",
+            size: 12,
+            color: AppStyle.muted
+        )
+        accuracyLabel.numberOfLines = 1
+        warning.addArrangedSubview(alertIcon)
+        warning.addArrangedSubview(accuracyLabel)
+
+        let retryButton = UIButton(type: .system)
+        var retryConfiguration = UIButton.Configuration.plain()
+        retryConfiguration.title = "다시 측정"
+        retryConfiguration.baseForegroundColor = AppStyle.blue
+        retryConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        retryButton.configuration = retryConfiguration
+        retryButton.backgroundColor = .white
+        retryButton.layer.cornerRadius = 10
+        retryButton.layer.borderWidth = 1
+        retryButton.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        retryButton.addAction(UIAction { [weak self] _ in
+            self?.beginLocationMeasurement(isRetry: true)
+        }, for: .touchUpInside)
+
+        let mapButton = UIButton(type: .system)
+        var mapConfiguration = UIButton.Configuration.filled()
+        mapConfiguration.title = "지도 보기"
+        mapConfiguration.baseBackgroundColor = AppStyle.paleBlue
+        mapConfiguration.baseForegroundColor = AppStyle.blue
+        mapConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        mapButton.configuration = mapConfiguration
+        mapButton.layer.cornerRadius = 10
+        mapButton.clipsToBounds = true
+        mapButton.addAction(UIAction { [weak self] _ in self?.openMeasuredLocationInMaps() }, for: .touchUpInside)
+        let buttons = UIStackView(arrangedSubviews: [retryButton, mapButton])
+        buttons.axis = .horizontal
+        buttons.spacing = 8
+        buttons.distribution = .fillEqually
+
+        let content = UIStackView(arrangedSubviews: [title, warning, buttons])
+        content.axis = .vertical
+        content.spacing = 8
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 14, bottom: 14, trailing: 14)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        return card
+    }
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
@@ -868,6 +962,12 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
                 progress: 1,
                 isOutsideSchool: true
             )
+            return
+        }
+        if location.horizontalAccuracy > 100 {
+            let card = makeLowAccuracyCard(accuracy: location.horizontalAccuracy)
+            replaceLocationCard(with: card)
+            scrollToLatestMessage()
             return
         }
         updateLocationMeasurement(
