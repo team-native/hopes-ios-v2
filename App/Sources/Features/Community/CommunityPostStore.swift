@@ -1,6 +1,7 @@
 import Foundation
 
 struct CommunityComment {
+    let board: String
     let postTitle: String
     let text: String
     let time: String
@@ -22,7 +23,11 @@ final class CommunityPostStore {
     ]
 
     private(set) var myComments = [
-        CommunityComment(postTitle: "기숙사 와이파이 다들 잘 돼?", text: "공유기 위치에 따라서 신호가 조금 다를 수 있어요", time: "오늘")
+        CommunityComment(board: "10기", postTitle: "기숙사 와이파이 다들 잘 돼?", text: "오 고마워, 내일 말씀드려 볼게.", time: "방금"),
+        CommunityComment(board: "전체", postTitle: "전공 동아리 면접 후기 공유", text: "혹시 포트폴리오도 봤어?", time: "2시간 전"),
+        CommunityComment(board: "9기", postTitle: "취업 준비 언제부터 시작했어?", text: "저는 2학년 겨울부터 했어요!", time: "어제"),
+        CommunityComment(board: "전체", postTitle: "시험 기간 공부 장소 추천해줘", text: "도서관 스터디룸이 조용하고 좋아요.", time: "3일 전"),
+        CommunityComment(board: "10기", postTitle: "전공 프로젝트 준비 팁", text: "작게라도 먼저 만들어보는 걸 추천해요.", time: "지난주")
     ]
     private var shouldShowPublishedToast = false
 
@@ -52,7 +57,8 @@ final class CommunityPostStore {
     }
 
     func addComment(postTitle: String, text: String) {
-        myComments.insert(CommunityComment(postTitle: postTitle, text: text, time: "방금 전"), at: 0)
+        let board = posts.first(where: { $0.title == postTitle })?.grade ?? "전체"
+        myComments.insert(CommunityComment(board: board, postTitle: postTitle, text: text, time: "방금"), at: 0)
     }
 
     func update(_ original: CommunityPost, title: String, body: String, grade: String) -> CommunityPost {
@@ -72,11 +78,12 @@ final class CommunityPostStore {
 
     func updateComment(postTitle: String, oldText: String, newText: String) {
         guard let index = myComments.firstIndex(where: { $0.postTitle == postTitle && $0.text == oldText }) else {
-            myComments.insert(CommunityComment(postTitle: postTitle, text: newText, time: "방금 전"), at: 0)
+            let board = posts.first(where: { $0.title == postTitle })?.grade ?? "전체"
+            myComments.insert(CommunityComment(board: board, postTitle: postTitle, text: newText, time: "방금"), at: 0)
             return
         }
         let comment = myComments[index]
-        myComments[index] = CommunityComment(postTitle: comment.postTitle, text: newText, time: comment.time)
+        myComments[index] = CommunityComment(board: comment.board, postTitle: comment.postTitle, text: newText, time: comment.time)
     }
 
     @discardableResult
