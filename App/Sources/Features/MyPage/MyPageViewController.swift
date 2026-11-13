@@ -2,6 +2,9 @@ import UIKit
 
 @MainActor
 final class MyPageViewController: AppPageViewController {
+    private let profileNameLabel = AppStyle.label("", size: 20, weight: .bold)
+    private let profileDetailLabel = AppStyle.label("", size: 13, color: AppStyle.muted)
+
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "마이페이지"
@@ -24,8 +27,14 @@ final class MyPageViewController: AppPageViewController {
             self?.showMessage("문의하기 화면은 별도 페이지 이슈에서 연결할게요")
         }
         addRow("프로필 수정", symbol: "person.crop.circle") { [weak self] in
-            self?.showMessage("프로필 수정 화면은 별도 페이지 이슈에서 연결할게요")
+            self?.openProfileEditor()
         }
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        profileNameLabel.text = UserProfileStore.shared.name
+        profileDetailLabel.text = "\(UserProfileStore.shared.department) · 10기\n\(UserProfileStore.shared.email)"
     }
 
     private func addProfileCard() {
@@ -39,9 +48,9 @@ final class MyPageViewController: AppPageViewController {
         avatar.widthAnchor.constraint(equalToConstant: 56).isActive = true
         avatar.heightAnchor.constraint(equalToConstant: 56).isActive = true
 
-        let name = AppStyle.label("임서하", size: 20, weight: .bold)
-        let detail = AppStyle.label("인공지능과 · 10기\ns26055@gsm.hs.kr", size: 13, color: AppStyle.muted)
-        let userInfo = UIStackView(arrangedSubviews: [name, detail])
+        profileNameLabel.text = UserProfileStore.shared.name
+        profileDetailLabel.text = "\(UserProfileStore.shared.department) · 10기\n\(UserProfileStore.shared.email)"
+        let userInfo = UIStackView(arrangedSubviews: [profileNameLabel, profileDetailLabel])
         userInfo.axis = .vertical
         userInfo.spacing = 5
         let header = UIStackView(arrangedSubviews: [avatar, userInfo])
@@ -61,7 +70,7 @@ final class MyPageViewController: AppPageViewController {
         edit.setTitleColor(AppStyle.blue, for: .normal)
         edit.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
         edit.addAction(UIAction { [weak self] _ in
-            self?.showMessage("프로필 수정 화면은 별도 페이지 이슈에서 연결할게요")
+            self?.openProfileEditor()
         }, for: .touchUpInside)
         edit.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(edit)
@@ -71,6 +80,10 @@ final class MyPageViewController: AppPageViewController {
             edit.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14)
         ])
         contentStack.addArrangedSubview(card)
+    }
+
+    private func openProfileEditor() {
+        push(EditProfileViewController())
     }
 
     private func addActivityCard() {
