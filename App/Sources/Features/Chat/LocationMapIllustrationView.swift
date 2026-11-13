@@ -13,21 +13,21 @@ enum LocationMapStyle {
 
 final class LocationMapIllustrationView: UIView {
     private struct Building {
-        let x: CGFloat
-        let y: CGFloat
+        let positionX: CGFloat
+        let positionY: CGFloat
         let width: CGFloat
         let height: CGFloat
     }
 
     private let buildings = [
-        Building(x: 16, y: 14, width: 90, height: 44),
-        Building(x: 124, y: 8, width: 70, height: 60),
-        Building(x: 214, y: 22, width: 110, height: 40),
-        Building(x: 36, y: 84, width: 120, height: 50),
-        Building(x: 196, y: 98, width: 90, height: 70),
-        Building(x: 30, y: 170, width: 150, height: 60),
-        Building(x: 210, y: 200, width: 110, height: 90),
-        Building(x: 20, y: 270, width: 120, height: 70)
+        Building(positionX: 16, positionY: 14, width: 90, height: 44),
+        Building(positionX: 124, positionY: 8, width: 70, height: 60),
+        Building(positionX: 214, positionY: 22, width: 110, height: 40),
+        Building(positionX: 36, positionY: 84, width: 120, height: 50),
+        Building(positionX: 196, positionY: 98, width: 90, height: 70),
+        Building(positionX: 30, positionY: 170, width: 150, height: 60),
+        Building(positionX: 210, positionY: 200, width: 110, height: 90),
+        Building(positionX: 20, positionY: 270, width: 120, height: 70)
     ]
     private let accuracyView = UIImageView(image: UIImage(named: "map-accuracy"))
     private let pinContainer = UIView()
@@ -46,7 +46,7 @@ final class LocationMapIllustrationView: UIView {
         clipsToBounds = true
         layer.cornerRadius = 16
 
-        buildings.forEach { building in
+        buildings.forEach { _ in
             let view = UIView()
             view.backgroundColor = UIColor.white.withAlphaComponent(0.75)
             view.layer.cornerRadius = 8
@@ -58,7 +58,12 @@ final class LocationMapIllustrationView: UIView {
 
         pinContainer.backgroundColor = LocationMapStyle.brand
         pinContainer.layer.cornerRadius = 20
-        pinContainer.layer.shadowColor = UIColor(red: 46 / 255.0, green: 135 / 255.0, blue: 245 / 255.0, alpha: 0.2).cgColor
+        pinContainer.layer.shadowColor = UIColor(
+            red: 46 / 255.0,
+            green: 135 / 255.0,
+            blue: 245 / 255.0,
+            alpha: 0.2
+        ).cgColor
         pinContainer.layer.shadowOpacity = 1
         pinContainer.layer.shadowRadius = 10
         pinContainer.layer.shadowOffset = CGSize(width: 0, height: 8)
@@ -80,8 +85,8 @@ final class LocationMapIllustrationView: UIView {
         let scale = bounds.width / 362
         for (view, building) in zip(subviews.prefix(buildings.count), buildings) {
             view.frame = CGRect(
-                x: building.x * scale,
-                y: building.y * scale,
+                x: building.positionX * scale,
+                y: building.positionY * scale,
                 width: building.width * scale,
                 height: building.height * scale
             )

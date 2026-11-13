@@ -760,62 +760,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         locationCard = card
     }
 
-    private func makeLocationResultCard(accuracy: CLLocationAccuracy) -> UIView {
-        let card = UIView()
-        card.backgroundColor = .white
-        card.layer.cornerRadius = 24
-        card.layer.borderWidth = 1
-        card.layer.borderColor = LocationMapStyle.subtleBorder.cgColor
-        card.layer.shadowColor = UIColor(red: 26 / 255.0, green: 64 / 255.0, blue: 128 / 255.0, alpha: 0.05).cgColor
-        card.layer.shadowOpacity = 1
-        card.layer.shadowRadius = 8
-        card.layer.shadowOffset = CGSize(width: 0, height: 4)
-
-        let content = UIStackView()
-        content.axis = .vertical
-        content.spacing = 12
-        content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
-        content.translatesAutoresizingMaskIntoConstraints = false
-
-        let response = AppStyle.label("지금 학교 본관 근처에 있어요.", size: 15, color: LocationMapStyle.ink)
-        let mapPreview = LocationMapIllustrationView()
-        mapPreview.translatesAutoresizingMaskIntoConstraints = false
-        mapPreview.heightAnchor.constraint(equalToConstant: 130).isActive = true
-
-        let locationTitle = AppStyle.label("광주소프트웨어마이스터고 · 본관 부근", size: 14, weight: .medium, color: LocationMapStyle.ink)
-        let locationDetails = AppStyle.label(
-            "정확도 약 ±\(Int(accuracy.rounded()))m · 방금 측정",
-            size: 12,
-            color: LocationMapStyle.secondary
-        )
-        let locationInfo = UIStackView(arrangedSubviews: [locationTitle, locationDetails])
-        locationInfo.axis = .vertical
-        locationInfo.spacing = 2
-
-        let mapButton = UIButton(type: .system)
-        var configuration = UIButton.Configuration.filled()
-        configuration.title = "지도 보기"
-        configuration.baseBackgroundColor = LocationMapStyle.brandSoft
-        configuration.baseForegroundColor = LocationMapStyle.brand
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
-        mapButton.configuration = configuration
-        mapButton.layer.cornerRadius = 10
-        mapButton.clipsToBounds = true
-        mapButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
-        mapButton.addAction(UIAction { [weak self] _ in self?.openSchoolMap() }, for: .touchUpInside)
-
-        [response, mapPreview, locationInfo, mapButton].forEach(content.addArrangedSubview)
-        card.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
-        ])
-        return card
-    }
-
     private func openSchoolMap() {
         guard navigationController != nil else { return }
         navigationController?.pushViewController(ChatLocationViewController(accuracy: measuredLocationAccuracy), animated: true)
@@ -936,7 +880,10 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             scrollToLatestMessage()
             return
         }
-        replaceLocationCard(with: makeLocationResultCard(accuracy: location.horizontalAccuracy))
+        let result = ChatLocationResultCardView(accuracy: location.horizontalAccuracy) { [weak self] in
+            self?.openSchoolMap()
+        }
+        replaceLocationCard(with: result)
         scrollToLatestMessage()
     }
 

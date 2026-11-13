@@ -118,24 +118,7 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
         card.layer.shadowRadius = 8
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
 
-        let iconContainer = UIView()
-        iconContainer.backgroundColor = LocationMapStyle.brandSoft
-        iconContainer.layer.cornerRadius = 12
-        iconContainer.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            iconContainer.widthAnchor.constraint(equalToConstant: 44),
-            iconContainer.heightAnchor.constraint(equalToConstant: 44)
-        ])
-        let icon = UIImageView(image: UIImage(named: "map-pin-blue"))
-        icon.contentMode = .scaleAspectFit
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        iconContainer.addSubview(icon)
-        NSLayoutConstraint.activate([
-            icon.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 22),
-            icon.heightAnchor.constraint(equalToConstant: 22)
-        ])
+        let iconContainer = makeLocationIcon()
 
         let title = AppStyle.label("본관 부근", size: 15, weight: .medium, color: LocationMapStyle.ink)
         accuracyLabel.numberOfLines = 1
@@ -143,16 +126,7 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
         labels.axis = .vertical
         labels.spacing = 2
 
-        let refresh = UIButton(type: .system)
-        refresh.setImage(UIImage(named: "map-refresh"), for: .normal)
-        refresh.tintColor = LocationMapStyle.secondary
-        refresh.accessibilityLabel = "위치 다시 측정"
-        refresh.addAction(UIAction { [weak self] _ in self?.refreshLocation() }, for: .touchUpInside)
-        refresh.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            refresh.widthAnchor.constraint(equalToConstant: 36),
-            refresh.heightAnchor.constraint(equalToConstant: 44)
-        ])
+        let refresh = makeRefreshButton()
 
         let row = UIStackView(arrangedSubviews: [iconContainer, labels, refresh])
         row.axis = .horizontal
@@ -166,6 +140,42 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
             row.centerYAnchor.constraint(equalTo: card.centerYAnchor)
         ])
         return card
+    }
+
+    private func makeLocationIcon() -> UIView {
+        let container = UIView()
+        container.backgroundColor = LocationMapStyle.brandSoft
+        container.layer.cornerRadius = 12
+        container.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.widthAnchor.constraint(equalToConstant: 44),
+            container.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        let icon = UIImageView(image: UIImage(named: "map-pin-blue"))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 22),
+            icon.heightAnchor.constraint(equalToConstant: 22)
+        ])
+        return container
+    }
+
+    private func makeRefreshButton() -> UIButton {
+        let refresh = UIButton(type: .system)
+        refresh.setImage(UIImage(named: "map-refresh"), for: .normal)
+        refresh.tintColor = LocationMapStyle.secondary
+        refresh.accessibilityLabel = "위치 다시 측정"
+        refresh.addAction(UIAction { [weak self] _ in self?.refreshLocation() }, for: .touchUpInside)
+        refresh.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            refresh.widthAnchor.constraint(equalToConstant: 36),
+            refresh.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        return refresh
     }
 
     private func makeNotice() -> UIView {
