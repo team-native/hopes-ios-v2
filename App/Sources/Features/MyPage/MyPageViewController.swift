@@ -13,7 +13,7 @@ final class MyPageViewController: AppPageViewController {
 
         addSection("내 활동")
         addRow("작성글 · 댓글 모아보기", subtitle: "내가 남긴 글과 댓글을 확인해요", symbol: "text.bubble") { [weak self] in
-            self?.showMessage("내 활동 화면은 별도 페이지 이슈에서 연결할게요")
+            self?.push(MyActivityViewController())
         }
 
         addSection("개인 설정")
