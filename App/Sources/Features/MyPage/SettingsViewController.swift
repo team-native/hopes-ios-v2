@@ -74,7 +74,7 @@ final class SettingsViewController: AppPageViewController {
         profileButton.widthAnchor.constraint(equalToConstant: 36).isActive = true
         profileButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
         profileButton.addAction(UIAction { [weak self] _ in
-            self?.push(MyPageViewController())
+            self?.push(EditProfileViewController())
         }, for: .touchUpInside)
 
         let header = UIStackView(arrangedSubviews: [labels, UIView(), profileButton])
