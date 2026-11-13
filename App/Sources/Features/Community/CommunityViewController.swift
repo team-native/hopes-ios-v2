@@ -4,10 +4,22 @@ struct CommunityPost {
     let grade: String
     let title: String
     let body: String
+    let detailBody: String?
     let time: String
     let comments: Int
     let likes: Int
     let category: String
+
+    init(grade: String, title: String, body: String, time: String, comments: Int, likes: Int, category: String, detailBody: String? = nil) {
+        self.grade = grade
+        self.title = title
+        self.body = body
+        self.detailBody = detailBody
+        self.time = time
+        self.comments = comments
+        self.likes = likes
+        self.category = category
+    }
 }
 
 @MainActor

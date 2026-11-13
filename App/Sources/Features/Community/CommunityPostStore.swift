@@ -12,7 +12,7 @@ final class CommunityPostStore {
     static let shared = CommunityPostStore()
 
     private(set) var posts = [
-        CommunityPost(grade: "10기", title: "기숙사 와이파이 다들 잘 돼?", body: "3층 끝방인데 저녁만 되면 너무 느려져서… 다른 층은 어떤지 궁금해.", time: "10분 전", comments: 5, likes: 12, category: "질문"),
+        CommunityPost(grade: "10기", title: "기숙사 와이파이 다들 잘 돼?", body: "3층 끝방인데 저녁만 되면 너무 느려져서… 다른 층은 어떤지 궁금해.", time: "10분 전", comments: 5, likes: 12, category: "질문", detailBody: "3층 끝방인데 저녁만 되면 와이파이가 너무 느려져서 과제 제출이 힘들어. 다른 층은 어떤지, 해결 방법 아는 사람 있으면 알려줘!"),
         CommunityPost(grade: "10기", title: "전공 동아리 면접 후기 공유", body: "어제 보고 왔는데 생각보다 분위기 편했어. 질문은 주로 지원 동기 위주였음.", time: "1시간 전", comments: 9, likes: 34, category: "정보"),
         CommunityPost(grade: "9기", title: "취업 준비 언제부터 시작했어?", body: "2학년 여름방학부터 포트폴리오 만들기 시작했는데 늦은 건지 모르겠어.", time: "3시간 전", comments: 14, likes: 21, category: "질문")
     ]
@@ -69,7 +69,8 @@ final class CommunityPostStore {
             time: original.time,
             comments: original.comments,
             likes: original.likes,
-            category: original.category
+            category: original.category,
+            detailBody: body == original.body ? original.detailBody : nil
         )
         posts = posts.map { $0.title == original.title && $0.body == original.body ? updated : $0 }
         myPosts = myPosts.map { $0.title == original.title && $0.body == original.body ? updated : $0 }
@@ -92,11 +93,11 @@ final class CommunityPostStore {
         myComments.remove(at: index)
         posts = posts.map { post in
             guard post.title == postTitle else { return post }
-            return CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: max(0, post.comments - 1), likes: post.likes, category: post.category)
+            return CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: max(0, post.comments - 1), likes: post.likes, category: post.category, detailBody: post.detailBody)
         }
         myPosts = myPosts.map { post in
             guard post.title == postTitle else { return post }
-            return CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: max(0, post.comments - 1), likes: post.likes, category: post.category)
+            return CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: max(0, post.comments - 1), likes: post.likes, category: post.category, detailBody: post.detailBody)
         }
         return true
     }
