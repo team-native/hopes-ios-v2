@@ -1,7 +1,7 @@
 import UIKit
 
 @MainActor
-final class CommunityPostDetailViewController: AppPageViewController {
+final class CommunityPostDetailViewController: AppPageViewController, UITextFieldDelegate {
     private var post: CommunityPost
     private let isMine: Bool
     private var likes: Int
@@ -9,101 +9,331 @@ final class CommunityPostDetailViewController: AppPageViewController {
     private let commentStack = UIStackView()
     private let commentField = UITextField()
     private let likeButton = UIButton(type: .system)
+    private let composerBar = UIView()
+    private let commentCountButton = UIButton(type: .system)
     private let commentEditState = UIStackView()
     private let commentEditLabel = AppStyle.label("댓글 수정 중", size: 12, color: AppStyle.blue)
     private var editingComment: String?
     private weak var editingCommentLabel: UILabel?
-    private var categoryLabel: UILabel?
+    private var gradeBadgeLabel: UILabel?
+    private var boardSubtitleLabel: UILabel?
     private var titleLabel: UILabel?
     private var bodyLabel: UILabel?
     private var commentCountLabel: UILabel?
+    private var visibleCommentCount = 3
+    private weak var postMoreButton: UIButton?
     private var shouldSimulateCommentFailure = true
+    private var composerBottomConstraint: NSLayoutConstraint!
+    private var keyboardObserver: NSObjectProtocol?
 
     init(post: CommunityPost, isMine: Bool = false) {
         self.post = post
         self.isMine = isMine
         likes = post.likes
         super.init(nibName: nil, bundle: nil)
+        hidesBottomBarWhenPushed = true
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "게시글"
+        title = nil
+        view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
+        contentStack.spacing = 16
+        if let topConstraint = scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .top
+        }) {
+            topConstraint.constant = 8
+        }
         guard isPostAvailable else {
             showDeletedPostState()
             return
         }
+        if let bottomConstraint = view.constraints.first(where: {
+            $0.firstItem === scrollView && $0.firstAttribute == .bottom
+        }) {
+            bottomConstraint.isActive = false
+        }
+        scrollView.contentInsetAdjustmentBehavior = .never
 
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            image: UIImage(systemName: "ellipsis"),
-            style: .plain,
-            target: self,
-            action: #selector(showPostActions)
-        )
+        addHeader()
+        contentStack.addArrangedSubview(makePostCard())
 
-        let postCard = AppStyle.card()
-        let author = AppStyle.label("\(post.grade) · 익명 · \(post.time)", size: 13, color: AppStyle.muted)
-        let category = AppStyle.label(post.category, size: 12, weight: .semibold, color: AppStyle.blue)
-        let postTitle = AppStyle.label(post.title, size: 21, weight: .bold)
-        let body = AppStyle.label(post.body, size: 16)
-        categoryLabel = category
-        titleLabel = postTitle
-        bodyLabel = body
-        let cardStack = UIStackView(arrangedSubviews: [author, category, postTitle, body])
-        cardStack.axis = .vertical
-        cardStack.spacing = 12
-        cardStack.translatesAutoresizingMaskIntoConstraints = false
-        postCard.addSubview(cardStack)
-        NSLayoutConstraint.activate([
-            cardStack.topAnchor.constraint(equalTo: postCard.topAnchor, constant: 18),
-            cardStack.leadingAnchor.constraint(equalTo: postCard.leadingAnchor, constant: 18),
-            cardStack.trailingAnchor.constraint(equalTo: postCard.trailingAnchor, constant: -18),
-            cardStack.bottomAnchor.constraint(equalTo: postCard.bottomAnchor, constant: -18)
-        ])
-        contentStack.addArrangedSubview(postCard)
-
-        likeButton.setTitle("♡  \(likes)", for: .normal)
-        likeButton.setTitleColor(AppStyle.ink, for: .normal)
-        likeButton.backgroundColor = .white
-        likeButton.layer.cornerRadius = 12
-        likeButton.layer.borderWidth = 1
-        likeButton.layer.borderColor = AppStyle.line.cgColor
-        likeButton.contentEdgeInsets = UIEdgeInsets(top: 10, left: 14, bottom: 10, right: 14)
-        likeButton.addAction(UIAction { [weak self] _ in self?.toggleLike() }, for: .touchUpInside)
-        contentStack.addArrangedSubview(likeButton)
-
-        let commentCount = AppStyle.label("댓글 \(post.comments)", size: 18, weight: .bold)
+        let commentCount = AppStyle.label("댓글 \(visibleCommentCount)", size: 14, weight: .medium, color: secondaryText)
         commentCountLabel = commentCount
         contentStack.addArrangedSubview(commentCount)
         commentStack.axis = .vertical
-        commentStack.spacing = 12
-        contentStack.addArrangedSubview(commentStack)
+        commentStack.spacing = 0
+        let commentsCard = UIView()
+        commentsCard.backgroundColor = .white
+        commentsCard.layer.cornerRadius = 24
+        commentsCard.layer.borderWidth = 1
+        commentsCard.layer.borderColor = AppStyle.line.cgColor
+        commentsCard.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).withAlphaComponent(0.05).cgColor
+        commentsCard.layer.shadowOpacity = 1
+        commentsCard.layer.shadowRadius = 8
+        commentsCard.layer.shadowOffset = CGSize(width: 0, height: 4)
+        commentsCard.addSubview(commentStack)
+        commentStack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            commentStack.topAnchor.constraint(equalTo: commentsCard.topAnchor, constant: 4),
+            commentStack.leadingAnchor.constraint(equalTo: commentsCard.leadingAnchor, constant: 16),
+            commentStack.trailingAnchor.constraint(equalTo: commentsCard.trailingAnchor, constant: -16),
+            commentStack.bottomAnchor.constraint(equalTo: commentsCard.bottomAnchor, constant: -4)
+        ])
+        contentStack.addArrangedSubview(commentsCard)
         [
-            ("10기", "나도 저녁 시간대에 좀 느려지는 것 같아"),
-            ("9기", "기숙사 와이파이는 층마다 차이가 있더라"),
-            ("나", CommunityPostStore.shared.myComments.first(where: { $0.postTitle == post.title })?.text ?? "오 고마워, 내일 아침에 말씀드려 볼게.")
-        ].forEach { addComment(author: $0.0, text: $0.1) }
+            ("10기", "5분 전", "2층도 저녁엔 느려. 공유기 위치 문제 같아."),
+            ("9기", "3분 전", "사감 선생님께 말씀드리면 점검해 주신대!"),
+            ("10기 (나)", "방금", CommunityPostStore.shared.myComments.first(where: { $0.postTitle == post.title })?.text ?? "오 고마워, 내일 말씀드려 볼게.")
+        ].forEach { addComment(author: $0.0, time: $0.1, text: $0.2) }
 
         configureCommentEditState()
-        let composer = UIStackView()
-        composer.axis = .horizontal
-        composer.spacing = 8
-        commentField.placeholder = "댓글을 입력해보세요"
-        commentField.borderStyle = .roundedRect
-        commentField.heightAnchor.constraint(equalToConstant: 44).isActive = true
-        let sendButton = UIButton(type: .system)
-        sendButton.setTitle("등록", for: .normal)
-        sendButton.setTitleColor(AppStyle.blue, for: .normal)
-        sendButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
-        sendButton.addAction(UIAction { [weak self] _ in self?.submitComment() }, for: .touchUpInside)
-        composer.addArrangedSubview(commentField)
-        composer.addArrangedSubview(sendButton)
-        let composerGroup = UIStackView(arrangedSubviews: [commentEditState, composer])
-        composerGroup.axis = .vertical
-        composerGroup.spacing = 8
-        contentStack.addArrangedSubview(composerGroup)
+        configureComposer()
+        scrollView.bottomAnchor.constraint(equalTo: composerBar.topAnchor, constant: -16).isActive = true
+        observeKeyboard()
+        view.accessibilityIdentifier = "community-post-detail-screen"
+    }
+
+    private let secondaryText = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if isMovingFromParent || isBeingDismissed {
+            navigationController?.setNavigationBarHidden(false, animated: animated)
+        }
+    }
+
+    deinit {
+        if let keyboardObserver { NotificationCenter.default.removeObserver(keyboardObserver) }
+    }
+
+    private func addHeader() {
+        let back = UIButton(type: .system)
+        back.translatesAutoresizingMaskIntoConstraints = false
+        back.setImage(UIImage(named: "community-detail-back-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        back.accessibilityLabel = "뒤로"
+        back.accessibilityIdentifier = "community-post-back"
+        back.addAction(UIAction { [weak self] _ in self?.navigationController?.popViewController(animated: true) }, for: .touchUpInside)
+        NSLayoutConstraint.activate([
+            back.widthAnchor.constraint(equalToConstant: 44),
+            back.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        let title = AppStyle.label("게시글", size: 18, weight: .medium, color: AppStyle.ink)
+        let subtitle = AppStyle.label("\(post.grade) 게시판", size: 12, color: secondaryText)
+        boardSubtitleLabel = subtitle
+        title.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        subtitle.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        let labels = UIStackView(arrangedSubviews: [title, subtitle])
+        labels.axis = .vertical
+        labels.spacing = 0
+        let header = UIStackView(arrangedSubviews: [back, labels])
+        header.axis = .horizontal
+        header.alignment = .center
+        header.spacing = 12
+        contentStack.addArrangedSubview(header)
+    }
+
+    private func makePostCard() -> UIView {
+        let badge = makeGradeBadge(post.grade)
+        gradeBadgeLabel = badge.arrangedSubviews.first as? UILabel
+        let more = makeMoreButton(identifier: "community-post-actions")
+        postMoreButton = more
+        more.addAction(UIAction { [weak self] _ in self?.showPostActions() }, for: .touchUpInside)
+
+        let head = UIStackView(arrangedSubviews: [badge, UIView(), more])
+        head.axis = .horizontal
+        head.alignment = .center
+
+        let title = AppStyle.label(post.title, size: 16, weight: .medium)
+        titleLabel = title
+        let meta = AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
+        let body = AppStyle.label(post.detailBody ?? post.body, size: 15, color: AppStyle.ink)
+        body.textColor = AppStyle.ink
+        bodyLabel = body
+
+        likeButton.translatesAutoresizingMaskIntoConstraints = false
+        likeButton.setImage(UIImage(named: "community-detail-heart-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        likeButton.setTitle("\(likes)", for: .normal)
+        likeButton.setTitleColor(AppStyle.blue, for: .normal)
+        likeButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        likeButton.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+        likeButton.layer.cornerRadius = 17
+        likeButton.accessibilityIdentifier = "community-post-like"
+        likeButton.addAction(UIAction { [weak self] _ in self?.toggleLike() }, for: .touchUpInside)
+        NSLayoutConstraint.activate([
+            likeButton.heightAnchor.constraint(equalToConstant: 34),
+            likeButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 62)
+        ])
+
+        let comments = commentCountButton
+        comments.translatesAutoresizingMaskIntoConstraints = false
+        configureCommentCountButton()
+        let actions = UIStackView(arrangedSubviews: [likeButton, comments, UIView()])
+        actions.axis = .horizontal
+        actions.alignment = .center
+        actions.spacing = 8
+
+        let content = UIStackView(arrangedSubviews: [head, title, meta, body, actions])
+        content.axis = .vertical
+        content.spacing = 8
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 16, trailing: 16)
+
+        let card = UIView()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = AppStyle.line.cgColor
+        card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).withAlphaComponent(0.05).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 8
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
+        card.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        return card
+    }
+
+    private func makeGradeBadge(_ grade: String) -> UIStackView {
+        let label = AppStyle.label(grade, size: 12, color: AppStyle.blue)
+        label.textAlignment = .center
+        let badge = UIStackView(arrangedSubviews: [label])
+        badge.axis = .horizontal
+        badge.alignment = .center
+        badge.isLayoutMarginsRelativeArrangement = true
+        badge.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10)
+        badge.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+        badge.layer.cornerRadius = 12
+        return badge
+    }
+
+    private func configureCommentCountButton() {
+        commentCountButton.translatesAutoresizingMaskIntoConstraints = false
+        commentCountButton.setImage(UIImage(named: "community-detail-comment-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        commentCountButton.setTitle("\(visibleCommentCount)", for: .normal)
+        commentCountButton.setTitleColor(secondaryText, for: .normal)
+        commentCountButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .regular)
+        commentCountButton.backgroundColor = .white
+        commentCountButton.layer.cornerRadius = 17
+        commentCountButton.layer.borderWidth = 1
+        commentCountButton.layer.borderColor = AppStyle.line.cgColor
+        commentCountButton.accessibilityIdentifier = "community-post-comment-count"
+        commentCountButton.addAction(UIAction { [weak self] _ in self?.commentField.becomeFirstResponder() }, for: .touchUpInside)
+        NSLayoutConstraint.activate([
+            commentCountButton.heightAnchor.constraint(equalToConstant: 34),
+            commentCountButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 62)
+        ])
+    }
+
+    private func updateCommentCount() {
+        commentCountLabel?.text = "댓글 \(visibleCommentCount)"
+        commentCountButton.setTitle("\(visibleCommentCount)", for: .normal)
+    }
+
+    private func makeMoreButton(identifier: String) -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(UIImage(named: "community-detail-more-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.accessibilityLabel = "더 보기"
+        button.accessibilityIdentifier = identifier
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 24),
+            button.heightAnchor.constraint(equalToConstant: 24)
+        ])
+        return button
+    }
+
+    private func configureComposer() {
+        composerBar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(composerBar)
+        let row = UIStackView(arrangedSubviews: [commentField, makeSendButton()])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 8
+        let stack = UIStackView(arrangedSubviews: [commentEditState, row])
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        composerBar.addSubview(stack)
+
+        commentField.placeholder = "댓글 달기"
+        commentField.font = .systemFont(ofSize: 14)
+        commentField.textColor = AppStyle.ink
+        commentField.backgroundColor = .white
+        commentField.layer.cornerRadius = 25
+        commentField.layer.borderWidth = 1
+        commentField.layer.borderColor = AppStyle.line.cgColor
+        commentField.returnKeyType = .send
+        commentField.delegate = self
+        commentField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
+        commentField.leftViewMode = .always
+        commentField.heightAnchor.constraint(equalToConstant: 52).isActive = true
+
+        NSLayoutConstraint.activate([
+            composerBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            composerBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            stack.topAnchor.constraint(equalTo: composerBar.topAnchor),
+            stack.leadingAnchor.constraint(equalTo: composerBar.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: composerBar.trailingAnchor),
+            stack.bottomAnchor.constraint(equalTo: composerBar.bottomAnchor)
+        ])
+        composerBottomConstraint = composerBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
+        composerBottomConstraint.isActive = true
+        scrollView.keyboardDismissMode = .interactive
+    }
+
+    private func observeKeyboard() {
+        keyboardObserver = NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillChangeFrameNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            MainActor.assumeIsolated {
+                guard let self,
+                      let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+                      let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else { return }
+                let local = self.view.convert(frame, from: nil)
+                let overlap = max(0, self.view.safeAreaLayoutGuide.layoutFrame.maxY - local.minY)
+                self.composerBottomConstraint.constant = -8 - overlap
+                UIView.animate(withDuration: duration) {
+                    self.view.layoutIfNeeded()
+                }
+            }
+        }
+    }
+
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        submitComment()
+        return true
+    }
+
+    private func makeSendButton() -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(UIImage(named: "community-detail-send-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.backgroundColor = AppStyle.blue
+        button.layer.cornerRadius = 24
+        button.accessibilityLabel = "댓글 등록"
+        button.accessibilityIdentifier = "community-comment-send"
+        button.addAction(UIAction { [weak self] _ in self?.submitComment() }, for: .touchUpInside)
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 48),
+            button.heightAnchor.constraint(equalToConstant: 48)
+        ])
+        return button
     }
 
     private var isPostAvailable: Bool {
@@ -183,31 +413,38 @@ final class CommunityPostDetailViewController: AppPageViewController {
         }
     }
 
-    private func addComment(author: String, text: String) {
-        let isOwnComment = author == "나"
-        let authorLabel = AppStyle.label(isOwnComment ? "10기 (나) · 방금" : "\(author) · 익명", size: 12, weight: .medium, color: AppStyle.muted)
+    private func addComment(author: String, time: String, text: String) {
+        let isOwnComment = author == "나" || author.contains("(나)")
+        let authorLabel = AppStyle.label("\(author) · \(time)", size: 12, weight: .medium, color: isOwnComment ? AppStyle.blue : AppStyle.muted)
         let textLabel = AppStyle.label(text, size: 14)
         if isOwnComment { editingCommentLabel = textLabel }
         let header = UIStackView(arrangedSubviews: [authorLabel, UIView()])
-        if isOwnComment {
-            let more = UIButton(type: .system)
-            more.setImage(UIImage(systemName: "ellipsis"), for: .normal)
-            more.tintColor = AppStyle.muted
-            more.widthAnchor.constraint(equalToConstant: 28).isActive = true
-            more.heightAnchor.constraint(equalToConstant: 24).isActive = true
-            more.addAction(UIAction { [weak self, weak textLabel] _ in
-                guard let self, let textLabel else { return }
-                self.showOwnCommentActions(text: textLabel.text ?? "", label: textLabel)
-            }, for: .touchUpInside)
-            header.addArrangedSubview(more)
+        let more = makeMoreButton(identifier: "community-comment-actions")
+        more.widthAnchor.constraint(equalToConstant: 24).isActive = true
+        more.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        more.addAction(UIAction { [weak self, weak textLabel, weak more] _ in
+            guard let self, let textLabel, let more else { return }
+            if isOwnComment {
+                self.showOwnCommentActions(text: textLabel.text ?? "", label: textLabel, source: more)
+            } else {
+                self.showCommentReportActions(source: more)
+            }
+        }, for: .touchUpInside)
+        header.addArrangedSubview(more)
+
+        let stack = UIStackView()
+        if !commentStack.arrangedSubviews.isEmpty {
+            let divider = UIView()
+            divider.backgroundColor = AppStyle.line
+            divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+            stack.addArrangedSubview(divider)
         }
-        let stack = UIStackView(arrangedSubviews: [header, textLabel])
+        stack.addArrangedSubview(header)
+        stack.addArrangedSubview(textLabel)
         stack.axis = .vertical
         stack.spacing = 6
-        stack.backgroundColor = .white
         stack.isLayoutMarginsRelativeArrangement = true
-        stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 13, leading: 14, bottom: 13, trailing: 14)
-        stack.layer.cornerRadius = 14
+        stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
         commentStack.addArrangedSubview(stack)
     }
 
@@ -242,10 +479,11 @@ final class CommunityPostDetailViewController: AppPageViewController {
     private func retryFailedComment(text: String, card: UIStackView) {
         commentStack.removeArrangedSubview(card)
         card.removeFromSuperview()
-        addComment(author: "나", text: text)
+        addComment(author: "10기 (나)", time: "방금", text: text)
         CommunityPostStore.shared.addComment(postTitle: post.title, text: text)
-        post = CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: post.comments + 1, likes: post.likes, category: post.category)
-        commentCountLabel?.text = "댓글 \(post.comments)"
+        post = CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: post.comments + 1, likes: post.likes, category: post.category, detailBody: post.detailBody)
+        visibleCommentCount += 1
+        updateCommentCount()
     }
 
     private func configureCommentEditState() {
@@ -268,7 +506,7 @@ final class CommunityPostDetailViewController: AppPageViewController {
         commentEditState.isHidden = true
     }
 
-    private func showOwnCommentActions(text: String, label: UILabel) {
+    private func showOwnCommentActions(text: String, label: UILabel, source: UIButton) {
         let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         sheet.addAction(UIAlertAction(title: "댓글 수정", style: .default) { [weak self] _ in
             self?.beginCommentEdit(text: text, label: label)
@@ -279,7 +517,21 @@ final class CommunityPostDetailViewController: AppPageViewController {
         })
         sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
         if let popover = sheet.popoverPresentationController {
-            popover.barButtonItem = navigationItem.rightBarButtonItem
+            popover.sourceView = source
+            popover.sourceRect = source.bounds
+        }
+        present(sheet, animated: true)
+    }
+
+    private func showCommentReportActions(source: UIButton) {
+        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        sheet.addAction(UIAlertAction(title: "댓글 신고", style: .destructive) { [weak self] _ in
+            self?.showMessage("신고 내용을 접수했어요")
+        })
+        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
+        if let popover = sheet.popoverPresentationController {
+            popover.sourceView = source
+            popover.sourceRect = source.bounds
         }
         present(sheet, animated: true)
     }
@@ -298,8 +550,9 @@ final class CommunityPostDetailViewController: AppPageViewController {
                 self.commentStack.removeArrangedSubview(commentCard)
                 commentCard.removeFromSuperview()
             }
-            self.post = CommunityPost(grade: self.post.grade, title: self.post.title, body: self.post.body, time: self.post.time, comments: max(0, self.post.comments - 1), likes: self.post.likes, category: self.post.category)
-            self.commentCountLabel?.text = "댓글 \(self.post.comments)"
+            self.post = CommunityPost(grade: self.post.grade, title: self.post.title, body: self.post.body, time: self.post.time, comments: max(0, self.post.comments - 1), likes: self.post.likes, category: self.post.category, detailBody: self.post.detailBody)
+            self.visibleCommentCount = max(0, self.visibleCommentCount - 1)
+            self.updateCommentCount()
             if self.editingComment == text { self.cancelCommentEdit() }
             if self.editingCommentLabel === label { self.editingCommentLabel = nil }
         })
@@ -319,7 +572,7 @@ final class CommunityPostDetailViewController: AppPageViewController {
         editingComment = nil
         editingCommentLabel = nil
         commentField.text = nil
-        commentField.placeholder = "댓글을 입력해보세요"
+        commentField.placeholder = "댓글 달기"
         commentEditState.isHidden = true
         view.endEditing(true)
     }
@@ -327,8 +580,10 @@ final class CommunityPostDetailViewController: AppPageViewController {
     private func toggleLike() {
         liked.toggle()
         likes += liked ? 1 : -1
-        likeButton.setTitle("\(liked ? "♥" : "♡")  \(likes)", for: .normal)
-        likeButton.setTitleColor(liked ? .systemRed : AppStyle.ink, for: .normal)
+        let color = liked ? AppStyle.blue : UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        let image = UIImage(systemName: liked ? "heart.fill" : "heart")?.withTintColor(color, renderingMode: .alwaysOriginal)
+        likeButton.setImage(image, for: .normal)
+        likeButton.setTitle("\(likes)", for: .normal)
     }
 
     private func submitComment() {
@@ -347,10 +602,11 @@ final class CommunityPostDetailViewController: AppPageViewController {
             view.endEditing(true)
             return
         }
-        addComment(author: "나", text: text)
+        addComment(author: "10기 (나)", time: "방금", text: text)
         CommunityPostStore.shared.addComment(postTitle: post.title, text: text)
-        post = CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: post.comments + 1, likes: post.likes, category: post.category)
-        commentCountLabel?.text = "댓글 \(post.comments)"
+        post = CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: post.comments + 1, likes: post.likes, category: post.category, detailBody: post.detailBody)
+        visibleCommentCount += 1
+        updateCommentCount()
         commentField.text = nil
         view.endEditing(true)
     }
@@ -365,7 +621,8 @@ final class CommunityPostDetailViewController: AppPageViewController {
         }
         sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
         if let popover = sheet.popoverPresentationController {
-            popover.barButtonItem = navigationItem.rightBarButtonItem
+            popover.sourceView = postMoreButton
+            popover.sourceRect = postMoreButton?.bounds ?? .zero
         }
         present(sheet, animated: true)
     }
@@ -394,9 +651,10 @@ final class CommunityPostDetailViewController: AppPageViewController {
         editor.onSave = { [weak self] updated in
             guard let self else { return }
             self.post = updated
-            self.categoryLabel?.text = updated.category
+            self.gradeBadgeLabel?.text = updated.grade
+            self.boardSubtitleLabel?.text = "\(updated.grade) 게시판"
             self.titleLabel?.text = updated.title
-            self.bodyLabel?.text = updated.body
+            self.bodyLabel?.text = updated.detailBody ?? updated.body
         }
         push(editor)
     }
@@ -410,7 +668,8 @@ final class CommunityPostDetailViewController: AppPageViewController {
         }
         sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
         if let popover = sheet.popoverPresentationController {
-            popover.barButtonItem = navigationItem.rightBarButtonItem
+            popover.sourceView = postMoreButton
+            popover.sourceRect = postMoreButton?.bounds ?? .zero
         }
         present(sheet, animated: true)
     }
