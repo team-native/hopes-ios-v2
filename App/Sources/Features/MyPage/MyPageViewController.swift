@@ -18,7 +18,7 @@ final class MyPageViewController: AppPageViewController {
             self?.showMessage("AI 답변 설정 화면은 별도 페이지 이슈에서 연결할게요")
         }
         addRow("알림", subtitle: "새 답변 · 공지", symbol: "bell") { [weak self] in
-            self?.showMessage("알림 화면은 별도 페이지 이슈에서 연결할게요")
+            self?.push(NotificationsViewController())
         }
         addRow("문의하기", subtitle: "gsm-chatbot@gsm.hs.kr", symbol: "envelope") { [weak self] in
             self?.showMessage("문의하기 화면은 별도 페이지 이슈에서 연결할게요")
