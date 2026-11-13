@@ -67,6 +67,11 @@ final class ChatLocationResultCardView: UIView {
         configuration.baseBackgroundColor = LocationMapStyle.brandSoft
         configuration.baseForegroundColor = LocationMapStyle.brand
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 14, weight: .medium)
+            return outgoing
+        }
         button.configuration = configuration
         button.layer.cornerRadius = 10
         button.clipsToBounds = true

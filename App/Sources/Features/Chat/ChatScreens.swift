@@ -762,7 +762,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     private func openSchoolMap() {
         guard navigationController != nil else { return }
-        navigationController?.pushViewController(ChatLocationViewController(accuracy: measuredLocationAccuracy), animated: true)
+        let map = ChatLocationViewController(accuracy: measuredLocationAccuracy)
+        navigationController?.pushViewController(map, animated: true)
     }
 
     private func makeLowAccuracyCard(accuracy: CLLocationAccuracy) -> UIView {
