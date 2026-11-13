@@ -11,6 +11,8 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     private let bodyErrorLabel = AppStyle.label("", size: 12, color: .systemRed)
     private var titleErrorRow: UIStackView?
     private var bodyErrorRow: UIStackView?
+    private var registrationErrorBanner: UIStackView?
+    private var shouldSimulateRegistrationFailure = true
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,6 +35,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         registerButton.addAction(UIAction { [weak self] _ in self?.publish() }, for: .touchUpInside)
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: registerButton)
 
+        contentStack.addArrangedSubview(makeRegistrationErrorBanner())
         contentStack.addArrangedSubview(makeBoardRow())
         configureTitleField()
         let titleGroup = UIStackView(arrangedSubviews: [titleField, makeErrorRow(titleErrorLabel)])
@@ -153,6 +156,25 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         return notice
     }
 
+    private func makeRegistrationErrorBanner() -> UIStackView {
+        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
+        icon.tintColor = .systemRed
+        icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        let message = AppStyle.label("게시글을 등록하지 못했어요. 작성한 내용은 그대로 있어요. 다시 시도해 주세요.", size: 12, color: .systemRed)
+        let banner = UIStackView(arrangedSubviews: [icon, message])
+        banner.axis = .horizontal
+        banner.alignment = .center
+        banner.spacing = 8
+        banner.isLayoutMarginsRelativeArrangement = true
+        banner.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        banner.backgroundColor = UIColor(red: 1, green: 0.945, blue: 0.949, alpha: 1)
+        banner.layer.cornerRadius = 14
+        banner.isHidden = true
+        registrationErrorBanner = banner
+        return banner
+    }
+
     func textViewDidBeginEditing(_ textView: UITextView) {
         if textView.text == bodyPlaceholder {
             textView.text = ""
@@ -210,6 +232,13 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         guard !titleText.isEmpty, !bodyText.isEmpty else {
             return
         }
+        if shouldSimulateRegistrationFailure {
+            // The prototype has no post API yet; keep the draft and reproduce one temporary registration failure.
+            shouldSimulateRegistrationFailure = false
+            registrationErrorBanner?.isHidden = false
+            return
+        }
+        registrationErrorBanner?.isHidden = true
         CommunityPostStore.shared.add(title: titleText, body: bodyText, category: "질문", grade: selectedBoard)
         navigationController?.popViewController(animated: true)
     }
