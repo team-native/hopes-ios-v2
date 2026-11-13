@@ -782,7 +782,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         mapButton.configuration = mapConfiguration
         mapButton.layer.cornerRadius = 10
         mapButton.clipsToBounds = true
-        mapButton.addAction(UIAction { [weak self] _ in self?.openMeasuredLocationInMaps() }, for: .touchUpInside)
+        mapButton.addAction(UIAction { [weak self] _ in self?.openSchoolMap() }, for: .touchUpInside)
         let buttons = UIStackView(arrangedSubviews: [retryButton, mapButton])
         buttons.axis = .horizontal
         buttons.spacing = 8
