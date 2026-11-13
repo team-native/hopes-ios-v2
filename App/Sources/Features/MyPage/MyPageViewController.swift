@@ -24,7 +24,7 @@ final class MyPageViewController: AppPageViewController {
             self?.push(NotificationsViewController())
         }
         addRow("문의하기", subtitle: "gsm-chatbot@gsm.hs.kr", symbol: "envelope") { [weak self] in
-            self?.showMessage("문의하기 화면은 별도 페이지 이슈에서 연결할게요")
+            self?.push(InquiryViewController())
         }
         addRow("프로필 수정", symbol: "person.crop.circle") { [weak self] in
             self?.openProfileEditor()
