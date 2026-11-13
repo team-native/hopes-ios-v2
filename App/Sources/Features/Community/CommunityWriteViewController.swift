@@ -4,6 +4,7 @@ import UIKit
 final class CommunityWriteViewController: AppPageViewController, UITextViewDelegate {
     private let titleField = UITextField()
     private let bodyView = UITextView()
+    private let fieldBorderColor = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
     private let bodyPlaceholder = "내용을 입력하세요"
     private var selectedBoard = "10기"
     private let boardValue = AppStyle.label("10기", size: 15, weight: .medium)
@@ -13,15 +14,26 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     private var bodyErrorRow: UIStackView?
     private var registrationErrorBanner: UIStackView?
     private var shouldSimulateRegistrationFailure = true
+    private var previousNavigationBarHidden = false
+
+    init() {
+        super.init(nibName: nil, bundle: nil)
+        hidesBottomBarWhenPushed = true
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "글쓰기"
+        title = nil
+        view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
         contentStack.spacing = 12
-
-        let closeButton = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(cancel))
-        closeButton.tintColor = AppStyle.ink
-        navigationItem.leftBarButtonItem = closeButton
+        if let topConstraint = scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .top
+        }) {
+            topConstraint.constant = 8
+        }
+        scrollView.keyboardDismissMode = .interactive
 
         let registerButton = UIButton(type: .system)
         var registerConfiguration = UIButton.Configuration.filled()
@@ -32,8 +44,12 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         registerButton.configuration = registerConfiguration
         registerButton.layer.cornerRadius = 10
         registerButton.clipsToBounds = true
+        registerButton.accessibilityIdentifier = "community-register-post"
         registerButton.addAction(UIAction { [weak self] _ in self?.publish() }, for: .touchUpInside)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: registerButton)
+        registerButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        let header = makeHeader()
+        header.addArrangedSubview(registerButton)
+        contentStack.addArrangedSubview(header)
 
         contentStack.addArrangedSubview(makeRegistrationErrorBanner())
         contentStack.addArrangedSubview(makeBoardRow())
@@ -49,12 +65,46 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         contentStack.addArrangedSubview(bodyGroup)
         contentStack.addArrangedSubview(UIView())
         contentStack.addArrangedSubview(makePrivacyNotice())
+        view.accessibilityIdentifier = "community-write-screen"
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        previousNavigationBarHidden = navigationController?.isNavigationBarHidden ?? false
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if isMovingFromParent || isBeingDismissed {
+            navigationController?.setNavigationBarHidden(previousNavigationBarHidden, animated: animated)
+        }
+    }
+
+    private func makeHeader() -> UIStackView {
+        let close = UIButton(type: .system)
+        close.translatesAutoresizingMaskIntoConstraints = false
+        close.setImage(UIImage(named: "community-write-close-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        close.accessibilityLabel = "닫기"
+        close.accessibilityIdentifier = "community-write-close"
+        close.addAction(UIAction { [weak self] _ in self?.cancel() }, for: .touchUpInside)
+        NSLayoutConstraint.activate([
+            close.widthAnchor.constraint(equalToConstant: 44),
+            close.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        let heading = AppStyle.label("글쓰기", size: 18, weight: .medium, color: AppStyle.ink)
+        heading.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        let header = UIStackView(arrangedSubviews: [close, heading, UIView()])
+        header.axis = .horizontal
+        header.alignment = .center
+        header.spacing = 12
+        return header
     }
 
     private func makeBoardRow() -> UIButton {
         let label = AppStyle.label("게시판", size: 14, weight: .medium, color: AppStyle.muted)
-        let chevron = UIImageView(image: UIImage(systemName: "chevron.down"))
-        chevron.tintColor = AppStyle.muted
+        let chevron = UIImageView(image: UIImage(named: "community-write-chevron-icon")?.withRenderingMode(.alwaysOriginal))
         chevron.contentMode = .scaleAspectFit
         chevron.widthAnchor.constraint(equalToConstant: 16).isActive = true
         chevron.heightAnchor.constraint(equalToConstant: 16).isActive = true
@@ -78,7 +128,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         button.backgroundColor = .white
         button.layer.cornerRadius = 16
         button.layer.borderWidth = 1
-        button.layer.borderColor = AppStyle.line.cgColor
+        button.layer.borderColor = fieldBorderColor.cgColor
         button.addAction(UIAction { [weak self] _ in self?.presentBoardPicker() }, for: .touchUpInside)
         return button
     }
@@ -100,7 +150,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         titleField.backgroundColor = .white
         titleField.layer.cornerRadius = 16
         titleField.layer.borderWidth = 1
-        titleField.layer.borderColor = AppStyle.line.cgColor
+        titleField.layer.borderColor = fieldBorderColor.cgColor
         titleField.heightAnchor.constraint(equalToConstant: 54).isActive = true
         let padding = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
         titleField.leftView = padding
@@ -133,15 +183,14 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         bodyView.backgroundColor = .white
         bodyView.layer.cornerRadius = 16
         bodyView.layer.borderWidth = 1
-        bodyView.layer.borderColor = AppStyle.line.cgColor
+        bodyView.layer.borderColor = fieldBorderColor.cgColor
         bodyView.textContainerInset = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
-        bodyView.heightAnchor.constraint(equalToConstant: 120).isActive = true
+        bodyView.heightAnchor.constraint(equalToConstant: 510).isActive = true
         bodyView.delegate = self
     }
 
     private func makePrivacyNotice() -> UIView {
-        let lock = UIImageView(image: UIImage(systemName: "lock.fill"))
-        lock.tintColor = AppStyle.blue
+        let lock = UIImageView(image: UIImage(named: "community-write-lock-icon")?.withRenderingMode(.alwaysOriginal))
         lock.widthAnchor.constraint(equalToConstant: 18).isActive = true
         lock.heightAnchor.constraint(equalToConstant: 18).isActive = true
         let message = AppStyle.label("작성자는 기수만 표시돼요. 이름·학번은 다른 사용자에게 공개되지 않아요.", size: 12, color: AppStyle.muted)
@@ -151,8 +200,8 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         notice.spacing = 8
         notice.isLayoutMarginsRelativeArrangement = true
         notice.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
-        notice.backgroundColor = AppStyle.paleBlue
-        notice.layer.cornerRadius = 16
+        notice.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+        notice.layer.cornerRadius = 14
         return notice
     }
 
@@ -190,7 +239,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
             textView.text = bodyPlaceholder
             textView.textColor = AppStyle.muted
         }
-        bodyView.layer.borderColor = bodyErrorRow?.isHidden == false ? UIColor.systemRed.cgColor : AppStyle.line.cgColor
+        bodyView.layer.borderColor = bodyErrorRow?.isHidden == false ? UIColor.systemRed.cgColor : fieldBorderColor.cgColor
     }
 
     func textViewDidChange(_ textView: UITextView) {
@@ -248,13 +297,13 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         titleErrorLabel.text = isError ? "제목을 입력해 주세요." : nil
         titleErrorRow?.isHidden = !isError
         titleField.layer.borderWidth = isError ? 1.5 : 1
-        titleField.layer.borderColor = isError ? UIColor.systemRed.cgColor : AppStyle.line.cgColor
+        titleField.layer.borderColor = isError ? UIColor.systemRed.cgColor : fieldBorderColor.cgColor
     }
 
     private func setBodyError(_ isError: Bool) {
         bodyErrorLabel.text = isError ? "내용을 입력해 주세요." : nil
         bodyErrorRow?.isHidden = !isError
         bodyView.layer.borderWidth = isError ? 1.5 : 1
-        bodyView.layer.borderColor = isError ? UIColor.systemRed.cgColor : AppStyle.line.cgColor
+        bodyView.layer.borderColor = isError ? UIColor.systemRed.cgColor : fieldBorderColor.cgColor
     }
 }
