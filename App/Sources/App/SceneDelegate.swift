@@ -30,6 +30,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 navigationController.pushViewController(MyPageViewController(), animated: false)
             }
             window.rootViewController = tabs
+        } else if arguments.contains("--chat-home-preview") {
+            let tabs = AppTabBarController()
+            tabs.selectedIndex = 1
+            window.rootViewController = tabs
         } else {
             window.rootViewController = WelcomeViewController()
         }
