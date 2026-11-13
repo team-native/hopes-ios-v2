@@ -103,6 +103,7 @@ final class CommunityPostDetailViewController: AppPageViewController {
     private func submitComment() {
         guard let text = commentField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return }
         addComment(author: "나", text: text)
+        CommunityPostStore.shared.addComment(postTitle: post.title, text: text)
         commentField.text = nil
         view.endEditing(true)
     }
