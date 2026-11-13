@@ -44,4 +44,19 @@ final class CommunityPostStore {
     func addComment(postTitle: String, text: String) {
         myComments.insert(CommunityComment(postTitle: postTitle, text: text, time: "방금 전"), at: 0)
     }
+
+    func update(_ original: CommunityPost, title: String, body: String, grade: String) -> CommunityPost {
+        let updated = CommunityPost(
+            grade: grade,
+            title: title,
+            body: body,
+            time: original.time,
+            comments: original.comments,
+            likes: original.likes,
+            category: original.category
+        )
+        posts = posts.map { $0.title == original.title && $0.body == original.body ? updated : $0 }
+        myPosts = myPosts.map { $0.title == original.title && $0.body == original.body ? updated : $0 }
+        return updated
+    }
 }

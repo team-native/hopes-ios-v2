@@ -18,6 +18,11 @@ final class MyActivityViewController: AppPageViewController {
         renderItems()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if isViewLoaded { renderItems() }
+    }
+
     private func renderItems() {
         itemsStack.arrangedSubviews.forEach { view in
             itemsStack.removeArrangedSubview(view)
@@ -31,7 +36,7 @@ final class MyActivityViewController: AppPageViewController {
             }
             posts.forEach { post in
                 addActivityRow(post.title, subtitle: "\(post.category) · \(post.time) · 댓글 \(post.comments)", symbol: "doc.text") { [weak self] in
-                    self?.push(CommunityPostDetailViewController(post: post))
+                    self?.push(CommunityPostDetailViewController(post: post, isMine: true))
                 }
             }
         } else {

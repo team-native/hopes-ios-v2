@@ -2,15 +2,20 @@ import UIKit
 
 @MainActor
 final class CommunityPostDetailViewController: AppPageViewController {
-    private let post: CommunityPost
+    private var post: CommunityPost
+    private let isMine: Bool
     private var likes: Int
     private var liked = false
     private let commentStack = UIStackView()
     private let commentField = UITextField()
     private let likeButton = UIButton(type: .system)
+    private var categoryLabel: UILabel?
+    private var titleLabel: UILabel?
+    private var bodyLabel: UILabel?
 
-    init(post: CommunityPost) {
+    init(post: CommunityPost, isMine: Bool = false) {
         self.post = post
+        self.isMine = isMine
         likes = post.likes
         super.init(nibName: nil, bundle: nil)
     }
@@ -30,9 +35,12 @@ final class CommunityPostDetailViewController: AppPageViewController {
         let postCard = AppStyle.card()
         let author = AppStyle.label("\(post.grade) · 익명 · \(post.time)", size: 13, color: AppStyle.muted)
         let category = AppStyle.label(post.category, size: 12, weight: .semibold, color: AppStyle.blue)
-        let titleLabel = AppStyle.label(post.title, size: 21, weight: .bold)
+        let postTitle = AppStyle.label(post.title, size: 21, weight: .bold)
         let body = AppStyle.label(post.body, size: 16)
-        let cardStack = UIStackView(arrangedSubviews: [author, category, titleLabel, body])
+        categoryLabel = category
+        titleLabel = postTitle
+        bodyLabel = body
+        let cardStack = UIStackView(arrangedSubviews: [author, category, postTitle, body])
         cardStack.axis = .vertical
         cardStack.spacing = 12
         cardStack.translatesAutoresizingMaskIntoConstraints = false
@@ -110,12 +118,28 @@ final class CommunityPostDetailViewController: AppPageViewController {
 
     @objc private func showPostActions() {
         let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        sheet.addAction(UIAlertAction(title: "게시글 신고", style: .destructive) { [weak self] _ in self?.showReportReasons() })
+        if isMine {
+            sheet.addAction(UIAlertAction(title: "수정하기", style: .default) { [weak self] _ in self?.editPost() })
+        } else {
+            sheet.addAction(UIAlertAction(title: "게시글 신고", style: .destructive) { [weak self] _ in self?.showReportReasons() })
+        }
         sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
         if let popover = sheet.popoverPresentationController {
             popover.barButtonItem = navigationItem.rightBarButtonItem
         }
         present(sheet, animated: true)
+    }
+
+    private func editPost() {
+        let editor = CommunityPostEditViewController(post: post)
+        editor.onSave = { [weak self] updated in
+            guard let self else { return }
+            self.post = updated
+            self.categoryLabel?.text = updated.category
+            self.titleLabel?.text = updated.title
+            self.bodyLabel?.text = updated.body
+        }
+        push(editor)
     }
 
     private func showReportReasons() {
