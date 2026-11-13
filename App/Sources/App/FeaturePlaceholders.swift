@@ -1,11 +1,6 @@
 import UIKit
 
 @MainActor
-final class ChatHomeViewController: AppPageViewController {
-    override func viewDidLoad() { super.viewDidLoad(); title = "채팅"; addHeading("채팅") }
-}
-
-@MainActor
 final class CommunityViewController: AppPageViewController {
     override func viewDidLoad() { super.viewDidLoad(); title = "커뮤니티"; addHeading("커뮤니티") }
 }
