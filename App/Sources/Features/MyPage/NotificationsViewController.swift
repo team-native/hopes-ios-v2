@@ -13,7 +13,7 @@ final class NotificationsViewController: AppPageViewController {
     private var items: [NotificationItem] = ProcessInfo.processInfo.arguments.contains("--notifications-empty") ? [] : [
         NotificationItem(title: "내 질문에 새 답변이 달렸어요", detail: "기숙사 하루 일과가 어떻게 돼? · 10분 전", category: "답변", question: "기숙사 하루 일과가 어떻게 돼?", isRead: false),
         NotificationItem(title: "게시글에 댓글이 달렸어요", detail: "기숙사 와이파이 다들 잘 돼? · 1시간 전", category: "답변", question: "기숙사 와이파이 다들 잘 돼?", isRead: false),
-        NotificationItem(title: "이번 주 학교 일정 안내", detail: "학교 공지 · 어제", category: "공지", question: nil, isRead: true)
+        NotificationItem(title: "답변 데이터 업데이트 완료", detail: "시스템 공지 · 2026.11.12", category: "공지", question: nil, isRead: true)
     ]
 
     private let categoryControl = UISegmentedControl(items: ["전체", "답변", "공지"])
@@ -208,7 +208,7 @@ final class NotificationsViewController: AppPageViewController {
                 if let question = item.question {
                     self.push(ChatConversationViewController(question: question))
                 } else {
-                    self.showMessage(item.title)
+                    self.push(AnnouncementDetailViewController())
                 }
                 self.renderItems()
             }
