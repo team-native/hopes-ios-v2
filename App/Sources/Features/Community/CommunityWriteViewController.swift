@@ -240,6 +240,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         }
         registrationErrorBanner?.isHidden = true
         CommunityPostStore.shared.add(title: titleText, body: bodyText, category: "질문", grade: selectedBoard)
+        CommunityPostStore.shared.markPostPublished()
         navigationController?.popViewController(animated: true)
     }
 

@@ -15,6 +15,7 @@ final class CommunityViewController: AppPageViewController {
     private let postStack = UIStackView()
     private var selectedCategory = "전체"
     private var categoryFilters: UIStackView?
+    private var publishToast: UIView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,7 +59,69 @@ final class CommunityViewController: AppPageViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if isViewLoaded { renderPosts() }
+        if isViewLoaded {
+            renderPosts()
+            if CommunityPostStore.shared.consumePublishedToast() { showPublishToast() }
+        }
+    }
+
+    private func showPublishToast() {
+        publishToast?.removeFromSuperview()
+
+        let checkCircle = UIView()
+        checkCircle.backgroundColor = AppStyle.blue
+        checkCircle.layer.cornerRadius = 11
+        checkCircle.widthAnchor.constraint(equalToConstant: 22).isActive = true
+        checkCircle.heightAnchor.constraint(equalToConstant: 22).isActive = true
+        let checkmark = UIImageView(image: UIImage(systemName: "checkmark"))
+        checkmark.tintColor = .white
+        checkmark.contentMode = .scaleAspectFit
+        checkCircle.addSubview(checkmark)
+        checkmark.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            checkmark.centerXAnchor.constraint(equalTo: checkCircle.centerXAnchor),
+            checkmark.centerYAnchor.constraint(equalTo: checkCircle.centerYAnchor),
+            checkmark.widthAnchor.constraint(equalToConstant: 12),
+            checkmark.heightAnchor.constraint(equalToConstant: 12)
+        ])
+
+        let message = AppStyle.label("게시글을 등록했어요", size: 14, color: .white)
+        let toast = UIStackView(arrangedSubviews: [checkCircle, message])
+        toast.axis = .horizontal
+        toast.alignment = .center
+        toast.spacing = 10
+        toast.isLayoutMarginsRelativeArrangement = true
+        toast.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        toast.backgroundColor = AppStyle.ink
+        toast.layer.cornerRadius = 26
+        toast.layer.shadowColor = UIColor.black.cgColor
+        toast.layer.shadowOpacity = 0.18
+        toast.layer.shadowRadius = 12
+        toast.layer.shadowOffset = CGSize(width: 0, height: 5)
+        toast.isUserInteractionEnabled = false
+        toast.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(toast)
+        NSLayoutConstraint.activate([
+            toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        ])
+        publishToast = toast
+        toast.alpha = 0
+        toast.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        UIView.animate(withDuration: 0.2) {
+            toast.alpha = 1
+            toast.transform = .identity
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self, weak toast] in
+            guard let self, let toast, self.publishToast === toast else { return }
+            UIView.animate(withDuration: 0.2, animations: {
+                toast.alpha = 0
+                toast.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+            }, completion: { _ in
+                toast.removeFromSuperview()
+                self.publishToast = nil
+            })
+        }
     }
 
     private func selectCategory(_ category: String) {

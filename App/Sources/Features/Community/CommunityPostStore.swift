@@ -24,8 +24,18 @@ final class CommunityPostStore {
     private(set) var myComments = [
         CommunityComment(postTitle: "기숙사 와이파이 다들 잘 돼?", text: "공유기 위치에 따라서 신호가 조금 다를 수 있어요", time: "오늘")
     ]
+    private var shouldShowPublishedToast = false
 
     private init() {}
+
+    func markPostPublished() {
+        shouldShowPublishedToast = true
+    }
+
+    func consumePublishedToast() -> Bool {
+        defer { shouldShowPublishedToast = false }
+        return shouldShowPublishedToast
+    }
 
     func add(title: String, body: String, category: String, grade: String) {
         let newPost = CommunityPost(
