@@ -16,7 +16,8 @@ let project = Project(
                     "CFBundleVersion": "1",
                     "UILaunchScreen": [:],
                     "NSCameraUsageDescription": "질문에 첨부할 사진을 촬영하기 위해 카메라 접근이 필요합니다.",
-                    "NSPhotoLibraryUsageDescription": "질문에 첨부할 사진을 선택하기 위해 사진 보관함 접근이 필요합니다."
+                    "NSPhotoLibraryUsageDescription": "질문에 첨부할 사진을 선택하기 위해 사진 보관함 접근이 필요합니다.",
+                    "NSLocationWhenInUseUsageDescription": "질문에 첨부할 현재 위치를 확인하기 위해 위치 접근이 필요합니다."
                 ]
             ),
             sources: ["App/Sources/**"],

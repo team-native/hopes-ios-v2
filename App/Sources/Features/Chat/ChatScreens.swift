@@ -141,6 +141,14 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
                 preview.onSend = { [weak self] in self?.addMessage("첨부했어요: \(fileName)", outgoing: true) }
                 self.present(preview, animated: true)
             }
+            picker.onLocationRequested = { [weak self] in
+                guard let self else { return }
+                let location = ChatLocationViewController()
+                location.onLocationSelected = { [weak self] value in
+                    self?.addMessage("위치 첨부: \(value)", outgoing: true)
+                }
+                self.present(location, animated: true)
+            }
             self.present(picker, animated: true)
         }, for: .touchUpInside)
         let send = UIButton(type: .system)
