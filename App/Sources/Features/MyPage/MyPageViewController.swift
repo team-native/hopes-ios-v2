@@ -20,6 +20,9 @@ final class MyPageViewController: AppPageViewController {
         addRow("AI 답변 스타일 관리", subtitle: "답변 방식과 관심 분야를 설정해요", symbol: "sparkles") { [weak self] in
             self?.push(AIAnswerStyleViewController())
         }
+        addRow("개인정보 설정", symbol: "lock") { [weak self] in
+            self?.push(PrivacySettingsViewController())
+        }
         addRow("알림", subtitle: "새 답변 · 공지", symbol: "bell") { [weak self] in
             self?.push(NotificationsViewController())
         }
