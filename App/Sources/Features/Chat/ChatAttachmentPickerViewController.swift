@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 @MainActor
 final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewControllerDelegate, UIDocumentPickerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     var onAttachmentSelected: ((String, UIImage?) -> Void)?
+    var onLocationRequested: (() -> Void)?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -20,7 +21,8 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         stack.addArrangedSubview(AppStyle.button("사진 보관함", action: { [weak self] in self?.openPhotoLibrary() }))
         stack.addArrangedSubview(AppStyle.button("파일 선택", action: { [weak self] in self?.openFiles() }))
         stack.addArrangedSubview(AppStyle.button("현재 위치", action: { [weak self] in
-            self?.showMessage("위치 공유 화면은 별도 위치 화면 이슈에서 연결할게요")
+            guard let self else { return }
+            self.dismiss(animated: true) { [weak self] in self?.onLocationRequested?() }
         }))
 
         view.addSubview(stack)
