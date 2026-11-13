@@ -64,7 +64,8 @@ final class CommunityPostEditViewController: AppPageViewController, UITextViewDe
         lock.widthAnchor.constraint(equalToConstant: 18).isActive = true
         lock.heightAnchor.constraint(equalToConstant: 18).isActive = true
         notice.addArrangedSubview(lock)
-        notice.addArrangedSubview(AppStyle.label("작성자는 기수만 표시돼요. 이름·학번은 다른 사용자에게 공개되지 않아요.", size: 12, color: AppStyle.muted))
+        notice.addArrangedSubview(AppStyle.label("작성자는 기수만 표시돼요. 이름·학번은 다른 사용자에게 공개되지 않아요.", size: 12,
+            color: AppStyle.muted))
         contentStack.addArrangedSubview(UIView())
         contentStack.addArrangedSubview(notice)
     }
@@ -75,7 +76,8 @@ final class CommunityPostEditViewController: AppPageViewController, UITextViewDe
         close.tintColor = AppStyle.ink
         close.widthAnchor.constraint(equalToConstant: 44).isActive = true
         close.heightAnchor.constraint(equalToConstant: 44).isActive = true
-        close.addAction(UIAction { [weak self] _ in self?.navigationController?.popViewController(animated: true) }, for: .touchUpInside)
+        close.addAction(UIAction { [weak self] _ in self?.navigationController?.popViewController(animated: true) },
+            for: .touchUpInside)
 
         let heading = AppStyle.label("게시글 수정", size: 18, weight: .semibold)
         let save = UIButton(type: .system)
@@ -135,7 +137,8 @@ final class CommunityPostEditViewController: AppPageViewController, UITextViewDe
             })
         }
         sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
-        if let popover = sheet.popoverPresentationController { popover.sourceView = boardButton; popover.sourceRect = boardButton.bounds }
+        if let popover = sheet.popoverPresentationController { popover.sourceView = boardButton
+            popover.sourceRect = boardButton.bounds }
         present(sheet, animated: true)
     }
 

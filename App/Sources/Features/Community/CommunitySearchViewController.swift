@@ -2,17 +2,18 @@ import UIKit
 
 @MainActor
 final class CommunitySearchViewController: AppPageViewController, UITextFieldDelegate {
-    private let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
-    private let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
-    private let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
-    private let searchFieldIcon = UIImageView(image: UIImage(named: "community-search-field-icon")?.withRenderingMode(.alwaysOriginal))
-    private let clearButton = UIButton(type: .system)
-    private let searchField = UITextField()
-    private let recentStack = UIStackView()
-    private let recentChips = UIStackView()
-    private let resultsStack = UIStackView()
-    private var recentQueries = ["기숙사", "동아리 면접", "포트폴리오"]
-    private var previousNavigationBarHidden = false
+    let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+    let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+    let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+    let searchFieldIcon = UIImageView(image: UIImage(named: "community-search-field-icon")?
+        .withRenderingMode(.alwaysOriginal))
+    let clearButton = UIButton(type: .system)
+    let searchField = UITextField()
+    let recentStack = UIStackView()
+    let recentChips = UIStackView()
+    let resultsStack = UIStackView()
+    var recentQueries = ["기숙사", "동아리 면접", "포트폴리오"]
+    var previousNavigationBarHidden = false
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -56,7 +57,8 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         searchField.layer.cornerRadius = 25
         searchField.layer.borderWidth = 1
         searchField.layer.borderColor = AppStyle.line.cgColor
-        searchField.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).withAlphaComponent(0.05).cgColor
+        searchField.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255,
+            alpha: 1).withAlphaComponent(0.05).cgColor
         searchField.layer.shadowOpacity = 1
         searchField.layer.shadowRadius = 12
         searchField.layer.shadowOffset = CGSize(width: 0, height: 4)
@@ -70,7 +72,8 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         searchField.leftView = left
         searchField.leftViewMode = .always
 
-        clearButton.setImage(UIImage(named: "community-search-clear-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        clearButton.setImage(UIImage(named: "community-search-clear-icon")?.withRenderingMode(.alwaysOriginal),
+            for: .normal)
         clearButton.accessibilityLabel = "검색어 지우기"
         clearButton.accessibilityIdentifier = "community-search-clear"
         clearButton.frame = CGRect(x: 0, y: 0, width: 34, height: 34)
@@ -87,7 +90,9 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         cancel.setTitleColor(AppStyle.blue, for: .normal)
         cancel.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         cancel.accessibilityIdentifier = "community-search-cancel"
-        cancel.addAction(UIAction { [weak self] _ in self?.navigationController?.popViewController(animated: true) }, for: .touchUpInside)
+        cancel.addAction(UIAction { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        }, for: .touchUpInside)
         let row = UIStackView(arrangedSubviews: [searchField, cancel])
         row.axis = .horizontal
         row.alignment = .center
@@ -121,7 +126,11 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         return recentStack
     }
 
-    private func renderRecentSearches() {
+}
+
+@MainActor
+extension CommunitySearchViewController {
+    func renderRecentSearches() {
         recentChips.arrangedSubviews.forEach { view in
             recentChips.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -146,7 +155,7 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         }
     }
 
-    private func runSearch() {
+    func runSearch() {
         let query = searchField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !query.isEmpty else { return }
         if !recentQueries.contains(query) { recentQueries.insert(query, at: 0) }
@@ -158,7 +167,7 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         clearButton.isHidden = false
     }
 
-    private func renderResults(for query: String) {
+    func renderResults(for query: String) {
         resultsStack.arrangedSubviews.forEach { view in
             resultsStack.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -172,15 +181,39 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
             resultsStack.addArrangedSubview(makeEmptyState())
             return
         }
-        resultsStack.addArrangedSubview(AppStyle.label("검색 결과 \(posts.count)개", size: 14, weight: .medium, color: secondary))
+        resultsStack.addArrangedSubview(AppStyle.label("검색 결과 \(posts.count)개", size: 14, weight: .medium,
+            color: secondary))
         posts.forEach { post in resultsStack.addArrangedSubview(makeResultCard(post)) }
     }
 
-    private func makeResultCard(_ post: CommunityPost) -> UIView {
+}
+
+@MainActor
+extension CommunitySearchViewController {
+    func makeResultCard(_ post: CommunityPost) -> UIView {
+        let content = makeResultCardContent(post)
+        let card = makeResultCardContainer(content, post: post)
+        return card
+    }
+
+    private func makeResultCardContent(_ post: CommunityPost) -> UIStackView {
+        let badge = makeGradeBadge(post.grade)
+        let title = makeResultTitle(post.title)
+        let body = makeResultBody(post.body)
+        let footer = makeResultFooter(post)
+        let content = UIStackView(arrangedSubviews: [badge, title, body, footer])
+        content.axis = .vertical
+        content.spacing = 8
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+        return content
+    }
+
+    private func makeGradeBadge(_ grade: String) -> UIView {
         let badge = UIView()
         badge.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
         badge.layer.cornerRadius = 12
-        let badgeLabel = AppStyle.label(post.grade, size: 12, color: brandBlue)
+        let badgeLabel = AppStyle.label(grade, size: 12, color: brandBlue)
         badgeLabel.translatesAutoresizingMaskIntoConstraints = false
         badge.addSubview(badgeLabel)
         NSLayoutConstraint.activate([
@@ -191,21 +224,32 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
             badge.heightAnchor.constraint(equalToConstant: 24),
             badge.widthAnchor.constraint(greaterThanOrEqualToConstant: 39)
         ])
+        return badge
+    }
 
-        let title = AppStyle.label(post.title, size: 15, weight: .medium, color: AppStyle.ink)
-        title.attributedText = NSAttributedString(string: post.title, attributes: [
+    private func makeResultTitle(_ text: String) -> UILabel {
+        let title = AppStyle.label(text, size: 15, weight: .medium, color: AppStyle.ink)
+        title.attributedText = NSAttributedString(string: text, attributes: [
             .font: UIFont.systemFont(ofSize: 15, weight: .medium),
             .foregroundColor: AppStyle.ink,
             .paragraphStyle: lineStyle(height: 24)
         ])
         title.numberOfLines = 1
-        let body = AppStyle.label(post.body, size: 14, weight: .medium, color: secondary)
-        body.attributedText = NSAttributedString(string: post.body, attributes: [
+        return title
+    }
+
+    private func makeResultBody(_ text: String) -> UILabel {
+        let body = AppStyle.label(text, size: 14, weight: .medium, color: secondary)
+        body.attributedText = NSAttributedString(string: text, attributes: [
             .font: UIFont.systemFont(ofSize: 14, weight: .medium),
             .foregroundColor: secondary,
             .paragraphStyle: lineStyle(height: 20)
         ])
         body.numberOfLines = 2
+        return body
+    }
+
+    private func makeResultFooter(_ post: CommunityPost) -> UIStackView {
         let footer = UIStackView(arrangedSubviews: [
             AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: tertiary),
             UIView(),
@@ -215,19 +259,21 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         footer.axis = .horizontal
         footer.alignment = .center
         footer.spacing = 8
+        return footer
+    }
 
-        let content = UIStackView(arrangedSubviews: [badge, title, body, footer])
-        content.axis = .vertical
-        content.spacing = 8
-        content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
-
+    private func makeResultCardContainer(_ content: UIView, post: CommunityPost) -> UIControl {
         let card = UIControl()
         card.backgroundColor = .white
         card.layer.cornerRadius = 24
         card.layer.borderWidth = 1
         card.layer.borderColor = AppStyle.line.cgColor
-        card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).withAlphaComponent(0.05).cgColor
+        card.layer.shadowColor = UIColor(
+            red: 26 / 255,
+            green: 64 / 255,
+            blue: 128 / 255,
+            alpha: 0.05
+        ).cgColor
         card.layer.shadowOpacity = 1
         card.layer.shadowRadius = 8
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
@@ -246,14 +292,14 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         return card
     }
 
-    private func lineStyle(height: CGFloat) -> NSMutableParagraphStyle {
+    func lineStyle(height: CGFloat) -> NSMutableParagraphStyle {
         let style = NSMutableParagraphStyle()
         style.minimumLineHeight = height
         style.maximumLineHeight = height
         return style
     }
 
-    private func makeStat(icon: String, count: Int) -> UIStackView {
+    func makeStat(icon: String, count: Int) -> UIStackView {
         let image = UIImageView(image: UIImage(named: icon)?.withRenderingMode(.alwaysOriginal))
         image.contentMode = .scaleAspectFit
         image.translatesAutoresizingMaskIntoConstraints = false
@@ -269,7 +315,7 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         return stat
     }
 
-    private func clearSearch() {
+    func clearSearch() {
         searchField.text = nil
         clearButton.isHidden = true
         recentStack.isHidden = false
@@ -277,11 +323,33 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         DispatchQueue.main.async { [weak self] in self?.searchField.becomeFirstResponder() }
     }
 
-    @objc private func searchTextDidChange() {
+    @objc func searchTextDidChange() {
         clearButton.isHidden = (searchField.text ?? "").isEmpty
     }
 
-    private func makeEmptyState() -> UIView {
+}
+
+@MainActor
+extension CommunitySearchViewController {
+    func makeEmptyState() -> UIView {
+        let state = makeEmptyStateStack()
+        let container = UIView()
+        container.heightAnchor.constraint(
+            equalTo: scrollView.frameLayoutGuide.heightAnchor,
+            constant: -100
+        ).isActive = true
+        container.addSubview(state)
+        state.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            state.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            state.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            state.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 12),
+            state.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -12)
+        ])
+        return container
+    }
+
+    private func makeEmptyStateStack() -> UIStackView {
         let illustration = UIView()
         illustration.backgroundColor = .white
         illustration.layer.cornerRadius = 44
@@ -315,19 +383,13 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         state.alignment = .center
         state.spacing = 12
 
-        let container = UIView()
-        container.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, constant: -100).isActive = true
-        container.addSubview(state)
-        state.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            state.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            state.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            subtitle.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 12),
-            subtitle.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -12)
-        ])
-        return container
+        return state
     }
 
+}
+
+@MainActor
+extension CommunitySearchViewController {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         runSearch()
         return true
