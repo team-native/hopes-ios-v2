@@ -12,7 +12,16 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = WelcomeViewController()
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--inquiry-error-preview") {
+            window.rootViewController = UINavigationController(rootViewController: InquiryViewController())
+        } else if arguments.contains("--inquiry-done-preview") {
+            window.rootViewController = UINavigationController(
+                rootViewController: InquiryCompletionViewController(email: "s26055@gsm.hs.kr")
+            )
+        } else {
+            window.rootViewController = WelcomeViewController()
+        }
         self.window = window
         (UIApplication.shared.delegate as? AppDelegate)?.window = window
         window.makeKeyAndVisible()
