@@ -92,7 +92,9 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         stopAnswerButton.layer.cornerRadius = 12
         stopAnswerButton.layer.borderWidth = 1
         stopAnswerButton.layer.borderColor = AppStyle.line.cgColor
-        stopAnswerButton.contentEdgeInsets = UIEdgeInsets(top: 13, left: 20, bottom: 13, right: 20)
+        var buttonConfiguration = UIButton.Configuration.plain()
+        buttonConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 13, leading: 20, bottom: 13, trailing: 20)
+        stopAnswerButton.configuration = buttonConfiguration
         stopAnswerButton.isHidden = true
         stopAnswerButton.addAction(UIAction { [weak self] _ in self?.stopAnswerGeneration() }, for: .touchUpInside)
         stopAnswerButton.translatesAutoresizingMaskIntoConstraints = false
@@ -104,6 +106,27 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     }
 
     func configureComposer() {
+        let composer = makeComposerContainer()
+        let attach = makeAttachmentButton()
+        let send = makeSendButton()
+        let mic = makeVoiceButton()
+        composer.addArrangedSubview(attach)
+        composer.addArrangedSubview(inputField)
+        composer.addArrangedSubview(mic)
+        composer.addArrangedSubview(send)
+        view.addSubview(composer)
+
+        NSLayoutConstraint.activate([
+            composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            composer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+            composer.heightAnchor.constraint(equalToConstant: 52),
+            scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor),
+            inputField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
+        ])
+    }
+
+    private func makeComposerContainer() -> UIStackView {
         let composer = UIStackView()
         composer.axis = .horizontal
         composer.spacing = 10
@@ -112,19 +135,31 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         composer.layer.cornerRadius = 28
         composer.layer.borderWidth = 1
         composer.layer.borderColor = LocationMapStyle.subtleBorder.cgColor
-        composer.layer.shadowColor = UIColor(red: 26 / 255.0, green: 64 / 255.0, blue: 128 / 255.0, alpha: 0.09).cgColor
+        composer.layer.shadowColor = UIColor(
+            red: 26 / 255.0,
+            green: 64 / 255.0,
+            blue: 128 / 255.0,
+            alpha: 0.09
+        ).cgColor
         composer.layer.shadowOpacity = 1
         composer.layer.shadowRadius = 14
         composer.layer.shadowOffset = CGSize(width: 0, height: 8)
         composer.isLayoutMarginsRelativeArrangement = true
         composer.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6)
+        configureInputField()
         composer.translatesAutoresizingMaskIntoConstraints = false
+        return composer
+    }
 
+    private func configureInputField() {
         inputField.placeholder = "추가 질문 입력…"
         inputField.borderStyle = .none
         inputField.returnKeyType = .send
         inputField.delegate = self
         inputField.heightAnchor.constraint(equalToConstant: 40).isActive = true
+    }
+
+    private func makeAttachmentButton() -> UIButton {
         let attach = UIButton(type: .system)
         attach.setImage(UIImage(named: "map-composer-plus"), for: .normal)
         attach.tintColor = LocationMapStyle.ink
@@ -148,6 +183,10 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             }
             self.present(picker, animated: true)
         }, for: .touchUpInside)
+        return attach
+    }
+
+    private func makeSendButton() -> UIButton {
         let send = UIButton(type: .system)
         send.setImage(UIImage(named: "map-composer-up"), for: .normal)
         send.tintColor = .white
@@ -156,26 +195,17 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         send.addAction(UIAction { [weak self] _ in self?.sendMessage() }, for: .touchUpInside)
         send.widthAnchor.constraint(equalToConstant: 40).isActive = true
         send.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        return send
+    }
+
+    private func makeVoiceButton() -> UIButton {
         let mic = UIButton(type: .system)
         mic.setImage(UIImage(named: "map-composer-mic"), for: .normal)
         mic.tintColor = LocationMapStyle.secondary
         mic.widthAnchor.constraint(equalToConstant: 40).isActive = true
         mic.heightAnchor.constraint(equalToConstant: 40).isActive = true
         mic.addAction(UIAction { [weak self] _ in self?.presentMessage("음성 입력은 추후 지원할 예정이에요") }, for: .touchUpInside)
-        composer.addArrangedSubview(attach)
-        composer.addArrangedSubview(inputField)
-        composer.addArrangedSubview(mic)
-        composer.addArrangedSubview(send)
-        view.addSubview(composer)
-
-        NSLayoutConstraint.activate([
-            composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            composer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            composer.heightAnchor.constraint(equalToConstant: 52),
-            scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor),
-            inputField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
-        ])
+        return mic
     }
 
     func addMessage(_ text: String, outgoing: Bool) {
@@ -207,7 +237,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     }
 
     func shareAnswer() {
-        let activity = UIActivityViewController(activityItems: ["Frontend 시작 순서\nHTML·CSS로 간단한 페이지 만들기 → JavaScript 기초 문법 익히기 → React로 작은 프로젝트 완성하기"], applicationActivities: nil)
+        let answer = "Frontend 시작 순서\nHTML·CSS로 간단한 페이지 만들기 → JavaScript 기초 문법 익히기 → React로 작은 프로젝트 완성하기"
+        let activity = UIActivityViewController(activityItems: [answer], applicationActivities: nil)
         present(activity, animated: true)
     }
 

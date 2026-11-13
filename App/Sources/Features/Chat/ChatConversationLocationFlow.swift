@@ -71,6 +71,25 @@ extension ChatConversationViewController {
         card.layer.shadowRadius = 14
         card.layer.shadowOffset = CGSize(width: 0, height: 6)
 
+        let row = makeLocationMeasurementRow()
+        let progress = makeLocationProgressView()
+        let content = UIStackView(arrangedSubviews: [row, progress])
+        content.axis = .vertical
+        content.spacing = 10
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        return card
+    }
+
+    private func makeLocationMeasurementRow() -> UIStackView {
         let iconContainer = UIView()
         iconContainer.backgroundColor = AppStyle.paleBlue
         iconContainer.layer.cornerRadius = 12
@@ -98,6 +117,10 @@ extension ChatConversationViewController {
         row.alignment = .center
         row.spacing = 10
 
+        return row
+    }
+
+    private func makeLocationProgressView() -> UIProgressView {
         let progress = UIProgressView(progressViewStyle: .default)
         progress.progress = 0.42
         progress.progressTintColor = AppStyle.blue
@@ -106,21 +129,7 @@ extension ChatConversationViewController {
         progress.clipsToBounds = true
         progress.heightAnchor.constraint(equalToConstant: 6).isActive = true
 
-        let content = UIStackView(arrangedSubviews: [row, progress])
-        content.axis = .vertical
-        content.spacing = 10
-        content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14)
-        content.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
-        ])
-
-        return card
+        return progress
     }
 
     func replaceLocationCard(with card: UIView) {
@@ -147,8 +156,31 @@ extension ChatConversationViewController {
         card.layer.shadowOpacity = 1
         card.layer.shadowRadius = 14
         card.layer.shadowOffset = CGSize(width: 0, height: 6)
+        let content = makeLowAccuracyContent(accuracy: accuracy)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        return card
+    }
 
+    private func makeLowAccuracyContent(accuracy: CLLocationAccuracy) -> UIStackView {
         let title = AppStyle.label("학교 근처로 보이지만 위치 정확도가 낮아요.", size: 15)
+        let warning = makeAccuracyWarning(accuracy: accuracy)
+        let buttons = makeAccuracyActions()
+        let content = UIStackView(arrangedSubviews: [title, warning, buttons])
+        content.axis = .vertical
+        content.spacing = 8
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 14, bottom: 14, trailing: 14)
+        return content
+    }
+
+    private func makeAccuracyWarning(accuracy: CLLocationAccuracy) -> UIStackView {
         let warning = UIStackView()
         warning.axis = .horizontal
         warning.alignment = .center
@@ -170,7 +202,10 @@ extension ChatConversationViewController {
         accuracyLabel.numberOfLines = 1
         warning.addArrangedSubview(alertIcon)
         warning.addArrangedSubview(accuracyLabel)
+        return warning
+    }
 
+    private func makeAccuracyActions() -> UIStackView {
         let retryButton = UIButton(type: .system)
         var retryConfiguration = UIButton.Configuration.plain()
         retryConfiguration.title = "다시 측정"
@@ -199,21 +234,7 @@ extension ChatConversationViewController {
         buttons.axis = .horizontal
         buttons.spacing = 8
         buttons.distribution = .fillEqually
-
-        let content = UIStackView(arrangedSubviews: [title, warning, buttons])
-        content.axis = .vertical
-        content.spacing = 8
-        content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 14, bottom: 14, trailing: 14)
-        content.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
-        ])
-        return card
+        return buttons
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {

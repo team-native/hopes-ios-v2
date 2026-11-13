@@ -55,9 +55,12 @@ extension ChatConversationViewController {
         back.addAction(UIAction { [weak self] _ in self?.navigationController?.popViewController(animated: true) },
             for: .touchUpInside)
 
+        let department = UserDefaults.standard.string(forKey: "chat.selectedDepartment") ?? "소프트웨어개발과"
+        let major = UserDefaults.standard.string(forKey: "chat.selectedMajor") ?? "Frontend"
+        let context = AppStyle.label("\(department) · \(major)", size: 12, color: AppStyle.muted)
         let titleStack = UIStackView(arrangedSubviews: [
             AppStyle.label("전공 공부", size: 18, weight: .semibold),
-            AppStyle.label("\(UserDefaults.standard.string(forKey: "chat.selectedDepartment") ?? "소프트웨어개발과") · \(UserDefaults.standard.string(forKey: "chat.selectedMajor") ?? "Frontend")", size: 12, color: AppStyle.muted)
+            context
         ])
         titleStack.axis = .vertical
         titleStack.spacing = 2
@@ -103,10 +106,37 @@ extension ChatConversationViewController {
 
         let title = AppStyle.label("Frontend 시작 순서", size: 18, weight: .semibold)
         let intro = AppStyle.label("처음에는 화면을 직접 만들어 보는 것부터 시작하는 걸 추천해요.", size: 15)
+        let answer = UIStackView(arrangedSubviews: [
+            title,
+            intro,
+            makeAnswerSteps(),
+            makeCodeCard(),
+            makeAnswerQuote(),
+            makeSchoolLink()
+        ])
+        answer.axis = .vertical
+        answer.spacing = 10
+        answer.isLayoutMarginsRelativeArrangement = true
+        answer.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+        answer.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(answer)
+        NSLayoutConstraint.activate([
+            answer.topAnchor.constraint(equalTo: card.topAnchor),
+            answer.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            answer.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            answer.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        messagesStack.addArrangedSubview(card)
+        addAnswerActions()
+        addRelatedQuestions()
+    }
+
+    private func makeAnswerSteps() -> UIStackView {
         let steps = UIStackView()
         steps.axis = .vertical
         steps.spacing = 4
-        ["HTML·CSS로 간단한 페이지 만들기", "JavaScript 기초 문법 익히기", "React로 작은 프로젝트 완성하기"].enumerated().forEach { index, text in
+        let titles = ["HTML·CSS로 간단한 페이지 만들기", "JavaScript 기초 문법 익히기", "React로 작은 프로젝트 완성하기"]
+        for (index, text) in titles.enumerated() {
             let number = AppStyle.label("\(index + 1).", size: 15, weight: .semibold, color: AppStyle.blue)
             number.widthAnchor.constraint(equalToConstant: 22).isActive = true
             let row = UIStackView(arrangedSubviews: [number, AppStyle.label(text, size: 15)])
@@ -115,7 +145,10 @@ extension ChatConversationViewController {
             row.spacing = 8
             steps.addArrangedSubview(row)
         }
+        return steps
+    }
 
+    private func makeCodeCard() -> UIView {
         let codeCard = UIView()
         codeCard.backgroundColor = AppStyle.canvas
         codeCard.layer.cornerRadius = 12
@@ -150,7 +183,10 @@ extension ChatConversationViewController {
             codeStack.trailingAnchor.constraint(equalTo: codeCard.trailingAnchor),
             codeStack.bottomAnchor.constraint(equalTo: codeCard.bottomAnchor)
         ])
+        return codeCard
+    }
 
+    private func makeAnswerQuote() -> UIView {
         let quote = AppStyle.label("막히면 선배에게 바로 물어보는 게 제일 빨라요.", size: 14, weight: .medium, color: AppStyle.muted)
         let quoteRow = UIView()
         let quoteLine = UIView()
@@ -169,30 +205,18 @@ extension ChatConversationViewController {
             quote.topAnchor.constraint(equalTo: quoteRow.topAnchor, constant: 2),
             quote.bottomAnchor.constraint(equalTo: quoteRow.bottomAnchor, constant: -2)
         ])
+        return quoteRow
+    }
 
+    private func makeSchoolLink() -> UIButton {
         let schoolLink = UIButton(type: .system)
         schoolLink.setTitle("학교 전공 소개 페이지 보기", for: .normal)
         schoolLink.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         schoolLink.contentHorizontalAlignment = .leading
-        schoolLink.addAction(UIAction { [weak self] _ in self?.presentMessage("전공 소개 페이지는 서비스 연결 후 열 수 있어요") },
-            for: .touchUpInside)
-
-        let answer = UIStackView(arrangedSubviews: [title, intro, steps, codeCard, quoteRow, schoolLink])
-        answer.axis = .vertical
-        answer.spacing = 10
-        answer.isLayoutMarginsRelativeArrangement = true
-        answer.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
-        answer.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(answer)
-        NSLayoutConstraint.activate([
-            answer.topAnchor.constraint(equalTo: card.topAnchor),
-            answer.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            answer.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            answer.bottomAnchor.constraint(equalTo: card.bottomAnchor)
-        ])
-        messagesStack.addArrangedSubview(card)
-        addAnswerActions()
-        addRelatedQuestions()
+        schoolLink.addAction(UIAction { [weak self] _ in
+            self?.presentMessage("전공 소개 페이지는 서비스 연결 후 열 수 있어요")
+        }, for: .touchUpInside)
+        return schoolLink
     }
 
     func addAnswerActions() {
@@ -214,8 +238,10 @@ extension ChatConversationViewController {
     }
 
     func refreshAnswerActions() {
-        guard let row = messagesStack.arrangedSubviews.first(where: { ($0 as? UIStackView)?.arrangedSubviews.first?.accessibilityIdentifier == "answer-like" }) as? UIStackView,
-              let like = row.arrangedSubviews.first as? UIButton else { return }
+        let row = messagesStack.arrangedSubviews.first { view in
+            (view as? UIStackView)?.arrangedSubviews.first?.accessibilityIdentifier == "answer-like"
+        } as? UIStackView
+        guard let row, let like = row.arrangedSubviews.first as? UIButton else { return }
         let title = isLiked ? "좋아요 · 1" : "좋아요"
         like.setTitle(title, for: .normal)
         like.setImage(UIImage(systemName: isLiked ? "hand.thumbsup.fill" : "hand.thumbsup"), for: .normal)
@@ -235,7 +261,9 @@ extension ChatConversationViewController {
         button.layer.cornerRadius = 20
         button.layer.borderWidth = selected ? 0 : 1
         button.layer.borderColor = AppStyle.line.cgColor
-        button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 14, bottom: 10, right: 14)
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14)
+        button.configuration = configuration
         button.addAction(UIAction { _ in action() }, for: .touchUpInside)
         return button
     }

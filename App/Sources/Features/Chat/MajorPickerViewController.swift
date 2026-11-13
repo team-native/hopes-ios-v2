@@ -26,8 +26,23 @@ final class MajorPickerViewController: UIViewController {
             sheet.preferredCornerRadius = 24
         }
 
+        configureOptionsStack()
+        updateSelection()
+
         let title = AppStyle.label("전공 선택", size: 22, weight: .bold)
         let subtitle = AppStyle.label("관심 전공을 고르면 그에 맞는 질문을 추천해 드려요.", size: 14, color: AppStyle.muted)
+        let actions = makeActions()
+        let stack = makeContentStack(title: title, subtitle: subtitle, actions: actions)
+        view.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: view.topAnchor),
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+    }
+
+    private func configureOptionsStack() {
         optionsStack.axis = .vertical
         optionsStack.spacing = 8
         for start in stride(from: 0, to: options.count, by: 3) {
@@ -52,8 +67,9 @@ final class MajorPickerViewController: UIViewController {
             while row.arrangedSubviews.count < 3 { row.addArrangedSubview(UIView()) }
             optionsStack.addArrangedSubview(row)
         }
-        updateSelection()
+    }
 
+    private func makeActions() -> UIStackView {
         let clear = UIButton(type: .system)
         clear.setTitle("선택 해제", for: .normal)
         clear.setTitleColor(AppStyle.ink, for: .normal)
@@ -75,20 +91,17 @@ final class MajorPickerViewController: UIViewController {
         actions.axis = .horizontal
         actions.spacing = 10
         actions.distribution = .fillEqually
+        return actions
+    }
 
+    private func makeContentStack(title: UILabel, subtitle: UILabel, actions: UIStackView) -> UIStackView {
         let stack = UIStackView(arrangedSubviews: [title, subtitle, optionsStack, actions])
         stack.axis = .vertical
         stack.spacing = 14
         stack.isLayoutMarginsRelativeArrangement = true
         stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 24, leading: 20, bottom: 20, trailing: 20)
         stack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: view.topAnchor),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor)
-        ])
+        return stack
     }
 
     private func updateSelection() {
