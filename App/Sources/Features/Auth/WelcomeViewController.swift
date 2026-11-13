@@ -2,264 +2,156 @@ import UIKit
 
 @MainActor
 final class WelcomeViewController: UIViewController {
-    private let gradientLayer = CAGradientLayer()
-    private let loginSheet = UIView()
     private var didOpenLogin = false
+    private let cloudImage = UIImageView(image: UIImage(named: "auth-cloud-decor"))
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
-    override var prefersHomeIndicatorAutoHidden: Bool { false }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(hex: 0x0D6BC7)
-        configureBackground()
-        configureBrand()
-        configureHero()
-        configureSwipeCue()
-        configureLoginPeek()
-
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
-        view.addGestureRecognizer(pan)
+        view.backgroundColor = .white
+        configureBrandMark()
+        configureCopy()
+        configureCloud()
+        configureActions()
         view.accessibilityIdentifier = "welcome-screen"
-    }
-
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        gradientLayer.frame = view.bounds
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        if ProcessInfo.processInfo.arguments.contains("--login-preview") {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--login-preview")
+            || arguments.contains("--login-error-preview")
+            || arguments.contains("--login-offline-preview")
+            || arguments.contains("--login-loading-preview") {
             openLogin()
         }
     }
 
-    private func configureBackground() {
-        gradientLayer.colors = [
-            UIColor(hex: 0x2EA1ED).cgColor,
-            UIColor(hex: 0x0D6BC7).cgColor
-        ]
-        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
-        gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
-        view.layer.insertSublayer(gradientLayer, at: 0)
-    }
+    private func configureBrandMark() {
+        let tile = UIView()
+        tile.backgroundColor = .white
+        tile.layer.cornerRadius = 18
+        tile.layer.borderWidth = 1
+        tile.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+        tile.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
+        tile.layer.shadowOpacity = 0.08
+        tile.layer.shadowRadius = 12
+        tile.layer.shadowOffset = CGSize(width: 0, height: 4)
+        tile.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tile)
 
-    private func configureBrand() {
-        let mark = UIView()
-        mark.backgroundColor = .white
-        mark.layer.cornerRadius = 12
-        mark.layer.shadowColor = UIColor.black.withAlphaComponent(0.09).cgColor
-        mark.layer.shadowOpacity = 1
-        mark.layer.shadowRadius = 11
-        mark.layer.shadowOffset = CGSize(width: 0, height: 8)
-
-        let monogram = UILabel()
-        monogram.text = "h"
-        monogram.textAlignment = .center
-        monogram.textColor = UIColor(hex: 0x0D8AE5)
-        monogram.font = .systemFont(ofSize: 26, weight: .bold)
-        monogram.translatesAutoresizingMaskIntoConstraints = false
-        mark.addSubview(monogram)
-        NSLayoutConstraint.activate([
-            monogram.leadingAnchor.constraint(equalTo: mark.leadingAnchor),
-            monogram.trailingAnchor.constraint(equalTo: mark.trailingAnchor),
-            monogram.topAnchor.constraint(equalTo: mark.topAnchor, constant: 2),
-            monogram.bottomAnchor.constraint(equalTo: mark.bottomAnchor, constant: -2)
-        ])
-
-        let wordmark = UILabel()
-        wordmark.text = "hopes"
-        wordmark.font = .systemFont(ofSize: 17, weight: .bold)
-        wordmark.textColor = .white
-
-        let school = UILabel()
-        school.text = "광주소프트웨어마이스터고"
-        school.font = .systemFont(ofSize: 11, weight: .medium)
-        school.textColor = UIColor(hex: 0xD9F0FF)
-
-        let nameStack = UIStackView(arrangedSubviews: [wordmark, school])
-        nameStack.axis = .vertical
-        nameStack.spacing = 0
-        nameStack.alignment = .leading
-
-        let brand = UIStackView(arrangedSubviews: [mark, nameStack])
-        brand.axis = .horizontal
-        brand.alignment = .center
-        brand.spacing = 12
-        brand.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(brand)
+        let logo = UIImageView(image: UIImage(named: "auth-logo-mark"))
+        logo.contentMode = .scaleAspectFit
+        logo.translatesAutoresizingMaskIntoConstraints = false
+        tile.addSubview(logo)
 
         NSLayoutConstraint.activate([
-            mark.widthAnchor.constraint(equalToConstant: 42),
-            mark.heightAnchor.constraint(equalToConstant: 42),
-            brand.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            brand.topAnchor.constraint(equalTo: view.topAnchor, constant: 76)
+            tile.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
+            tile.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 210),
+            tile.widthAnchor.constraint(equalToConstant: 64),
+            tile.heightAnchor.constraint(equalToConstant: 64),
+            logo.centerXAnchor.constraint(equalTo: tile.centerXAnchor),
+            logo.centerYAnchor.constraint(equalTo: tile.centerYAnchor),
+            logo.widthAnchor.constraint(equalToConstant: 26),
+            logo.heightAnchor.constraint(equalToConstant: 40)
         ])
     }
 
-    private func configureHero() {
-        let hero = UILabel()
-        hero.numberOfLines = 3
-        hero.text = "선배에게 묻는\n가장 솔직한\n학교 이야기"
-        hero.font = .systemFont(ofSize: 31, weight: .bold)
-        hero.textColor = .white
-        hero.adjustsFontSizeToFitWidth = true
-        hero.minimumScaleFactor = 0.9
-        hero.accessibilityIdentifier = "welcome-hero"
-        hero.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(hero)
-
-        let description = UILabel()
-        description.numberOfLines = 2
-        description.text = "재학생, 신입생, 입학 희망자를 위한 AI 선배 챗봇.\n실제 선배들의 경험으로 답해드려요."
-        description.font = interFont(size: 15, bold: false)
-        description.textColor = UIColor(hex: 0xD6EDFF)
-        description.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(description)
-
-        NSLayoutConstraint.activate([
-            hero.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            hero.topAnchor.constraint(equalTo: view.topAnchor, constant: 286),
-            hero.widthAnchor.constraint(equalToConstant: 300),
-            hero.heightAnchor.constraint(equalToConstant: 117),
-            description.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            description.topAnchor.constraint(equalTo: view.topAnchor, constant: 416),
-            description.widthAnchor.constraint(equalToConstant: 338),
-            description.heightAnchor.constraint(equalToConstant: 48)
-        ])
-    }
-
-    private func configureSwipeCue() {
-        let arrows = UIStackView()
-        arrows.axis = .vertical
-        arrows.alignment = .center
-        arrows.spacing = -1
-        arrows.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(arrows)
-
-        ["swipe-chevron-top", "swipe-chevron-bottom"].forEach { name in
-            let imageView = UIImageView(image: UIImage(named: name))
-            imageView.contentMode = .scaleToFill
-            imageView.widthAnchor.constraint(equalToConstant: 34).isActive = true
-            imageView.heightAnchor.constraint(equalToConstant: 17).isActive = true
-            arrows.addArrangedSubview(imageView)
-        }
-
-        let title = UILabel()
-        title.text = "위로 스와이프하기"
-        title.textAlignment = .center
-        title.font = interFont(size: 18, bold: true)
-        title.textColor = .white
-        title.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(title)
-
-        let hint = UILabel()
-        hint.text = "로그인 창을 올려 학교 이메일로 시작해요."
-        hint.textAlignment = .center
-        hint.font = interFont(size: 12, bold: false)
-        hint.textColor = UIColor(hex: 0xDDF0FF)
-        hint.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(hint)
-
-        NSLayoutConstraint.activate([
-            arrows.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            arrows.topAnchor.constraint(equalTo: view.topAnchor, constant: 565),
-            title.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            title.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            title.topAnchor.constraint(equalTo: view.topAnchor, constant: 621),
-            title.heightAnchor.constraint(equalToConstant: 22),
-            hint.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            hint.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            hint.topAnchor.constraint(equalTo: view.topAnchor, constant: 651),
-            hint.heightAnchor.constraint(equalToConstant: 15)
-        ])
-    }
-
-    private func configureLoginPeek() {
-        loginSheet.backgroundColor = .white
-        loginSheet.layer.cornerRadius = 28
-        loginSheet.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        loginSheet.layer.shadowColor = UIColor(red: 10 / 255, green: 31 / 255, blue: 56 / 255, alpha: 1).cgColor
-        loginSheet.layer.shadowOpacity = 0.16
-        loginSheet.layer.shadowRadius = 28
-        loginSheet.layer.shadowOffset = CGSize(width: 0, height: -12)
-        loginSheet.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(loginSheet)
-
-        let handle = UIView()
-        handle.backgroundColor = UIColor(hex: 0xD6E2EE)
-        handle.layer.cornerRadius = 2.5
-        handle.translatesAutoresizingMaskIntoConstraints = false
-        loginSheet.addSubview(handle)
-
+    private func configureCopy() {
         let heading = UILabel()
-        heading.text = "로그인"
-        heading.font = interFont(size: 25, bold: true)
-        heading.textColor = UIColor(hex: 0x0F172A)
+        heading.numberOfLines = 3
+        let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+        let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        let title = NSMutableAttributedString(
+            string: "선배에게 묻는\n가장 솔직한\n학교 이야기",
+            attributes: [.font: UIFont.systemFont(ofSize: 34, weight: .semibold), .foregroundColor: ink]
+        )
+        title.addAttribute(.foregroundColor, value: blue, range: NSRange(location: 0, length: 2))
+        title.addAttribute(.foregroundColor, value: blue, range: NSRange(location: 8, length: 6))
+        heading.attributedText = title
         heading.translatesAutoresizingMaskIntoConstraints = false
-        loginSheet.addSubview(heading)
+        view.addSubview(heading)
 
-        let subtitle = UILabel()
-        subtitle.text = "학교 이메일로 로그인하세요."
-        subtitle.font = interFont(size: 12, bold: false)
-        subtitle.textColor = UIColor(hex: 0x718096)
-        subtitle.translatesAutoresizingMaskIntoConstraints = false
-        loginSheet.addSubview(subtitle)
+        let body = UILabel()
+        body.text = "광주소프트웨어마이스터고 학교생활·전공·취업 질문에 선배들이 남긴 경험으로 답해요."
+        body.numberOfLines = 2
+        body.font = .systemFont(ofSize: 15)
+        body.textColor = UIColor(red: 111 / 255, green: 127 / 255, blue: 153 / 255, alpha: 1)
+        body.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(body)
 
         NSLayoutConstraint.activate([
-            loginSheet.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            loginSheet.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            loginSheet.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            loginSheet.heightAnchor.constraint(equalToConstant: 190),
-            handle.centerXAnchor.constraint(equalTo: loginSheet.centerXAnchor),
-            handle.topAnchor.constraint(equalTo: loginSheet.topAnchor, constant: 20),
-            handle.widthAnchor.constraint(equalToConstant: 86),
-            handle.heightAnchor.constraint(equalToConstant: 5),
-            heading.leadingAnchor.constraint(equalTo: loginSheet.leadingAnchor, constant: 30),
-            heading.topAnchor.constraint(equalTo: loginSheet.topAnchor, constant: 78),
-            subtitle.leadingAnchor.constraint(equalTo: loginSheet.leadingAnchor, constant: 32),
-            subtitle.topAnchor.constraint(equalTo: loginSheet.topAnchor, constant: 118)
+            heading.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
+            heading.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            heading.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 290),
+            heading.heightAnchor.constraint(equalToConstant: 132),
+            body.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
+            body.trailingAnchor.constraint(equalTo: heading.trailingAnchor),
+            body.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 438),
+            body.heightAnchor.constraint(equalToConstant: 48)
         ])
     }
 
-    @objc private func handleSwipe(_ recognizer: UIPanGestureRecognizer) {
-        guard recognizer.state == .ended,
-              !didOpenLogin,
-              recognizer.translation(in: view).y < -40,
-              view.window != nil else { return }
-        openLogin()
+    private func configureCloud() {
+        cloudImage.contentMode = .scaleAspectFit
+        cloudImage.translatesAutoresizingMaskIntoConstraints = false
+        view.insertSubview(cloudImage, at: 0)
+        NSLayoutConstraint.activate([
+            cloudImage.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
+            cloudImage.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 498),
+            cloudImage.widthAnchor.constraint(equalToConstant: 420),
+            cloudImage.heightAnchor.constraint(equalToConstant: 220)
+        ])
     }
 
-    private func openLogin() {
+    private func configureActions() {
+        let startButton = UIButton(type: .system)
+        startButton.setTitle("시작하기", for: .normal)
+        startButton.setTitleColor(.white, for: .normal)
+        startButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        startButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        startButton.layer.cornerRadius = 12
+        startButton.addTarget(self, action: #selector(openLogin), for: .touchUpInside)
+        startButton.accessibilityIdentifier = "welcome-start"
+        startButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(startButton)
+
+        let prompt = UILabel()
+        prompt.text = "이미 계정이 있으신가요?"
+        prompt.font = .systemFont(ofSize: 14)
+        prompt.textColor = UIColor(red: 111 / 255, green: 127 / 255, blue: 153 / 255, alpha: 1)
+
+        let loginButton = UIButton(type: .system)
+        loginButton.setTitle("로그인", for: .normal)
+        loginButton.setTitleColor(UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1), for: .normal)
+        loginButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        loginButton.addTarget(self, action: #selector(openLogin), for: .touchUpInside)
+
+        let link = UIStackView(arrangedSubviews: [prompt, loginButton])
+        link.axis = .horizontal
+        link.alignment = .center
+        link.spacing = 8
+        link.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(link)
+
+        NSLayoutConstraint.activate([
+            startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
+            startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -39),
+            startButton.heightAnchor.constraint(equalToConstant: 50),
+            link.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            link.topAnchor.constraint(equalTo: startButton.bottomAnchor, constant: 16),
+            link.heightAnchor.constraint(equalToConstant: 20)
+        ])
+    }
+
+    @objc private func openLogin() {
         guard !didOpenLogin else { return }
         didOpenLogin = true
         let navigation = UINavigationController(rootViewController: LoginViewController())
-        navigation.view.backgroundColor = .clear
-        navigation.view.isOpaque = false
-        navigation.modalPresentationStyle = .overFullScreen
-        navigation.modalPresentationCapturesStatusBarAppearance = true
+        navigation.modalPresentationStyle = .fullScreen
+        navigation.setNavigationBarHidden(true, animated: false)
         present(navigation, animated: true)
-    }
-
-    private func interFont(size: CGFloat, bold: Bool) -> UIFont {
-        guard let regular = UIFont(name: "Inter-Regular", size: size) else {
-            return .systemFont(ofSize: size, weight: bold ? .bold : .regular)
-        }
-        guard bold, let descriptor = regular.fontDescriptor.withSymbolicTraits(.traitBold) else {
-            return regular
-        }
-        return UIFont(descriptor: descriptor, size: size)
-    }
-}
-
-private extension UIColor {
-    convenience init(hex: UInt32) {
-        self.init(
-            red: CGFloat((hex >> 16) & 0xFF) / 255,
-            green: CGFloat((hex >> 8) & 0xFF) / 255,
-            blue: CGFloat(hex & 0xFF) / 255,
-            alpha: 1
-        )
     }
 }

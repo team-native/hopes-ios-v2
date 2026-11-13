@@ -35,7 +35,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             tabs.selectedIndex = 1
             window.rootViewController = tabs
         } else {
-            window.rootViewController = WelcomeViewController()
+            window.rootViewController = SplashViewController()
         }
         self.window = window
         (UIApplication.shared.delegate as? AppDelegate)?.window = window
