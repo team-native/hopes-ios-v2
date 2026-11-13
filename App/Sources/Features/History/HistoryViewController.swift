@@ -308,10 +308,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
             self?.push(ChatConversationViewController(question: conversation.title))
         }
         row.onDelete = { [weak self, weak row] in
-            guard let self else { return }
-            if let row, self.revealedRow === row { self.revealedRow = nil }
-            self.conversations.removeAll { $0.title == conversation.title && $0.time == conversation.time }
-            self.renderConversations()
+            self?.confirmDeletion(of: conversation, from: row)
         }
         row.onBeginSwipe = { [weak self, weak row] in
             guard let self, let row, self.revealedRow !== row else { return }
@@ -320,6 +317,24 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         }
         row.configure(content: content, trashImage: UIImage(systemName: "trash"))
         return row
+    }
+
+    private func confirmDeletion(of conversation: Conversation, from row: ConversationRowView?) {
+        row?.setRevealed(false, animated: true)
+        if revealedRow === row { revealedRow = nil }
+
+        let alert = UIAlertController(
+            title: "이 대화를 삭제할까요?",
+            message: "삭제한 대화는 되돌릴 수 없어요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            self.conversations.removeAll { $0.title == conversation.title && $0.time == conversation.time }
+            self.renderConversations()
+        })
+        present(alert, animated: true)
     }
 
     private func highlightedTitle(_ title: String, query: String) -> NSAttributedString {
