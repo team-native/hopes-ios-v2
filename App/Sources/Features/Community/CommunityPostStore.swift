@@ -19,8 +19,8 @@ final class CommunityPostStore {
     ]
 
     private(set) var myPosts = [
-        CommunityPost(grade: "익명", title: "시험 기간 공부 장소 추천해줘", body: "도서관 말고 집중 잘 되는 장소가 있을까?", time: "2일 전", comments: 4, likes: 2, category: "질문"),
-        CommunityPost(grade: "익명", title: "전공 프로젝트 준비 팁", body: "첫 프로젝트를 시작할 때 참고하면 좋을 팁이 궁금해.", time: "지난주", comments: 3, likes: 6, category: "정보")
+        CommunityPost(grade: "10기", title: "기숙사 와이파이 다들 잘 돼?", body: "3층 끝방인데 저녁만 되면 너무 느려져서… 다른 층은 어떤지 궁금해.", time: "10분 전", comments: 5, likes: 12, category: "질문"),
+        CommunityPost(grade: "10기", title: "기숙사 세탁실 이용 시간 아는 사람?", body: "주말에도 밤 10시까지 쓸 수 있는지 궁금해.", time: "어제", comments: 2, likes: 4, category: "질문")
     ]
 
     private(set) var myComments = [

@@ -2,22 +2,29 @@ import UIKit
 
 @MainActor
 final class MyActivityViewController: AppPageViewController {
+    private let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    private let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+    private let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+    private let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+    private let subtleLine = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     private let tabsStack = UIStackView()
     private let itemsStack = UIStackView()
-    private var selectedTab = 1
+    private var selectedTab = 0
     private var previousNavigationBarHidden = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "내 활동"
+        view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
         previousNavigationBarHidden = navigationController?.isNavigationBarHidden ?? false
         navigationController?.setNavigationBarHidden(true, animated: false)
+        contentStack.spacing = 16
 
         addHeader()
         addTabs()
 
         itemsStack.axis = .vertical
-        itemsStack.spacing = 12
+        itemsStack.spacing = 10
         contentStack.addArrangedSubview(itemsStack)
         renderItems()
     }
@@ -54,16 +61,17 @@ final class MyActivityViewController: AppPageViewController {
 
     private func addHeader() {
         let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        backButton.tintColor = AppStyle.ink
+        backButton.setImage(UIImage(named: "my-activity-back-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        backButton.accessibilityLabel = "뒤로"
+        backButton.accessibilityIdentifier = "my-activity-back"
         backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.addAction(UIAction { [weak self] _ in
             self?.navigationController?.popViewController(animated: true)
         }, for: .touchUpInside)
 
-        let titleLabel = AppStyle.label("내 활동", size: 18, weight: .medium)
-        let subtitleLabel = AppStyle.label("내가 쓴 글과 댓글은 나만 볼 수 있어요", size: 12, color: AppStyle.muted)
+        let titleLabel = AppStyle.label("내 활동", size: 18, weight: .medium, color: ink)
+        let subtitleLabel = AppStyle.label("내가 쓴 글과 댓글은 나만 볼 수 있어요", size: 12, color: secondary)
         let titles = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         titles.axis = .vertical
         titles.spacing = 1
@@ -88,7 +96,9 @@ final class MyActivityViewController: AppPageViewController {
         let button = UIButton(type: .system)
         button.tag = index
         button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 14, bottom: 8, right: 14)
+        var configuration = UIButton.Configuration.plain()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        button.configuration = configuration
         button.layer.cornerRadius = 20
         button.addAction(UIAction { [weak self, weak button] _ in
             guard let self, let button else { return }
@@ -110,12 +120,14 @@ final class MyActivityViewController: AppPageViewController {
         values.forEach { value in
             let (button, title, selected) = value
             button?.setTitle(title, for: .normal)
-            button?.setTitleColor(selected ? AppStyle.blue : AppStyle.muted, for: .normal)
-            button?.backgroundColor = selected ? AppStyle.paleBlue : .white
+            button?.setTitleColor(selected ? UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1) : secondary, for: .normal)
+            button?.tintColor = selected ? UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1) : secondary
+            button?.isSelected = selected
+            button?.backgroundColor = selected ? softBlue : .white
             button?.layer.borderWidth = 1
             button?.layer.borderColor = selected
-                ? UIColor(red: 0.66, green: 0.80, blue: 0.98, alpha: 1).cgColor
-                : UIColor(red: 0.86, green: 0.90, blue: 0.96, alpha: 1).cgColor
+                ? UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
+                : UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1).cgColor
         }
     }
 
@@ -132,11 +144,7 @@ final class MyActivityViewController: AppPageViewController {
                 addPostsEmptyState()
                 return
             }
-            posts.forEach { post in
-                addActivityRow(post.title, subtitle: "\(post.category) · \(post.time) · 댓글 \(post.comments)", symbol: "doc.text") { [weak self] in
-                    self?.push(CommunityPostDetailViewController(post: post, isMine: true))
-                }
-            }
+            posts.forEach(addPostCard)
             return
         }
 
@@ -148,6 +156,118 @@ final class MyActivityViewController: AppPageViewController {
         comments.forEach { comment in
             addCommentCard(comment)
         }
+    }
+
+    private func addPostCard(_ post: CommunityPost) {
+        let badge = makeBadge(post.grade)
+        let more = UIImageView(image: UIImage(named: "my-activity-more-icon")?.withRenderingMode(.alwaysOriginal))
+        more.contentMode = .scaleAspectFit
+        more.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            more.widthAnchor.constraint(equalToConstant: 18),
+            more.heightAnchor.constraint(equalToConstant: 18)
+        ])
+        let head = UIStackView(arrangedSubviews: [badge, UIView(), more])
+        head.axis = .horizontal
+        head.alignment = .center
+
+        let title = AppStyle.label(post.title, size: 15, weight: .medium, color: ink)
+        title.numberOfLines = 1
+        title.attributedText = NSAttributedString(string: post.title, attributes: [
+            .font: UIFont.systemFont(ofSize: 15, weight: .medium),
+            .foregroundColor: ink,
+            .kern: -0.1,
+            .paragraphStyle: lineStyle(height: 24)
+        ])
+        let body = AppStyle.label(post.body, size: 14, weight: .medium, color: secondary)
+        body.attributedText = NSAttributedString(string: post.body, attributes: [
+            .font: UIFont.systemFont(ofSize: 14, weight: .medium),
+            .foregroundColor: secondary,
+            .paragraphStyle: lineStyle(height: 20)
+        ])
+        body.numberOfLines = 2
+
+        let footer = UIStackView(arrangedSubviews: [
+            AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: tertiary),
+            UIView(),
+            makeStat(icon: "my-activity-heart-icon", count: post.likes),
+            makeStat(icon: "my-activity-chat-icon", count: post.comments)
+        ])
+        footer.axis = .horizontal
+        footer.alignment = .center
+        footer.spacing = 12
+
+        let content = UIStackView(arrangedSubviews: [head, title, body, footer])
+        content.axis = .vertical
+        content.spacing = 8
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+
+        let card = UIControl()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = subtleLine.cgColor
+        card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
+        card.layer.shadowOpacity = 0.05
+        card.layer.shadowRadius = 4
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
+        card.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        card.addAction(UIAction { [weak self] _ in
+            self?.push(CommunityPostDetailViewController(post: post, isMine: true))
+        }, for: .touchUpInside)
+        card.accessibilityLabel = "\(post.title), 좋아요 \(post.likes), 댓글 \(post.comments)개"
+        card.accessibilityTraits = .button
+        card.accessibilityIdentifier = "my-activity-post-\(CommunityPostStore.shared.myPosts.firstIndex(where: { $0.title == post.title }) ?? 0)"
+        itemsStack.addArrangedSubview(card)
+    }
+
+    private func makeBadge(_ text: String) -> UIView {
+        let badge = UIView()
+        badge.backgroundColor = softBlue
+        badge.layer.cornerRadius = 12
+        let label = AppStyle.label(text, size: 12, color: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1))
+        label.translatesAutoresizingMaskIntoConstraints = false
+        badge.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: badge.topAnchor, constant: 4),
+            label.bottomAnchor.constraint(equalTo: badge.bottomAnchor, constant: -4),
+            label.leadingAnchor.constraint(equalTo: badge.leadingAnchor, constant: 10),
+            label.trailingAnchor.constraint(equalTo: badge.trailingAnchor, constant: -10),
+            badge.heightAnchor.constraint(equalToConstant: 24),
+            badge.widthAnchor.constraint(greaterThanOrEqualToConstant: 39)
+        ])
+        return badge
+    }
+
+    private func makeStat(icon: String, count: Int) -> UIStackView {
+        let image = UIImageView(image: UIImage(named: icon)?.withRenderingMode(.alwaysOriginal))
+        image.contentMode = .scaleAspectFit
+        image.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            image.widthAnchor.constraint(equalToConstant: 14),
+            image.heightAnchor.constraint(equalToConstant: 14)
+        ])
+        let label = AppStyle.label("\(count)", size: 12, color: tertiary)
+        let stat = UIStackView(arrangedSubviews: [image, label])
+        stat.axis = .horizontal
+        stat.alignment = .center
+        stat.spacing = 4
+        return stat
+    }
+
+    private func lineStyle(height: CGFloat) -> NSMutableParagraphStyle {
+        let style = NSMutableParagraphStyle()
+        style.minimumLineHeight = height
+        style.maximumLineHeight = height
+        return style
     }
 
     private func addPostsEmptyState() {
@@ -260,22 +380,4 @@ final class MyActivityViewController: AppPageViewController {
         itemsStack.addArrangedSubview(card)
     }
 
-    private func addActivityRow(_ title: String, subtitle: String, symbol: String, action: @escaping () -> Void) {
-        let button = UIButton(type: .system)
-        button.backgroundColor = .white
-        button.layer.cornerRadius = 16
-        button.layer.borderWidth = 1
-        button.layer.borderColor = AppStyle.line.cgColor
-        var config = UIButton.Configuration.plain()
-        config.title = title
-        config.subtitle = subtitle
-        config.image = UIImage(systemName: symbol)
-        config.imagePlacement = .leading
-        config.imagePadding = 12
-        config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14)
-        config.baseForegroundColor = AppStyle.ink
-        button.configuration = config
-        button.addAction(UIAction { _ in action() }, for: .touchUpInside)
-        itemsStack.addArrangedSubview(button)
-    }
 }
