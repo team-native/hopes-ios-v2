@@ -10,7 +10,7 @@ final class NotificationsViewController: AppPageViewController {
         var isRead: Bool
     }
 
-    private var items = [
+    private var items: [NotificationItem] = ProcessInfo.processInfo.arguments.contains("--notifications-empty") ? [] : [
         NotificationItem(title: "내 질문에 새 답변이 달렸어요", detail: "기숙사 하루 일과가 어떻게 돼? · 10분 전", category: "답변", question: "기숙사 하루 일과가 어떻게 돼?", isRead: false),
         NotificationItem(title: "게시글에 댓글이 달렸어요", detail: "기숙사 와이파이 다들 잘 돼? · 1시간 전", category: "답변", question: "기숙사 와이파이 다들 잘 돼?", isRead: false),
         NotificationItem(title: "이번 주 학교 일정 안내", detail: "학교 공지 · 어제", category: "공지", question: nil, isRead: true)
@@ -20,6 +20,7 @@ final class NotificationsViewController: AppPageViewController {
     private let itemsStack = UIStackView()
     private var selectedCategory = "전체"
     private let isLoadingPreview = ProcessInfo.processInfo.arguments.contains("--notifications-loading")
+    private let isEmptyPreview = ProcessInfo.processInfo.arguments.contains("--notifications-empty")
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,6 +32,10 @@ final class NotificationsViewController: AppPageViewController {
 
         if isLoadingPreview {
             addLoadingSkeleton()
+            return
+        }
+        if items.isEmpty {
+            addEmptyState()
             return
         }
 
@@ -70,7 +75,7 @@ final class NotificationsViewController: AppPageViewController {
         labels.spacing = 0
 
         var headerItems: [UIView] = [backButton, labels, UIView()]
-        if !isLoadingPreview {
+        if !isLoadingPreview && !isEmptyPreview {
             let markAllReadButton = UIButton(type: .system)
             markAllReadButton.setTitle("모두 읽음", for: .normal)
             markAllReadButton.setTitleColor(AppStyle.blue, for: .normal)
@@ -128,6 +133,52 @@ final class NotificationsViewController: AppPageViewController {
             rows.addArrangedSubview(row)
         }
         contentStack.addArrangedSubview(card)
+    }
+
+    private func addEmptyState() {
+        let illustration = UIView()
+        illustration.backgroundColor = .white
+        illustration.layer.cornerRadius = 44
+        illustration.layer.borderWidth = 1
+        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        illustration.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.10).cgColor
+        illustration.layer.shadowOpacity = 1
+        illustration.layer.shadowRadius = 14
+        illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
+        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
+        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
+
+        let bell = UIImageView(image: UIImage(systemName: "bell"))
+        bell.tintColor = AppStyle.blue
+        bell.contentMode = .scaleAspectFit
+        bell.translatesAutoresizingMaskIntoConstraints = false
+        illustration.addSubview(bell)
+        NSLayoutConstraint.activate([
+            bell.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
+            bell.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
+            bell.widthAnchor.constraint(equalToConstant: 36),
+            bell.heightAnchor.constraint(equalToConstant: 36)
+        ])
+
+        let title = AppStyle.label("새 알림이 없어요", size: 18, weight: .medium)
+        title.textAlignment = .center
+        let subtitle = AppStyle.label("새 답변과 공지가 여기에 쌓여요.", size: 14, color: AppStyle.muted)
+        subtitle.textAlignment = .center
+
+        let content = UIStackView(arrangedSubviews: [illustration, title, subtitle])
+        content.axis = .vertical
+        content.alignment = .center
+        content.spacing = 12
+
+        let container = UIView()
+        container.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.9),
+            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+        contentStack.addArrangedSubview(container)
     }
 
     private func skeletonLine(width: CGFloat, height: CGFloat, radius: CGFloat) -> UIView {
