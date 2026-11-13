@@ -200,6 +200,7 @@ final class CommunityPostDetailViewController: AppPageViewController {
         let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         if isMine {
             sheet.addAction(UIAlertAction(title: "수정하기", style: .default) { [weak self] _ in self?.editPost() })
+            sheet.addAction(UIAlertAction(title: "삭제하기", style: .destructive) { [weak self] _ in self?.confirmPostDeletion() })
         } else {
             sheet.addAction(UIAlertAction(title: "게시글 신고", style: .destructive) { [weak self] _ in self?.showReportReasons() })
         }
@@ -208,6 +209,25 @@ final class CommunityPostDetailViewController: AppPageViewController {
             popover.barButtonItem = navigationItem.rightBarButtonItem
         }
         present(sheet, animated: true)
+    }
+
+    private func confirmPostDeletion() {
+        let alert = UIAlertController(
+            title: "게시글을 삭제할까요?",
+            message: "삭제한 글과 댓글은 되돌릴 수 없어요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            CommunityPostStore.shared.delete(self.post)
+            if let navigationController = self.navigationController {
+                navigationController.popViewController(animated: true)
+            } else {
+                self.dismiss(animated: true)
+            }
+        })
+        present(alert, animated: true)
     }
 
     private func editPost() {

@@ -68,4 +68,10 @@ final class CommunityPostStore {
         let comment = myComments[index]
         myComments[index] = CommunityComment(postTitle: comment.postTitle, text: newText, time: comment.time)
     }
+
+    func delete(_ post: CommunityPost) {
+        posts.removeAll { $0.title == post.title && $0.body == post.body }
+        myPosts.removeAll { $0.title == post.title && $0.body == post.body }
+        myComments.removeAll { $0.postTitle == post.title }
+    }
 }
