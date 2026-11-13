@@ -98,7 +98,7 @@ final class MyPageViewController: AppPageViewController, UITextViewDelegate {
             if let navigationController = self?.navigationController, navigationController.viewControllers.count > 1 {
                 navigationController.popViewController(animated: true)
             } else {
-                self?.tabBarController?.selectedIndex = 3
+                self?.push(SettingsViewController())
             }
         }, for: .touchUpInside)
 

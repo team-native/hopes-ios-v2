@@ -24,14 +24,16 @@ final class AppTabBarController: UITabBarController {
         tabBar.standardAppearance = appearance
         tabBar.scrollEdgeAppearance = appearance
         let tabs: [(UIViewController, String, String)] = [
-            (HomeViewController(), "홈", "house"),
-            (ChatHomeViewController(), "채팅", "bubble.left.and.bubble.right"),
-            (HistoryViewController(), "기록", "clock.arrow.circlepath"),
-            (SettingsViewController(), "설정", "gearshape")
+            (HomeViewController(), "홈", "home-tab-icon"),
+            (ChatHomeViewController(), "채팅", "chat-tab-icon"),
+            (CommunityViewController(), "커뮤니티", "community-tab-icon"),
+            (HistoryViewController(), "기록", "history-tab-icon"),
+            (MyPageViewController(), "마이페이지", "mypage-tab-icon")
         ]
         viewControllers = tabs.map { controller, title, image in
             let navigation = UINavigationController(rootViewController: controller)
-            navigation.tabBarItem = UITabBarItem(title: title, image: UIImage(systemName: image), selectedImage: nil)
+            let icon = UIImage(named: image)?.withRenderingMode(.alwaysTemplate)
+            navigation.tabBarItem = UITabBarItem(title: title, image: icon, selectedImage: icon)
             return navigation
         }
     }
