@@ -145,7 +145,10 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private let scrollView = UIScrollView()
     private let messagesStack = UIStackView()
     private let inputField = UITextField()
+    private let stopAnswerButton = UIButton(type: .system)
     private var isLiked = false
+    private var generationTimer: DispatchWorkItem?
+    private var pendingAnswerCard: UIView?
 
     init(question: String?) {
         initialQuestion = question
@@ -163,7 +166,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         if let initialQuestion {
             addConversationHeader()
             addUserMessage(initialQuestion)
-            addFormattedAnswer()
+            beginAnswerGeneration()
         } else {
             addConversationHeader()
             addMessage("학교생활에 대해 궁금한 점을 편하게 물어보세요", outgoing: false)
@@ -198,6 +201,83 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             messagesStack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -18),
             messagesStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -18)
         ])
+
+        stopAnswerButton.setTitle("답변 중지", for: .normal)
+        stopAnswerButton.setTitleColor(AppStyle.ink, for: .normal)
+        stopAnswerButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
+        stopAnswerButton.backgroundColor = .white
+        stopAnswerButton.layer.cornerRadius = 12
+        stopAnswerButton.layer.borderWidth = 1
+        stopAnswerButton.layer.borderColor = AppStyle.line.cgColor
+        stopAnswerButton.contentEdgeInsets = UIEdgeInsets(top: 13, left: 20, bottom: 13, right: 20)
+        stopAnswerButton.isHidden = true
+        stopAnswerButton.addAction(UIAction { [weak self] _ in self?.stopAnswerGeneration() }, for: .touchUpInside)
+        stopAnswerButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stopAnswerButton)
+        NSLayoutConstraint.activate([
+            stopAnswerButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            stopAnswerButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -76)
+        ])
+    }
+
+    private func beginAnswerGeneration() {
+        let card = AppStyle.card()
+        card.layer.cornerRadius = 24
+        card.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.08).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 14
+        card.layer.shadowOffset = CGSize(width: 0, height: 6)
+
+        let title = AppStyle.label("Frontend 시작 순서", size: 18, weight: .semibold)
+        let partial = AppStyle.label("처음에는 화면을 직접 만들어 보는 것부터 시작하는 걸 추천해요. HTML·CSS로 간단한 페이지를", size: 15)
+        let cursor = UIView()
+        cursor.backgroundColor = AppStyle.blue
+        cursor.widthAnchor.constraint(equalToConstant: 2).isActive = true
+        cursor.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        let content = UIStackView(arrangedSubviews: [title, partial, cursor])
+        content.axis = .vertical
+        content.spacing = 10
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        messagesStack.addArrangedSubview(card)
+        pendingAnswerCard = card
+        stopAnswerButton.isHidden = false
+        inputField.placeholder = "답변을 만드는 중이에요…"
+        inputField.isEnabled = false
+
+        let work = DispatchWorkItem { [weak self] in self?.finishAnswerGeneration() }
+        generationTimer = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
+    }
+
+    private func finishAnswerGeneration() {
+        generationTimer = nil
+        if let pendingAnswerCard {
+            messagesStack.removeArrangedSubview(pendingAnswerCard)
+            pendingAnswerCard.removeFromSuperview()
+            self.pendingAnswerCard = nil
+        }
+        stopAnswerButton.isHidden = true
+        inputField.isEnabled = true
+        inputField.placeholder = "추가 질문 입력…"
+        addFormattedAnswer()
+    }
+
+    private func stopAnswerGeneration() {
+        generationTimer?.cancel()
+        generationTimer = nil
+        stopAnswerButton.isHidden = true
+        inputField.isEnabled = true
+        inputField.placeholder = "추가 질문 입력…"
+        presentMessage("답변 생성을 중지했어요")
     }
 
     private func addConversationHeader() {
@@ -548,7 +628,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         guard let text = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return }
         inputField.text = nil
         addMessage(text, outgoing: true)
-        addMessage("질문을 기록했어요. 서비스 연결 후 선배의 답변을 받을 수 있어요.", outgoing: false)
+        beginAnswerGeneration()
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
