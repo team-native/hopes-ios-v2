@@ -35,13 +35,32 @@ final class AppTabBarController: UITabBarController {
         tabBar.standardAppearance = appearance
         tabBar.scrollEdgeAppearance = appearance
         let tabs: [TabItem] = [
-            TabItem(controller: HomeViewController(), title: "홈", image: "home-tab-icon-inactive", selectedImage: "home-tab-icon"),
+            TabItem(
+                controller: HomeViewController(),
+                title: "홈",
+                image: "home-tab-icon-inactive",
+                selectedImage: "home-tab-icon"
+            ),
             TabItem(controller: ChatHomeViewController(), title: "채팅", image: "chat-tab-icon", selectedImage: nil),
-            TabItem(controller: CommunityViewController(), title: "커뮤니티", image: "community-tab-icon", selectedImage: nil),
+            TabItem(
+                controller: CommunityViewController(),
+                title: "커뮤니티",
+                image: "community-tab-icon",
+                selectedImage: nil
+            ),
             TabItem(controller: HistoryViewController(), title: "기록", image: "history-tab-icon", selectedImage: nil),
-            TabItem(controller: MyPageViewController(), title: "마이페이지", image: "mypage-tab-icon", selectedImage: "mypage-tab-icon-selected")
+            TabItem(
+                controller: MyPageViewController(),
+                title: "마이페이지",
+                image: "mypage-tab-icon",
+                selectedImage: "mypage-tab-icon-selected"
+            )
         ]
-        viewControllers = tabs.map { item in
+        viewControllers = makeNavigationControllers(for: tabs)
+    }
+
+    private func makeNavigationControllers(for tabs: [TabItem]) -> [UIViewController] {
+        tabs.map { item in
             let navigation = UINavigationController(rootViewController: item.controller)
             let icon = UIImage(named: item.image)?.withRenderingMode(.alwaysTemplate)
             let selectedIcon = item.selectedImage.flatMap {

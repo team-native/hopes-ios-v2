@@ -4,7 +4,8 @@ import UIKit
 final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelegate {
     private let defaults = UserDefaults.standard
     private let promptView = UITextView()
-    private let promptPlaceholder = AppStyle.label("예: 답변은 항상 3문장 이내로 짧게 해줘.", size: 15, color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
+    private let promptPlaceholder = AppStyle.label("예: 답변은 항상 3문장 이내로 짧게 해줘.", size: 15,
+        color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
     private let topSaveButton = UIButton(type: .system)
     private let saveButton = UIButton(type: .system)
     private var promptHeightConstraint: NSLayoutConstraint!
@@ -35,18 +36,21 @@ final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelega
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillChangeFrameNotification,
+            object: nil)
         navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)),
+            name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
 
     private func addHeader() {
         let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(named: "ai-answer-style-back-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        backButton.setImage(UIImage(named: "ai-answer-style-back-icon")?.withRenderingMode(.alwaysOriginal),
+            for: .normal)
         backButton.accessibilityLabel = "뒤로"
         backButton.accessibilityIdentifier = "ai-answer-style-back"
         backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
@@ -55,8 +59,10 @@ final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelega
             self?.navigationController?.popViewController(animated: true)
         }, for: .touchUpInside)
 
-        let title = AppStyle.label("개인 설정", size: 18, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
-        let subtitle = AppStyle.label("AI 답변 스타일을 관리해요.", size: 12, color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
+        let title = AppStyle.label("개인 설정", size: 18, weight: .medium, color: UIColor(red: 20 / 255,
+            green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let subtitle = AppStyle.label("AI 답변 스타일을 관리해요.", size: 12, color: UIColor(red: 107 / 255, green: 120 / 255,
+            blue: 144 / 255, alpha: 1))
         let labels = UIStackView(arrangedSubviews: [title, subtitle])
         labels.axis = .vertical
 
@@ -95,8 +101,10 @@ final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelega
         card.layer.shadowRadius = 4
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
 
-        let title = AppStyle.label("시스템 프롬프트", size: 15, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
-        let subtitle = AppStyle.label("AI 응답을 만들 때 반영돼요.", size: 12, color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
+        let title = AppStyle.label("시스템 프롬프트", size: 15, weight: .medium, color: UIColor(red: 20 / 255,
+            green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let subtitle = AppStyle.label("AI 응답을 만들 때 반영돼요.", size: 12, color: UIColor(red: 107 / 255,
+            green: 120 / 255, blue: 144 / 255, alpha: 1))
 
         promptView.text = defaults.string(forKey: "answerStyle.systemPrompt")
             ?? ""
@@ -176,7 +184,8 @@ final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelega
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             saveButton.heightAnchor.constraint(equalToConstant: 50)
         ])
-        let bottomConstraint = saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        let bottomConstraint = saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+            constant: -16)
         bottomConstraint.isActive = true
         saveButtonBottomConstraint = bottomConstraint
     }
@@ -194,7 +203,8 @@ final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelega
     }
 
     @objc private func keyboardWillChangeFrame(_ notification: Notification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+        else { return }
         let frame = view.convert(keyboardFrame, from: nil)
         let overlap = max(0, view.bounds.maxY - view.safeAreaInsets.bottom - frame.minY)
         saveButtonBottomConstraint?.constant = -(16 + overlap)

@@ -2,11 +2,12 @@ import UIKit
 
 @MainActor
 final class EditProfileViewController: AppPageViewController, UITextViewDelegate {
-    private let nameField = UITextField()
-    private let introductionView = UITextView()
-    private let introductionPlaceholder = AppStyle.label("예: 프론트엔드에 관심 많은 8기 학생이에요.", size: 15, color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
-    private let showsSaveError = ProcessInfo.processInfo.arguments.contains("--profile-save-error")
-    private var saveButtonBottomConstraint: NSLayoutConstraint?
+    let nameField = UITextField()
+    let introductionView = UITextView()
+    let introductionPlaceholder = AppStyle.label("예: 프론트엔드에 관심 많은 8기 학생이에요.", size: 15,
+        color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
+    let showsSaveError = ProcessInfo.processInfo.arguments.contains("--profile-save-error")
+    var saveButtonBottomConstraint: NSLayoutConstraint?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,13 +33,15 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillChangeFrameNotification,
+            object: nil)
         navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)),
+            name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
 
     private func addHeader() {
@@ -52,8 +55,10 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
             self?.navigationController?.popViewController(animated: true)
         }, for: .touchUpInside)
 
-        let title = AppStyle.label("프로필 수정", size: 18, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
-        let subtitle = AppStyle.label("마이페이지 > 프로필 수정", size: 12, color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
+        let title = AppStyle.label("프로필 수정", size: 18, weight: .medium, color: UIColor(red: 20 / 255,
+            green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let subtitle = AppStyle.label("마이페이지 > 프로필 수정", size: 12, color: UIColor(red: 107 / 255, green: 120 / 255,
+            blue: 144 / 255, alpha: 1))
         let labels = UIStackView(arrangedSubviews: [title, subtitle])
         labels.axis = .vertical
         let header = UIStackView(arrangedSubviews: [backButton, labels])
@@ -88,8 +93,10 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         card.layer.shadowOpacity = 0.05
         card.layer.shadowRadius = 4
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
-        let heading = AppStyle.label("계정 정보", size: 15, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
-        let note = AppStyle.label("수정할 수 없는 정보예요.", size: 12, color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
+        let heading = AppStyle.label("계정 정보", size: 15, weight: .medium, color: UIColor(red: 20 / 255,
+            green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let note = AppStyle.label("수정할 수 없는 정보예요.", size: 12, color: UIColor(red: 152 / 255, green: 163 / 255,
+            blue: 184 / 255, alpha: 1))
         let headingStack = UIStackView(arrangedSubviews: [heading, note])
         headingStack.axis = .vertical
         headingStack.spacing = 2
@@ -110,8 +117,10 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
     }
 
     private func accountInfoRow(title: String, value: String) -> UIView {
-        let key = AppStyle.label(title, size: 14, weight: .medium, color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
-        let text = AppStyle.label(value, size: 14, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let key = AppStyle.label(title, size: 14, weight: .medium, color: UIColor(red: 107 / 255, green: 120 / 255,
+            blue: 144 / 255, alpha: 1))
+        let text = AppStyle.label(value, size: 14, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255,
+            blue: 43 / 255, alpha: 1))
         text.textAlignment = .right
         let spacer = UIView()
         let row = UIStackView(arrangedSubviews: [key, spacer, text])
@@ -120,7 +129,11 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         return row
     }
 
-    private func addProfileForm() {
+}
+
+@MainActor
+extension EditProfileViewController {
+    func addProfileForm() {
         let card = AppStyle.card()
         card.layer.cornerRadius = 24
         card.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
@@ -128,48 +141,17 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         card.layer.shadowOpacity = 0.05
         card.layer.shadowRadius = 4
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
-        let heading = AppStyle.label("프로필", size: 15, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
-        let nameLabel = AppStyle.label("이름", size: 14, weight: .medium, color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
-        nameField.text = UserProfileStore.shared.name
-        nameField.font = .systemFont(ofSize: 15)
-        nameField.textColor = AppStyle.ink
-        nameField.borderStyle = .none
-        nameField.layer.cornerRadius = 16
-        nameField.layer.borderWidth = 1
-        nameField.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
-        nameField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
-        nameField.leftViewMode = .always
-        nameField.accessibilityIdentifier = "profile-edit-name"
-        nameField.heightAnchor.constraint(equalToConstant: 54).isActive = true
-
-        let introductionLabel = AppStyle.label("자기소개 (AI 응답 개인화에 활용돼요)", size: 14, weight: .medium, color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
-        introductionView.text = UserProfileStore.shared.introduction
-        introductionView.font = .systemFont(ofSize: 15)
-        introductionView.textColor = AppStyle.ink
-        introductionView.backgroundColor = .white
-        introductionView.layer.cornerRadius = 16
-        introductionView.layer.borderWidth = 1
-        introductionView.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
-        introductionView.textContainerInset = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
-        introductionView.heightAnchor.constraint(equalToConstant: showsSaveError ? 110 : 96).isActive = true
-        introductionView.delegate = self
-        introductionView.accessibilityIdentifier = "profile-edit-introduction"
-        introductionPlaceholder.translatesAutoresizingMaskIntoConstraints = false
-        introductionView.addSubview(introductionPlaceholder)
-        NSLayoutConstraint.activate([
-            introductionPlaceholder.topAnchor.constraint(equalTo: introductionView.topAnchor, constant: 14),
-            introductionPlaceholder.leadingAnchor.constraint(equalTo: introductionView.leadingAnchor, constant: 20),
-            introductionPlaceholder.trailingAnchor.constraint(lessThanOrEqualTo: introductionView.trailingAnchor, constant: -16)
+        let heading = AppStyle.label("프로필", size: 15, weight: .medium, color: UIColor(red: 20 / 255,
+            green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let nameLabel = AppStyle.label("이름", size: 14, weight: .medium, color: UIColor(red: 107 / 255,
+            green: 120 / 255, blue: 144 / 255, alpha: 1))
+        configureNameField()
+        let introductionLabel = configureIntroductionField()
+        let fields = UIStackView(arrangedSubviews: [
+            heading,
+            makeLabeledField(label: nameLabel, field: nameField),
+            makeLabeledField(label: introductionLabel, field: introductionView)
         ])
-        introductionPlaceholder.isHidden = !introductionView.text.isEmpty
-
-        let nameFieldGroup = UIStackView(arrangedSubviews: [nameLabel, nameField])
-        nameFieldGroup.axis = .vertical
-        nameFieldGroup.spacing = 6
-        let introductionGroup = UIStackView(arrangedSubviews: [introductionLabel, introductionView])
-        introductionGroup.axis = .vertical
-        introductionGroup.spacing = 6
-        let fields = UIStackView(arrangedSubviews: [heading, nameFieldGroup, introductionGroup])
         fields.axis = .vertical
         fields.spacing = 12
         fields.translatesAutoresizingMaskIntoConstraints = false
@@ -183,6 +165,56 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         contentStack.addArrangedSubview(card)
     }
 
+    private func configureNameField() {
+        nameField.text = UserProfileStore.shared.name
+        nameField.font = .systemFont(ofSize: 15)
+        nameField.textColor = AppStyle.ink
+        nameField.borderStyle = .none
+        nameField.layer.cornerRadius = 16
+        nameField.layer.borderWidth = 1
+        nameField.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+        nameField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
+        nameField.leftViewMode = .always
+        nameField.accessibilityIdentifier = "profile-edit-name"
+        nameField.heightAnchor.constraint(equalToConstant: 54).isActive = true
+
+    }
+
+    private func configureIntroductionField() -> UILabel {
+        let label = AppStyle.label("자기소개 (AI 응답 개인화에 활용돼요)", size: 14, weight: .medium,
+            color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
+        introductionView.text = UserProfileStore.shared.introduction
+        introductionView.font = .systemFont(ofSize: 15)
+        introductionView.textColor = AppStyle.ink
+        introductionView.backgroundColor = .white
+        introductionView.layer.cornerRadius = 16
+        introductionView.layer.borderWidth = 1
+        introductionView.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255,
+            alpha: 1).cgColor
+        introductionView.textContainerInset = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
+        introductionView.heightAnchor.constraint(equalToConstant: showsSaveError ? 110 : 96).isActive = true
+        introductionView.delegate = self
+        introductionView.accessibilityIdentifier = "profile-edit-introduction"
+        introductionPlaceholder.translatesAutoresizingMaskIntoConstraints = false
+        introductionView.addSubview(introductionPlaceholder)
+        NSLayoutConstraint.activate([
+            introductionPlaceholder.topAnchor.constraint(equalTo: introductionView.topAnchor, constant: 14),
+            introductionPlaceholder.leadingAnchor.constraint(equalTo: introductionView.leadingAnchor, constant: 20),
+            introductionPlaceholder.trailingAnchor.constraint(lessThanOrEqualTo: introductionView.trailingAnchor,
+                constant: -16)
+        ])
+        introductionPlaceholder.isHidden = !introductionView.text.isEmpty
+
+        return label
+    }
+
+    private func makeLabeledField(label: UIView, field: UIView) -> UIStackView {
+        let group = UIStackView(arrangedSubviews: [label, field])
+        group.axis = .vertical
+        group.spacing = 6
+        return group
+    }
+
     func textViewDidBeginEditing(_ textView: UITextView) {
         textView.layer.borderColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1).cgColor
     }
@@ -194,7 +226,10 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
     func textViewDidChange(_ textView: UITextView) {
         introductionPlaceholder.isHidden = !textView.text.isEmpty
     }
+}
 
+@MainActor
+extension EditProfileViewController {
     private func addSaveButton() {
         let saveButton = UIButton(type: .system)
         var configuration = UIButton.Configuration.filled()
@@ -226,13 +261,15 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
             saveButton.heightAnchor.constraint(equalToConstant: 50),
             scrollView.bottomAnchor.constraint(equalTo: saveButton.topAnchor, constant: -16)
         ])
-        let bottomConstraint = saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        let bottomConstraint = saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+            constant: -16)
         bottomConstraint.isActive = true
         saveButtonBottomConstraint = bottomConstraint
     }
 
     @objc private func keyboardWillChangeFrame(_ notification: Notification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+        else { return }
         let frame = view.convert(keyboardFrame, from: nil)
         let overlap = max(0, view.bounds.maxY - view.safeAreaInsets.bottom - frame.minY)
         saveButtonBottomConstraint?.constant = -(16 + overlap)

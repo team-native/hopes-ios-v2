@@ -2,7 +2,7 @@ import UIKit
 
 @MainActor
 final class NotificationsViewController: AppPageViewController {
-    private struct NotificationItem {
+    struct NotificationItem {
         let title: String
         let detail: String
         let category: String
@@ -10,14 +10,15 @@ final class NotificationsViewController: AppPageViewController {
         var isRead: Bool
     }
 
-    private var items: [NotificationItem] = ProcessInfo.processInfo.arguments.contains("--notifications-empty") ? [] : [
-        NotificationItem(title: "새 답변 도착", detail: "기숙사 질문에 선배 답변이 도착했어요.", category: "답변", question: "기숙사 하루 일과가 어떻게 돼?", isRead: false),
+    var items: [NotificationItem] = ProcessInfo.processInfo.arguments.contains("--notifications-empty") ? [] : [
+        NotificationItem(title: "새 답변 도착", detail: "기숙사 질문에 선배 답변이 도착했어요.", category: "답변",
+            question: "기숙사 하루 일과가 어떻게 돼?", isRead: false),
         NotificationItem(title: "프로필 저장 완료", detail: "개인화 정보가 반영됐어요.", category: "프로필", question: nil, isRead: false),
         NotificationItem(title: "입학 안내 업데이트", detail: "면접 준비 질문이 추가됐어요.", category: "입학", question: nil, isRead: true),
         NotificationItem(title: "시스템 공지", detail: "답변 데이터 업데이트 완료", category: "공지", question: nil, isRead: true)
     ]
 
-    private let itemsStack = UIStackView()
+    let itemsStack = UIStackView()
     private let isLoadingPreview = ProcessInfo.processInfo.arguments.contains("--notifications-loading")
     private let isEmptyPreview = ProcessInfo.processInfo.arguments.contains("--notifications-empty")
 
@@ -67,8 +68,10 @@ final class NotificationsViewController: AppPageViewController {
             self?.navigationController?.popViewController(animated: true)
         }, for: .touchUpInside)
 
-        let title = AppStyle.label("알림", size: 18, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
-        let subtitle = AppStyle.label("새 답변과 공지 알림을 확인해요.", size: 12, color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
+        let title = AppStyle.label("알림", size: 18, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255,
+            blue: 43 / 255, alpha: 1))
+        let subtitle = AppStyle.label("새 답변과 공지 알림을 확인해요.", size: 12, color: UIColor(red: 107 / 255,
+            green: 120 / 255, blue: 144 / 255, alpha: 1))
         let labels = UIStackView(arrangedSubviews: [title, subtitle])
         labels.axis = .vertical
         labels.spacing = 0
@@ -167,6 +170,10 @@ final class NotificationsViewController: AppPageViewController {
         contentStack.addArrangedSubview(card)
     }
 
+}
+
+@MainActor
+extension NotificationsViewController {
     private func addEmptyState() {
         let illustration = UIView()
         illustration.backgroundColor = .white
@@ -222,7 +229,11 @@ final class NotificationsViewController: AppPageViewController {
         return line
     }
 
-    private func renderItems() {
+}
+
+@MainActor
+extension NotificationsViewController {
+    func renderItems() {
         itemsStack.arrangedSubviews.forEach { view in
             itemsStack.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -253,7 +264,17 @@ final class NotificationsViewController: AppPageViewController {
         }
     }
 
-    private func makeNotificationRow(_ item: NotificationItem, index: Int) -> UIControl {
+}
+
+@MainActor
+extension NotificationsViewController {
+    func makeNotificationRow(_ item: NotificationItem, index: Int) -> UIControl {
+        let row = makeNotificationRowContent(item, index: index)
+        addNotificationSelection(to: row, item: item, index: index)
+        return row
+    }
+
+    private func makeNotificationRowContent(_ item: NotificationItem, index: Int) -> UIControl {
         let iconName: String
         switch item.category {
         case "답변": iconName = "notifications-chat-icon"
@@ -277,15 +298,18 @@ final class NotificationsViewController: AppPageViewController {
             icon.heightAnchor.constraint(equalToConstant: 20)
         ])
 
-        let title = AppStyle.label(item.title, size: 15, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let title = AppStyle.label(item.title, size: 15, weight: .medium, color: UIColor(red: 20 / 255,
+            green: 27 / 255, blue: 43 / 255, alpha: 1))
         title.numberOfLines = 1
-        let detail = AppStyle.label(item.detail, size: 12, color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
+        let detail = AppStyle.label(item.detail, size: 12, color: UIColor(red: 107 / 255, green: 120 / 255,
+            blue: 144 / 255, alpha: 1))
         detail.numberOfLines = 1
         let labels = UIStackView(arrangedSubviews: [title, detail])
         labels.axis = .vertical
         labels.spacing = 2
 
-        let viewLabel = AppStyle.label("보기", size: 14, weight: .medium, color: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1))
+        let viewLabel = AppStyle.label("보기", size: 14, weight: .medium, color: UIColor(red: 47 / 255,
+            green: 134 / 255, blue: 245 / 255, alpha: 1))
         viewLabel.setContentHuggingPriority(.required, for: .horizontal)
         let content = UIStackView(arrangedSubviews: [chip, labels, viewLabel])
         content.axis = .horizontal
@@ -303,6 +327,10 @@ final class NotificationsViewController: AppPageViewController {
         ])
         row.accessibilityLabel = "\(item.title), \(item.detail), 보기"
         row.accessibilityIdentifier = "notification-row-\(index)"
+        return row
+    }
+
+    private func addNotificationSelection(to row: UIControl, item: NotificationItem, index: Int) {
         row.addAction(UIAction { [weak self] _ in
             guard let self else { return }
             self.items[index].isRead = true
@@ -314,10 +342,9 @@ final class NotificationsViewController: AppPageViewController {
                 self.push(AnnouncementDetailViewController())
             }
         }, for: .touchUpInside)
-        return row
     }
 
-    @objc private func markAllRead() {
+    @objc func markAllRead() {
         items = items.map { item in
             var updated = item
             updated.isRead = true

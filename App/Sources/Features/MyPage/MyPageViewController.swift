@@ -72,8 +72,29 @@ final class MyPageViewController: AppPageViewController {
         contentStack.addArrangedSubview(header)
     }
 
-    private func addProfileCard() {
+}
+
+@MainActor
+extension MyPageViewController {
+    func addProfileCard() {
+        let profile = makeProfileRow()
         let card = makeCard(cornerRadius: 28, shadowRadius: 14, shadowYOffset: 6)
+        let editButton = makeProfileEditButton()
+        let content = UIStackView(arrangedSubviews: [profile, editButton])
+        content.axis = .vertical
+        content.spacing = 16
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor, constant: 20),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+        ])
+        contentStack.addArrangedSubview(card)
+    }
+
+    private func makeProfileRow() -> UIStackView {
         let profile = UIStackView()
         profile.axis = .horizontal
         profile.alignment = .center
@@ -105,6 +126,10 @@ final class MyPageViewController: AppPageViewController {
         profile.addArrangedSubview(avatar)
         profile.addArrangedSubview(profileText)
 
+        return profile
+    }
+
+    private func makeProfileEditButton() -> UIButton {
         let editButton = UIButton(type: .system)
         editButton.translatesAutoresizingMaskIntoConstraints = false
         editButton.setTitle("프로필 수정", for: .normal)
@@ -117,21 +142,14 @@ final class MyPageViewController: AppPageViewController {
         editButton.addTarget(self, action: #selector(editProfile), for: .touchUpInside)
         NSLayoutConstraint.activate([editButton.heightAnchor.constraint(equalToConstant: 36)])
 
-        let content = UIStackView(arrangedSubviews: [profile, editButton])
-        content.axis = .vertical
-        content.spacing = 16
-        content.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor, constant: 20),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
-        ])
-        contentStack.addArrangedSubview(card)
+        return editButton
     }
 
-    private func addStatsCard() {
+}
+
+@MainActor
+extension MyPageViewController {
+    func addStatsCard() {
         let card = makeCard(cornerRadius: 24, shadowRadius: 10, shadowYOffset: 4)
         let stats = UIStackView()
         stats.axis = .horizontal
@@ -176,7 +194,7 @@ final class MyPageViewController: AppPageViewController {
         contentStack.addArrangedSubview(card)
     }
 
-    private func addMenuCard() {
+    func addMenuCard() {
         let card = makeCard(cornerRadius: 24, shadowRadius: 10, shadowYOffset: 4)
         let rows = UIStackView()
         rows.axis = .vertical
@@ -219,8 +237,13 @@ final class MyPageViewController: AppPageViewController {
         contentStack.addArrangedSubview(card)
     }
 
-    private func makeMenuRow(icon: String, title: String, subtitle: String, identifier: String,
-        action: Selector) -> UIView {
+    func makeMenuRow(
+        icon: String,
+        title: String,
+        subtitle: String,
+        identifier: String,
+        action: Selector
+    ) -> UIView {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.backgroundColor = .clear
@@ -275,7 +298,7 @@ final class MyPageViewController: AppPageViewController {
         return button
     }
 
-    private func makeCard(cornerRadius: CGFloat, shadowRadius: CGFloat, shadowYOffset: CGFloat) -> UIView {
+    func makeCard(cornerRadius: CGFloat, shadowRadius: CGFloat, shadowYOffset: CGFloat) -> UIView {
         let card = UIView()
         card.backgroundColor = .white
         card.layer.cornerRadius = cornerRadius
@@ -288,8 +311,14 @@ final class MyPageViewController: AppPageViewController {
         return card
     }
 
-    private func styledLabel(_ text: String, size: CGFloat, weight: UIFont.Weight = .regular, color: UIColor,
-        lineHeight: CGFloat, kern: CGFloat = 0) -> UILabel {
+    func styledLabel(
+        _ text: String,
+        size: CGFloat,
+        weight: UIFont.Weight = .regular,
+        color: UIColor,
+        lineHeight: CGFloat,
+        kern: CGFloat = 0
+    ) -> UILabel {
         let label = UILabel()
         label.numberOfLines = 0
         let paragraph = NSMutableParagraphStyle()

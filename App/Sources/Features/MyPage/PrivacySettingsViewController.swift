@@ -64,7 +64,8 @@ final class PrivacySettingsViewController: AppPageViewController {
     }
 
     private func confirmAccountDeletion() {
-        let alert = UIAlertController(title: "계정을 삭제할까요?", message: "계정 삭제 API 연결 전에는 실제 계정이 삭제되지 않아요.", preferredStyle: .alert)
+        let alert = UIAlertController(title: "계정을 삭제할까요?", message: "계정 삭제 API 연결 전에는 실제 계정이 삭제되지 않아요.",
+            preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "삭제 요청", style: .destructive) { [weak self] _ in
             self?.showMessage("계정 삭제 요청 화면을 준비했어요. 삭제 API가 연결되지 않아 실제 삭제는 진행되지 않았어요")
