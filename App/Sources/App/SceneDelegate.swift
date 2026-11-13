@@ -19,6 +19,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             window.rootViewController = UINavigationController(
                 rootViewController: InquiryCompletionViewController(email: "s26055@gsm.hs.kr")
             )
+        } else if arguments.contains("--settings-preview") {
+            let tabs = AppTabBarController()
+            tabs.selectedIndex = 3
+            window.rootViewController = tabs
         } else {
             window.rootViewController = WelcomeViewController()
         }
