@@ -4,6 +4,8 @@ import UIKit
 final class MyPageViewController: AppPageViewController {
     private let profileNameLabel = AppStyle.label("", size: 20, weight: .bold)
     private let profileDetailLabel = AppStyle.label("", size: 13, color: AppStyle.muted)
+    private let profileIntroductionLabel = AppStyle.label("", size: 12, color: AppStyle.muted)
+    private var saveToast: UIView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,7 +39,9 @@ final class MyPageViewController: AppPageViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         profileNameLabel.text = UserProfileStore.shared.name
-        profileDetailLabel.text = "\(UserProfileStore.shared.department) · 10기\n\(UserProfileStore.shared.email)"
+        profileDetailLabel.text = "\(UserProfileStore.shared.department) · 10기"
+        profileIntroductionLabel.text = UserProfileStore.shared.introduction
+        if UserProfileStore.shared.consumeProfileSaveToast() { showProfileSavedToast() }
     }
 
     private func addProfileCard() {
@@ -52,8 +56,9 @@ final class MyPageViewController: AppPageViewController {
         avatar.heightAnchor.constraint(equalToConstant: 56).isActive = true
 
         profileNameLabel.text = UserProfileStore.shared.name
-        profileDetailLabel.text = "\(UserProfileStore.shared.department) · 10기\n\(UserProfileStore.shared.email)"
-        let userInfo = UIStackView(arrangedSubviews: [profileNameLabel, profileDetailLabel])
+        profileDetailLabel.text = "\(UserProfileStore.shared.department) · 10기"
+        profileIntroductionLabel.text = UserProfileStore.shared.introduction
+        let userInfo = UIStackView(arrangedSubviews: [profileNameLabel, profileDetailLabel, profileIntroductionLabel])
         userInfo.axis = .vertical
         userInfo.spacing = 5
         let header = UIStackView(arrangedSubviews: [avatar, userInfo])
@@ -87,6 +92,55 @@ final class MyPageViewController: AppPageViewController {
 
     private func openProfileEditor() {
         push(EditProfileViewController())
+    }
+
+    private func showProfileSavedToast() {
+        saveToast?.removeFromSuperview()
+        let check = UIView()
+        check.backgroundColor = AppStyle.blue
+        check.layer.cornerRadius = 11
+        check.widthAnchor.constraint(equalToConstant: 22).isActive = true
+        check.heightAnchor.constraint(equalToConstant: 22).isActive = true
+        let checkmark = UIImageView(image: UIImage(systemName: "checkmark"))
+        checkmark.tintColor = .white
+        checkmark.contentMode = .scaleAspectFit
+        checkmark.translatesAutoresizingMaskIntoConstraints = false
+        check.addSubview(checkmark)
+        NSLayoutConstraint.activate([
+            checkmark.centerXAnchor.constraint(equalTo: check.centerXAnchor),
+            checkmark.centerYAnchor.constraint(equalTo: check.centerYAnchor),
+            checkmark.widthAnchor.constraint(equalToConstant: 12),
+            checkmark.heightAnchor.constraint(equalToConstant: 12)
+        ])
+
+        let message = AppStyle.label("프로필을 저장했어요", size: 13, weight: .medium, color: .white)
+        let toast = UIStackView(arrangedSubviews: [check, message])
+        toast.axis = .horizontal
+        toast.alignment = .center
+        toast.spacing = 10
+        toast.isLayoutMarginsRelativeArrangement = true
+        toast.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        toast.backgroundColor = UIColor(red: 0.13, green: 0.16, blue: 0.22, alpha: 1)
+        toast.layer.cornerRadius = 26
+        toast.layer.shadowColor = UIColor.black.withAlphaComponent(0.18).cgColor
+        toast.layer.shadowOpacity = 1
+        toast.layer.shadowRadius = 12
+        toast.layer.shadowOffset = CGSize(width: 0, height: 5)
+        toast.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(toast)
+        NSLayoutConstraint.activate([
+            toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        ])
+        saveToast = toast
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak toast] in
+            UIView.animate(withDuration: 0.2, animations: {
+                toast?.alpha = 0
+            }, completion: { _ in
+                toast?.removeFromSuperview()
+            })
+        }
     }
 
     private func addActivityCard() {

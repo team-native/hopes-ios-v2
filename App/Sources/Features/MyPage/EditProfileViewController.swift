@@ -173,6 +173,7 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
             email: UserProfileStore.shared.email,
             introduction: introductionView.text
         )
+        UserProfileStore.shared.markProfileSaved()
         navigationController?.popViewController(animated: true)
     }
 }
