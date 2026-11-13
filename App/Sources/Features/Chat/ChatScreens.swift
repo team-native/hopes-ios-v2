@@ -2,7 +2,8 @@ import UIKit
 
 @MainActor
 final class ChatHomeViewController: AppPageViewController {
-    private let departments = ["소프트웨어", "인공지능", "게임", "스마트IoT"]
+    private var selectedDepartment = UserDefaults.standard.string(forKey: "chat.selectedDepartment") ?? "소프트웨어개발과"
+    private let departmentButton = UIButton(type: .system)
     private let questions = [
         "학교에 입학하기 전에 준비하면 좋은 것은?",
         "전공 수업은 어떤 방식으로 진행되나요?",
@@ -12,13 +13,22 @@ final class ChatHomeViewController: AppPageViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "채팅"
-        addHeading("선배에게 물어보세요", subtitle: "관심 있는 분야를 고르면 질문을 추천해드려요")
+        addHeading("궁금한 점을 물어보세요", subtitle: "학과를 고르면 질문을 추천해드려요")
 
-        addSection("학과 선택")
-        departments.forEach { department in
-            addRow(department, symbol: "chevron.right") { [weak self] in
-                self?.push(QuestionListViewController(category: department))
-            }
+        addSection("학과")
+        departmentButton.setTitle("학과 · \(selectedDepartment)     ⌄", for: .normal)
+        departmentButton.setTitleColor(AppStyle.ink, for: .normal)
+        departmentButton.contentHorizontalAlignment = .leading
+        departmentButton.backgroundColor = .white
+        departmentButton.layer.cornerRadius = 14
+        departmentButton.layer.borderWidth = 1
+        departmentButton.layer.borderColor = AppStyle.line.cgColor
+        departmentButton.heightAnchor.constraint(equalToConstant: 52).isActive = true
+        departmentButton.addAction(UIAction { [weak self] _ in self?.openDepartmentPicker() }, for: .touchUpInside)
+        contentStack.addArrangedSubview(departmentButton)
+        addRow("\(selectedDepartment) 선배 질문 보기", symbol: "chevron.right") { [weak self] in
+            guard let self else { return }
+            self.push(QuestionListViewController(category: self.selectedDepartment))
         }
 
         addSection("추천 질문")
@@ -31,6 +41,17 @@ final class ChatHomeViewController: AppPageViewController {
         contentStack.addArrangedSubview(AppStyle.button("새 대화 시작", primary: true) { [weak self] in
             self?.push(ChatConversationViewController(question: nil))
         })
+    }
+
+    private func openDepartmentPicker() {
+        let picker = DepartmentPickerViewController(selectedDepartment: selectedDepartment)
+        picker.onSelect = { [weak self] department in
+            guard let self else { return }
+            self.selectedDepartment = department
+            UserDefaults.standard.set(department, forKey: "chat.selectedDepartment")
+            self.departmentButton.setTitle("학과 · \(department)     ⌄", for: .normal)
+        }
+        present(picker, animated: true)
     }
 }
 
