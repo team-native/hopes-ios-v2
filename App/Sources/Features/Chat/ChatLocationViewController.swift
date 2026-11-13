@@ -1,105 +1,220 @@
 import CoreLocation
-import MapKit
 import UIKit
 
 @MainActor
 final class ChatLocationViewController: UIViewController, @preconcurrency CLLocationManagerDelegate {
-    var onLocationSelected: ((String) -> Void)?
-
     private let locationManager = CLLocationManager()
-    private let mapView = MKMapView()
-    private let statusLabel = AppStyle.label("위치 권한을 확인하고 있어요", size: 14, color: AppStyle.muted)
-    private let sendButton = UIButton(type: .system)
-    private let permissionButton = UIButton(type: .system)
-    private var currentLocation: CLLocation?
+    private var accuracy: CLLocationAccuracy
+    private let accuracyLabel = AppStyle.label("", size: 12, color: LocationMapStyle.secondary)
+
+    init(accuracy: CLLocationAccuracy) {
+        self.accuracy = accuracy
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = LocationMapStyle.canvas
         locationManager.delegate = self
-
-        let title = AppStyle.label("현재 위치", size: 22, weight: .bold)
-        let subtitle = AppStyle.label("위치를 질문에 첨부할 수 있어요", size: 14, color: AppStyle.muted)
-        mapView.layer.cornerRadius = 16
-        mapView.clipsToBounds = true
-        mapView.heightAnchor.constraint(equalToConstant: 300).isActive = true
-
-        statusLabel.textAlignment = .center
-        sendButton.setTitle("현재 위치 첨부", for: .normal)
-        sendButton.setTitleColor(.white, for: .normal)
-        sendButton.backgroundColor = AppStyle.blue
-        sendButton.layer.cornerRadius = 14
-        sendButton.heightAnchor.constraint(equalToConstant: 52).isActive = true
-        sendButton.isEnabled = false
-        sendButton.alpha = 0.5
-        sendButton.addAction(UIAction { [weak self] _ in self?.selectLocation() }, for: .touchUpInside)
-
-        permissionButton.setTitle("설정에서 위치 권한 열기", for: .normal)
-        permissionButton.isHidden = true
-        permissionButton.addAction(UIAction { _ in
-            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-            UIApplication.shared.open(url)
-        }, for: .touchUpInside)
-
-        let stack = UIStackView(arrangedSubviews: [title, subtitle, mapView, statusLabel, permissionButton, sendButton])
-        stack.axis = .vertical
-        stack.spacing = 16
-        stack.isLayoutMarginsRelativeArrangement = true
-        stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 24, leading: 20, bottom: 20, trailing: 20)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor)
-        ])
-        renderPermissionState()
+        configureLayout()
     }
 
-    private func renderPermissionState() {
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+        tabBarController?.tabBar.isHidden = true
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+        tabBarController?.tabBar.isHidden = false
+    }
+
+    private func configureLayout() {
+        let backButton = UIButton(type: .system)
+        backButton.setImage(UIImage(named: "map-back"), for: .normal)
+        backButton.tintColor = LocationMapStyle.ink
+        backButton.accessibilityLabel = "뒤로"
+        backButton.addAction(UIAction { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        }, for: .touchUpInside)
+        backButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            backButton.widthAnchor.constraint(equalToConstant: 44),
+            backButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        let titleStack = UIStackView(arrangedSubviews: [
+            AppStyle.label("학교 지도", size: 18, weight: .medium, color: LocationMapStyle.ink),
+            AppStyle.label("현재 위치", size: 12, color: LocationMapStyle.secondary)
+        ])
+        titleStack.axis = .vertical
+        titleStack.spacing = 0
+        let header = UIStackView(arrangedSubviews: [backButton, titleStack])
+        header.axis = .horizontal
+        header.alignment = .center
+        header.spacing = 12
+
+        let map = LocationMapIllustrationView()
+        map.translatesAutoresizingMaskIntoConstraints = false
+        map.heightAnchor.constraint(greaterThanOrEqualToConstant: 300).isActive = true
+
+        let floorRow = makeFloorRow()
+        let locationCard = makeLocationCard()
+        let notice = makeNotice()
+
+        let content = UIStackView(arrangedSubviews: [header, map, floorRow, locationCard, notice])
+        content.axis = .vertical
+        content.spacing = 12
+        content.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            content.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            content.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            content.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+            header.heightAnchor.constraint(equalToConstant: 44),
+            floorRow.heightAnchor.constraint(equalToConstant: 38),
+            locationCard.heightAnchor.constraint(equalToConstant: 76)
+        ])
+        updateAccuracyLabel()
+    }
+
+    private func makeFloorRow() -> UIStackView {
+        let floors = UIStackView()
+        floors.axis = .horizontal
+        floors.alignment = .center
+        floors.spacing = 8
+        ["1F", "2F", "3F"].forEach { floor in
+            let chip = AppStyle.label(floor, size: 14, weight: .medium, color: LocationMapStyle.secondary)
+            chip.textAlignment = .center
+            chip.backgroundColor = .white
+            chip.layer.cornerRadius = 18
+            chip.layer.borderWidth = 1
+            chip.layer.borderColor = LocationMapStyle.border.cgColor
+            chip.clipsToBounds = true
+            chip.widthAnchor.constraint(equalToConstant: 45).isActive = true
+            chip.heightAnchor.constraint(equalToConstant: 38).isActive = true
+            floors.addArrangedSubview(chip)
+        }
+        let preparation = AppStyle.label("층별 도면 준비 중", size: 12, color: LocationMapStyle.tertiary)
+        floors.addArrangedSubview(preparation)
+        return floors
+    }
+
+    private func makeLocationCard() -> UIView {
+        let card = UIView()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = LocationMapStyle.subtleBorder.cgColor
+        card.layer.shadowColor = UIColor(red: 26 / 255.0, green: 64 / 255.0, blue: 128 / 255.0, alpha: 0.05).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 8
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
+
+        let iconContainer = UIView()
+        iconContainer.backgroundColor = LocationMapStyle.brandSoft
+        iconContainer.layer.cornerRadius = 12
+        iconContainer.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            iconContainer.widthAnchor.constraint(equalToConstant: 44),
+            iconContainer.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        let icon = UIImageView(image: UIImage(named: "map-pin-blue"))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        iconContainer.addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 22),
+            icon.heightAnchor.constraint(equalToConstant: 22)
+        ])
+
+        let title = AppStyle.label("본관 부근", size: 15, weight: .medium, color: LocationMapStyle.ink)
+        accuracyLabel.numberOfLines = 1
+        let labels = UIStackView(arrangedSubviews: [title, accuracyLabel])
+        labels.axis = .vertical
+        labels.spacing = 2
+
+        let refresh = UIButton(type: .system)
+        refresh.setImage(UIImage(named: "map-refresh"), for: .normal)
+        refresh.tintColor = LocationMapStyle.secondary
+        refresh.accessibilityLabel = "위치 다시 측정"
+        refresh.addAction(UIAction { [weak self] _ in self?.refreshLocation() }, for: .touchUpInside)
+        refresh.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            refresh.widthAnchor.constraint(equalToConstant: 36),
+            refresh.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        let row = UIStackView(arrangedSubviews: [iconContainer, labels, refresh])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 12
+        row.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            row.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
+            row.centerYAnchor.constraint(equalTo: card.centerYAnchor)
+        ])
+        return card
+    }
+
+    private func makeNotice() -> UIView {
+        let icon = UIImageView(image: UIImage(named: "map-alert"))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            icon.widthAnchor.constraint(equalToConstant: 18),
+            icon.heightAnchor.constraint(equalToConstant: 18)
+        ])
+        let text = AppStyle.label("실내 도면은 준비 중이에요. 확보되면 층별 지도를 볼 수 있어요.", size: 12, color: LocationMapStyle.secondary)
+        text.numberOfLines = 2
+        let row = UIStackView(arrangedSubviews: [icon, text])
+        row.axis = .horizontal
+        row.alignment = .top
+        row.spacing = 8
+        row.isLayoutMarginsRelativeArrangement = true
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
+        row.backgroundColor = LocationMapStyle.brandSoft
+        row.layer.cornerRadius = 16
+        return row
+    }
+
+    private func refreshLocation() {
         switch locationManager.authorizationStatus {
-        case .notDetermined:
-            permissionButton.isHidden = true
-            statusLabel.text = "위치 권한을 요청할게요"
-            locationManager.requestWhenInUseAuthorization()
         case .authorizedAlways, .authorizedWhenInUse:
-            permissionButton.isHidden = true
-            statusLabel.text = "현재 위치를 찾고 있어요"
-            mapView.showsUserLocation = true
             locationManager.requestLocation()
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
         case .denied, .restricted:
-            permissionButton.isHidden = false
-            statusLabel.text = "현재 위치를 보려면 위치 권한을 허용해주세요"
-            sendButton.isEnabled = false
-            sendButton.alpha = 0.5
+            break
         @unknown default:
-            statusLabel.text = "위치 권한 상태를 확인할 수 없어요"
+            break
         }
     }
 
+    private func updateAccuracyLabel() {
+        accuracyLabel.text = "정확도 약 ±\(Int(accuracy.rounded()))m · 방금 측정"
+    }
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        renderPermissionState()
+        if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedWhenInUse {
+            manager.requestLocation()
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        currentLocation = location
-        let region = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 900, longitudinalMeters: 900)
-        mapView.setRegion(region, animated: true)
-        statusLabel.text = "현재 위치를 확인했어요"
-        sendButton.isEnabled = true
-        sendButton.alpha = 1
-    }
-
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        statusLabel.text = "위치를 확인하지 못했어요. 잠시 후 다시 시도해주세요"
-    }
-
-    private func selectLocation() {
-        guard let location = currentLocation else { return }
-        let value = String(format: "%.5f, %.5f", location.coordinate.latitude, location.coordinate.longitude)
-        onLocationSelected?(value)
-        dismiss(animated: true)
+        accuracy = location.horizontalAccuracy
+        updateAccuracyLabel()
     }
 }
