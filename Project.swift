@@ -14,6 +14,7 @@ let project = Project(
                     "CFBundleDisplayName": "Hopes",
                     "CFBundleShortVersionString": "2.0.0",
                     "CFBundleVersion": "1",
+                    "UIAppFonts": ["Inter-Variable.ttf"],
                     "UILaunchScreen": [:],
                     "UIApplicationSceneManifest": [
                         "UIApplicationSupportsMultipleScenes": false,
