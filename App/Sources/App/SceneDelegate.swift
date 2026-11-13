@@ -23,6 +23,13 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let tabs = AppTabBarController()
             tabs.selectedIndex = 3
             window.rootViewController = tabs
+        } else if arguments.contains("--mypage-preview") {
+            let tabs = AppTabBarController()
+            tabs.selectedIndex = 3
+            if let navigationController = tabs.selectedViewController as? UINavigationController {
+                navigationController.pushViewController(MyPageViewController(), animated: false)
+            }
+            window.rootViewController = tabs
         } else {
             window.rootViewController = WelcomeViewController()
         }
