@@ -1,4 +1,5 @@
 import CoreLocation
+import MapKit
 import UIKit
 import Network
 
@@ -161,6 +162,9 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var locationCardTitle: UILabel?
     private var locationCardSubtitle: UILabel?
     private var locationProgress: UIProgressView?
+    private var locationCardIcon: UIImageView?
+    private var locationMapButton: UIButton?
+    private var measuredLocation: CLLocationCoordinate2D?
 
     init(question: String?) {
         initialQuestion = question
@@ -767,6 +771,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             pin.widthAnchor.constraint(equalToConstant: 24),
             pin.heightAnchor.constraint(equalToConstant: 24)
         ])
+        locationCardIcon = pin
 
         let title = AppStyle.label("현재 위치를 확인하고 있어요…", size: 15, weight: .medium)
         let subtitle = AppStyle.label("잠시만 기다려 주세요. 보통 몇 초면 끝나요.", size: 12, color: AppStyle.muted)
@@ -787,7 +792,20 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         progress.clipsToBounds = true
         progress.heightAnchor.constraint(equalToConstant: 6).isActive = true
 
-        let content = UIStackView(arrangedSubviews: [row, progress])
+        let mapButton = UIButton(type: .system)
+        var mapConfiguration = UIButton.Configuration.filled()
+        mapConfiguration.title = "지도 보기"
+        mapConfiguration.baseBackgroundColor = AppStyle.paleBlue
+        mapConfiguration.baseForegroundColor = AppStyle.blue
+        mapConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        mapButton.configuration = mapConfiguration
+        mapButton.layer.cornerRadius = 10
+        mapButton.clipsToBounds = true
+        mapButton.isHidden = true
+        mapButton.addAction(UIAction { [weak self] _ in self?.openMeasuredLocationInMaps() }, for: .touchUpInside)
+        locationMapButton = mapButton
+
+        let content = UIStackView(arrangedSubviews: [row, progress, mapButton])
         content.axis = .vertical
         content.spacing = 10
         content.isLayoutMarginsRelativeArrangement = true
@@ -807,10 +825,16 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         return card
     }
 
-    private func updateLocationMeasurement(title: String, subtitle: String, progress: Float) {
+    private func updateLocationMeasurement(title: String, subtitle: String, progress: Float, isOutsideSchool: Bool = false) {
         locationCardTitle?.text = title
         locationCardSubtitle?.text = subtitle
         locationProgress?.setProgress(progress, animated: true)
+        if isOutsideSchool {
+            let infoPath = Bundle.main.path(forResource: "outside-school-info", ofType: "png")
+            locationCardIcon?.image = infoPath.flatMap(UIImage.init(contentsOfFile:))
+            locationProgress?.isHidden = true
+            locationMapButton?.isHidden = false
+        }
         scrollToLatestMessage()
     }
 
@@ -830,12 +854,34 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard locations.last != nil else { return }
+        guard let location = locations.last else { return }
+        measuredLocation = location.coordinate
+        let schoolLocation = CLLocation(latitude: 35.142829306650874, longitude: 126.80021878005266)
+        let distanceInMeters = schoolLocation.distance(from: location)
+        if distanceInMeters > 250 {
+            let distanceText = distanceInMeters >= 1_000
+                ? String(format: "%.1fkm", distanceInMeters / 1_000)
+                : "\(Int(distanceInMeters.rounded()))m"
+            updateLocationMeasurement(
+                title: "지금은 학교에서 약 \(distanceText) 떨어진 곳에 있어요.",
+                subtitle: "학교 안에서는 건물 기준으로 더 자세히 안내해 드려요.",
+                progress: 1,
+                isOutsideSchool: true
+            )
+            return
+        }
         updateLocationMeasurement(
             title: "현재 위치를 확인했어요",
             subtitle: "위치 정보가 질문에 첨부됐어요.",
             progress: 1
         )
+    }
+
+    private func openMeasuredLocationInMaps() {
+        guard let measuredLocation else { return }
+        let item = MKMapItem(placemark: MKPlacemark(coordinate: measuredLocation))
+        item.name = "현재 위치"
+        item.openInMaps(launchOptions: [MKLaunchOptionsMapTypeKey: MKMapType.standard.rawValue])
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
