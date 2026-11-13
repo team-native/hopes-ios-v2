@@ -135,8 +135,11 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         attach.addAction(UIAction { [weak self] _ in
             guard let self else { return }
             let picker = ChatAttachmentPickerViewController()
-            picker.onAttachmentSelected = { [weak self] fileName in
-                self?.addMessage("첨부했어요: \(fileName)", outgoing: true)
+            picker.onAttachmentSelected = { [weak self] fileName, image in
+                guard let self else { return }
+                let preview = ChatAttachmentPreviewViewController(fileName: fileName, image: image)
+                preview.onSend = { [weak self] in self?.addMessage("첨부했어요: \(fileName)", outgoing: true) }
+                self.present(preview, animated: true)
             }
             self.present(picker, animated: true)
         }, for: .touchUpInside)
