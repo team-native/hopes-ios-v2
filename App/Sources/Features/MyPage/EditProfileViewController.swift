@@ -1,9 +1,10 @@
 import UIKit
 
 @MainActor
-final class EditProfileViewController: AppPageViewController, UITextFieldDelegate, UITextViewDelegate {
+final class EditProfileViewController: AppPageViewController, UITextViewDelegate {
     private let nameField = UITextField()
     private let introductionView = UITextView()
+    private let showsSaveError = ProcessInfo.processInfo.arguments.contains("--profile-save-error")
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -12,14 +13,28 @@ final class EditProfileViewController: AppPageViewController, UITextFieldDelegat
         navigationController?.setNavigationBarHidden(true, animated: false)
         contentStack.spacing = 14
         addHeader()
+
+        if showsSaveError {
+            addErrorBanner()
+            addAccountCard()
+        }
         addProfileForm()
 
         let saveButton = AppStyle.button("저장", primary: true) { [weak self] in self?.save() }
         saveButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        contentStack.addArrangedSubview(saveButton)
-
-        DispatchQueue.main.async { [weak self] in
-            self?.introductionView.becomeFirstResponder()
+        if showsSaveError {
+            saveButton.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(saveButton)
+            NSLayoutConstraint.activate([
+                saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+                saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+                saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            ])
+        } else {
+            contentStack.addArrangedSubview(saveButton)
+            DispatchQueue.main.async { [weak self] in
+                self?.introductionView.becomeFirstResponder()
+            }
         }
     }
 
@@ -49,6 +64,54 @@ final class EditProfileViewController: AppPageViewController, UITextFieldDelegat
         contentStack.addArrangedSubview(header)
     }
 
+    private func addErrorBanner() {
+        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
+        icon.tintColor = UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1)
+        icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        let message = AppStyle.label("저장하지 못했어요. 잠시 후 다시 시도해 주세요.", size: 12, color: icon.tintColor!)
+        let banner = UIStackView(arrangedSubviews: [icon, message])
+        banner.axis = .horizontal
+        banner.alignment = .center
+        banner.spacing = 8
+        banner.isLayoutMarginsRelativeArrangement = true
+        banner.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        banner.backgroundColor = UIColor(red: 1, green: 0.945, blue: 0.949, alpha: 1)
+        banner.layer.cornerRadius = 14
+        contentStack.addArrangedSubview(banner)
+    }
+
+    private func addAccountCard() {
+        let card = AppStyle.card()
+        card.layer.cornerRadius = 24
+        let heading = AppStyle.label("계정 정보 (수정 불가)", size: 14, color: AppStyle.muted)
+        let emailRow = accountInfoRow(title: "이메일", value: UserProfileStore.shared.email)
+        let departmentRow = accountInfoRow(title: "과 · 기수", value: "\(UserProfileStore.shared.department) · 10기")
+        let stack = UIStackView(arrangedSubviews: [heading, emailRow, departmentRow])
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+        ])
+        contentStack.addArrangedSubview(card)
+    }
+
+    private func accountInfoRow(title: String, value: String) -> UIView {
+        let key = AppStyle.label(title, size: 14, color: AppStyle.muted)
+        let text = AppStyle.label(value, size: 14)
+        text.textAlignment = .right
+        let spacer = UIView()
+        let row = UIStackView(arrangedSubviews: [key, spacer, text])
+        row.axis = .horizontal
+        row.alignment = .center
+        return row
+    }
+
     private func addProfileForm() {
         let card = AppStyle.card()
         card.layer.cornerRadius = 24
@@ -71,9 +134,9 @@ final class EditProfileViewController: AppPageViewController, UITextFieldDelegat
         introductionView.backgroundColor = .white
         introductionView.layer.cornerRadius = 16
         introductionView.layer.borderWidth = 1.5
-        introductionView.layer.borderColor = AppStyle.blue.withAlphaComponent(0.5).cgColor
+        introductionView.layer.borderColor = showsSaveError ? AppStyle.line.cgColor : AppStyle.blue.withAlphaComponent(0.5).cgColor
         introductionView.textContainerInset = UIEdgeInsets(top: 14, left: 12, bottom: 12, right: 12)
-        introductionView.heightAnchor.constraint(equalToConstant: 94).isActive = true
+        introductionView.heightAnchor.constraint(equalToConstant: showsSaveError ? 110 : 96).isActive = true
         introductionView.delegate = self
 
         let fields = UIStackView(arrangedSubviews: [nameLabel, nameField, introductionLabel, introductionView])
