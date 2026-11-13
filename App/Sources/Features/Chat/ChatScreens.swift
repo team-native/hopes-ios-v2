@@ -5,109 +5,262 @@ import Network
 
 @MainActor
 final class ChatHomeViewController: AppPageViewController {
-    private var selectedDepartment = UserDefaults.standard.string(forKey: "chat.selectedDepartment") ?? "소프트웨어개발과"
-    private var selectedMajor: String? = UserDefaults.standard.string(forKey: "chat.selectedMajor") ?? "Frontend"
-    private let departmentButton = UIButton(type: .system)
-    private let majorButton = UIButton(type: .system)
-    private let recommendedHeader = AppStyle.label("", size: 18, weight: .bold)
-    private let recommendedStack = UIStackView()
-    private var questions: [String] {
-        [
-            "기숙사 하루 일과가 어떻게 돼?",
-            "입학하려면 뭘 준비해야 해?",
-            "\(selectedMajor ?? "전공")은 뭐부터 공부하면 좋아?",
-            "후배한테 해주고 싶은 조언 있어?"
-        ]
-    }
+    private let questions: [(String, String)] = [
+        ("⌂", "기숙사 하루 일과가 어떻게 돼?"),
+        ("◇", "입학하려면 뭘 준비해야 해?"),
+        ("<>", "전공 선택은 어떻게 하는 게 좋아?"),
+        ("□", "후배한테 해주고 싶은 조언 있어?")
+    ]
+    private let messageField = UITextField()
+    private let composer = UIView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "채팅"
-        addHeading("무엇이 궁금한가요?", subtitle: "학과와 전공에 맞는 질문을 추천해드려요")
-
-        addSection("학과")
-        departmentButton.setTitle("학과 · \(selectedDepartment)     ⌄", for: .normal)
-        departmentButton.setTitleColor(AppStyle.ink, for: .normal)
-        departmentButton.contentHorizontalAlignment = .leading
-        departmentButton.backgroundColor = .white
-        departmentButton.layer.cornerRadius = 14
-        departmentButton.layer.borderWidth = 1
-        departmentButton.layer.borderColor = AppStyle.line.cgColor
-        departmentButton.heightAnchor.constraint(equalToConstant: 52).isActive = true
-        departmentButton.addAction(UIAction { [weak self] _ in self?.openDepartmentPicker() }, for: .touchUpInside)
-        contentStack.addArrangedSubview(departmentButton)
-        addSection("전공")
-        configureSelectionButton(majorButton, title: "전공 · \(selectedMajor ?? "선택 안 함")")
-        majorButton.addAction(UIAction { [weak self] _ in self?.openMajorPicker() }, for: .touchUpInside)
-        contentStack.addArrangedSubview(majorButton)
-        addRow("\(selectedDepartment) 선배 질문 보기", symbol: "chevron.right") { [weak self] in
-            guard let self else { return }
-            self.push(QuestionListViewController(category: self.selectedDepartment))
+        title = nil
+        view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        contentStack.spacing = 0
+        for constraint in scrollView.constraints {
+            if constraint.firstItem === contentStack, constraint.firstAttribute == .top { constraint.constant = 10 }
+            if constraint.firstItem === contentStack, constraint.firstAttribute == .leading { constraint.constant = 24 }
+            if constraint.firstItem === contentStack, constraint.firstAttribute == .trailing { constraint.constant = -24 }
         }
 
-        contentStack.addArrangedSubview(recommendedHeader)
-        recommendedStack.axis = .vertical
-        recommendedStack.spacing = 10
-        contentStack.addArrangedSubview(recommendedStack)
-        renderRecommendedQuestions()
+        addBrandHeader()
+        let centerLogo = makeCenterLogo()
+        contentStack.addArrangedSubview(centerLogo)
+        contentStack.setCustomSpacing(70, after: contentStack.arrangedSubviews[0])
+        contentStack.setCustomSpacing(30, after: centerLogo)
 
-        contentStack.addArrangedSubview(AppStyle.button("새 대화 시작", primary: true) { [weak self] in
+        let heading = AppStyle.label("무엇이 궁금한가요?", size: 28, weight: .bold, color: UIColor(red: 14 / 255, green: 18 / 255, blue: 26 / 255, alpha: 1))
+        heading.textAlignment = .center
+        contentStack.addArrangedSubview(heading)
+        contentStack.setCustomSpacing(10, after: heading)
+
+        let subtitle = AppStyle.label("광주소프트웨어마이스터고 선배에게 편하게 물어보세요.", size: 14, color: UIColor(red: 107 / 255, green: 122 / 255, blue: 148 / 255, alpha: 1))
+        subtitle.textAlignment = .center
+        subtitle.widthAnchor.constraint(equalToConstant: 300).isActive = true
+        contentStack.addArrangedSubview(subtitle)
+        contentStack.setCustomSpacing(46, after: subtitle)
+
+        let cards = UIStackView()
+        cards.axis = .vertical
+        cards.spacing = 6
+        questions.forEach { symbol, question in
+            cards.addArrangedSubview(makeQuestionCard(symbol: symbol, question: question))
+        }
+        contentStack.addArrangedSubview(cards)
+
+        configureComposer()
+        if let bottomConstraint = view.constraints.first(where: {
+            $0.firstItem === scrollView && $0.firstAttribute == .bottom
+        }) {
+            bottomConstraint.isActive = false
+        }
+        NSLayoutConstraint.activate([
+            scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor, constant: -16)
+        ])
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+        tabBarController?.tabBar.isHidden = false
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+
+    private func addBrandHeader() {
+        let logo = UIView()
+        logo.backgroundColor = .white
+        logo.layer.cornerRadius = 12
+        logo.layer.shadowColor = UIColor(red: 13 / 255, green: 26 / 255, blue: 46 / 255, alpha: 0.09).cgColor
+        logo.layer.shadowOpacity = 1
+        logo.layer.shadowRadius = 11
+        logo.layer.shadowOffset = CGSize(width: 0, height: 8)
+        logo.widthAnchor.constraint(equalToConstant: 42).isActive = true
+        logo.heightAnchor.constraint(equalToConstant: 42).isActive = true
+        let letter = AppStyle.label("h", size: 26, weight: .bold, color: UIColor(red: 13 / 255, green: 138 / 255, blue: 229 / 255, alpha: 1))
+        letter.textAlignment = .center
+        logo.addSubview(letter)
+        letter.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            letter.centerXAnchor.constraint(equalTo: logo.centerXAnchor),
+            letter.centerYAnchor.constraint(equalTo: logo.centerYAnchor)
+        ])
+
+        let brand = UIStackView(arrangedSubviews: [
+            logo,
+            UIStackView(arrangedSubviews: [
+                AppStyle.label("hopes", size: 17, weight: .bold, color: UIColor(red: 14 / 255, green: 18 / 255, blue: 26 / 255, alpha: 1)),
+                AppStyle.label("광주소프트웨어마이스터고", size: 11, weight: .medium, color: UIColor(red: 107 / 255, green: 122 / 255, blue: 148 / 255, alpha: 1))
+            ])
+        ])
+        brand.axis = .horizontal
+        brand.alignment = .center
+        brand.spacing = 12
+        if let labels = brand.arrangedSubviews.last as? UIStackView {
+            labels.axis = .vertical
+            labels.spacing = 0
+        }
+
+        let newChat = UIButton(type: .system)
+        newChat.setTitle("새 대화", for: .normal)
+        newChat.setTitleColor(UIColor(red: 14 / 255, green: 18 / 255, blue: 26 / 255, alpha: 1), for: .normal)
+        newChat.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+        newChat.backgroundColor = .white
+        newChat.layer.cornerRadius = 14
+        newChat.layer.borderWidth = 1
+        newChat.layer.borderColor = UIColor(red: 214 / 255, green: 224 / 255, blue: 237 / 255, alpha: 1).cgColor
+        newChat.widthAnchor.constraint(equalToConstant: 70).isActive = true
+        newChat.heightAnchor.constraint(equalToConstant: 39).isActive = true
+        newChat.addAction(UIAction { [weak self] _ in
             self?.push(ChatConversationViewController(question: nil))
-        })
+        }, for: .touchUpInside)
+
+        let header = UIStackView(arrangedSubviews: [brand, UIView(), newChat])
+        header.axis = .horizontal
+        header.alignment = .center
+        contentStack.addArrangedSubview(header)
     }
 
-    private func openDepartmentPicker() {
-        let picker = DepartmentPickerViewController(selectedDepartment: selectedDepartment)
-        picker.onSelect = { [weak self] department in
-            guard let self else { return }
-            self.selectedDepartment = department
-            UserDefaults.standard.set(department, forKey: "chat.selectedDepartment")
-            self.departmentButton.setTitle("학과 · \(department)     ⌄", for: .normal)
-            self.renderRecommendedQuestions()
-        }
-        present(picker, animated: true)
+    private func makeCenterLogo() -> UIView {
+        let logo = UIView()
+        logo.backgroundColor = .white
+        logo.layer.cornerRadius = 18
+        logo.layer.shadowColor = UIColor(red: 13 / 255, green: 26 / 255, blue: 46 / 255, alpha: 0.09).cgColor
+        logo.layer.shadowOpacity = 1
+        logo.layer.shadowRadius = 11
+        logo.layer.shadowOffset = CGSize(width: 0, height: 8)
+        logo.widthAnchor.constraint(equalToConstant: 74).isActive = true
+        logo.heightAnchor.constraint(equalToConstant: 74).isActive = true
+        let letter = AppStyle.label("h", size: 40, weight: .bold, color: UIColor(red: 13 / 255, green: 138 / 255, blue: 229 / 255, alpha: 1))
+        letter.textAlignment = .center
+        logo.addSubview(letter)
+        letter.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            letter.centerXAnchor.constraint(equalTo: logo.centerXAnchor),
+            letter.centerYAnchor.constraint(equalTo: logo.centerYAnchor)
+        ])
+        let wrapper = UIView()
+        wrapper.addSubview(logo)
+        logo.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            logo.centerXAnchor.constraint(equalTo: wrapper.centerXAnchor),
+            logo.topAnchor.constraint(equalTo: wrapper.topAnchor),
+            logo.bottomAnchor.constraint(equalTo: wrapper.bottomAnchor)
+        ])
+        return wrapper
     }
 
-    private func openMajorPicker() {
-        let picker = MajorPickerViewController(selectedMajor: selectedMajor)
-        picker.onComplete = { [weak self] major in
-            guard let self else { return }
-            self.selectedMajor = major
-            if let major {
-                UserDefaults.standard.set(major, forKey: "chat.selectedMajor")
-            } else {
-                UserDefaults.standard.removeObject(forKey: "chat.selectedMajor")
-            }
-            self.majorButton.setTitle("전공 · \(major ?? "선택 안 함")     ⌄", for: .normal)
-            self.renderRecommendedQuestions()
-        }
-        present(picker, animated: true)
+    private func makeQuestionCard(symbol: String, question: String) -> UIView {
+        let icon = AppStyle.label(symbol, size: 14, weight: .bold, color: UIColor(red: 13 / 255, green: 138 / 255, blue: 229 / 255, alpha: 1))
+        icon.textAlignment = .center
+        icon.backgroundColor = UIColor(red: 229 / 255, green: 245 / 255, blue: 1, alpha: 1)
+        icon.layer.cornerRadius = 12
+        icon.clipsToBounds = true
+        icon.widthAnchor.constraint(equalToConstant: 38).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 38).isActive = true
+        let title = AppStyle.label(question, size: 15, weight: .semibold, color: UIColor(red: 14 / 255, green: 18 / 255, blue: 26 / 255, alpha: 1))
+        let content = UIStackView(arrangedSubviews: [icon, title])
+        content.axis = .horizontal
+        content.alignment = .center
+        content.spacing = 14
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 14)
+        let card = UIControl()
+        card.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor),
+            card.heightAnchor.constraint(equalToConstant: 70)
+        ])
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 18
+        card.layer.borderWidth = 1
+        card.layer.borderColor = UIColor(red: 214 / 255, green: 224 / 255, blue: 237 / 255, alpha: 1).cgColor
+        card.layer.shadowColor = UIColor(red: 13 / 255, green: 26 / 255, blue: 46 / 255, alpha: 0.09).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 11
+        card.layer.shadowOffset = CGSize(width: 0, height: 8)
+        card.addAction(UIAction { [weak self] _ in
+            self?.push(ChatConversationViewController(question: question))
+        }, for: .touchUpInside)
+        return card
     }
 
-    private func configureSelectionButton(_ button: UIButton, title: String) {
-        button.setTitle(title + "     ⌄", for: .normal)
-        button.setTitleColor(AppStyle.ink, for: .normal)
-        button.contentHorizontalAlignment = .leading
-        button.backgroundColor = .white
-        button.layer.cornerRadius = 14
-        button.layer.borderWidth = 1
-        button.layer.borderColor = AppStyle.line.cgColor
-        button.heightAnchor.constraint(equalToConstant: 52).isActive = true
+    private func configureComposer() {
+        composer.backgroundColor = .white
+        composer.layer.cornerRadius = 18
+        composer.layer.borderWidth = 1
+        composer.layer.borderColor = UIColor(red: 214 / 255, green: 224 / 255, blue: 237 / 255, alpha: 1).cgColor
+        composer.layer.shadowColor = UIColor(red: 13 / 255, green: 26 / 255, blue: 46 / 255, alpha: 0.09).cgColor
+        composer.layer.shadowOpacity = 1
+        composer.layer.shadowRadius = 11
+        composer.layer.shadowOffset = CGSize(width: 0, height: 8)
+        composer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(composer)
+
+        messageField.attributedPlaceholder = NSAttributedString(
+            string: "선배에게 메시지 보내기",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 14),
+                .foregroundColor: UIColor(red: 156 / 255, green: 171 / 255, blue: 194 / 255, alpha: 1)
+            ]
+        )
+        messageField.font = .systemFont(ofSize: 14)
+        messageField.textColor = UIColor(red: 14 / 255, green: 18 / 255, blue: 26 / 255, alpha: 1)
+        messageField.returnKeyType = .send
+        messageField.delegate = self
+        messageField.translatesAutoresizingMaskIntoConstraints = false
+        composer.addSubview(messageField)
+
+        let send = UIButton(type: .system)
+        send.setTitle("↑", for: .normal)
+        send.setTitleColor(.white, for: .normal)
+        send.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        send.backgroundColor = UIColor(red: 13 / 255, green: 138 / 255, blue: 229 / 255, alpha: 1)
+        send.layer.cornerRadius = 15
+        send.translatesAutoresizingMaskIntoConstraints = false
+        send.addAction(UIAction { [weak self] _ in self?.sendMessage() }, for: .touchUpInside)
+        composer.addSubview(send)
+
+        NSLayoutConstraint.activate([
+            composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            composer.heightAnchor.constraint(equalToConstant: 52),
+            messageField.leadingAnchor.constraint(equalTo: composer.leadingAnchor, constant: 14),
+            messageField.centerYAnchor.constraint(equalTo: composer.centerYAnchor),
+            messageField.trailingAnchor.constraint(equalTo: send.leadingAnchor, constant: -8),
+            send.trailingAnchor.constraint(equalTo: composer.trailingAnchor, constant: -14),
+            send.centerYAnchor.constraint(equalTo: composer.centerYAnchor),
+            send.widthAnchor.constraint(equalToConstant: 30),
+            send.heightAnchor.constraint(equalToConstant: 30)
+        ])
+        if let tabBar = tabBarController?.tabBar {
+            composer.bottomAnchor.constraint(equalTo: tabBar.topAnchor, constant: -10).isActive = true
+        } else {
+            composer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10).isActive = true
+        }
     }
 
-    private func renderRecommendedQuestions() {
-        recommendedHeader.text = "\(selectedDepartment) · \(selectedMajor ?? "전공") 추천 질문"
-        recommendedStack.arrangedSubviews.forEach { view in
-            recommendedStack.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-        questions.forEach { question in
-            let button = AppStyle.button(question) { [weak self] in
-                self?.push(ChatConversationViewController(question: question))
-            }
-            button.contentHorizontalAlignment = .leading
-            recommendedStack.addArrangedSubview(button)
-        }
+    private func sendMessage() {
+        let question = messageField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !question.isEmpty else { return }
+        push(ChatConversationViewController(question: question))
+    }
+}
+
+extension ChatHomeViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        sendMessage()
+        return true
     }
 }
 
