@@ -69,6 +69,21 @@ final class CommunityPostStore {
         myComments[index] = CommunityComment(postTitle: comment.postTitle, text: newText, time: comment.time)
     }
 
+    @discardableResult
+    func deleteComment(postTitle: String, text: String) -> Bool {
+        guard let index = myComments.firstIndex(where: { $0.postTitle == postTitle && $0.text == text }) else { return false }
+        myComments.remove(at: index)
+        posts = posts.map { post in
+            guard post.title == postTitle else { return post }
+            return CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: max(0, post.comments - 1), likes: post.likes, category: post.category)
+        }
+        myPosts = myPosts.map { post in
+            guard post.title == postTitle else { return post }
+            return CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: max(0, post.comments - 1), likes: post.likes, category: post.category)
+        }
+        return true
+    }
+
     func delete(_ post: CommunityPost) {
         posts.removeAll { $0.title == post.title && $0.body == post.body }
         myPosts.removeAll { $0.title == post.title && $0.body == post.body }
