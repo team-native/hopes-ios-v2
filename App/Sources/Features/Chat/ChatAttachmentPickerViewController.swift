@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewControllerDelegate, UIDocumentPickerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    var onAttachmentSelected: ((String) -> Void)?
+    var onAttachmentSelected: ((String, UIImage?) -> Void)?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,16 +68,16 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
             dismiss(animated: true)
             return
         }
-        provider.loadObject(ofClass: UIImage.self) { [weak self] _, _ in
+        provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
             DispatchQueue.main.async {
-                self?.finishSelection("사진")
+                self?.finishSelection("사진", image: object as? UIImage)
             }
         }
     }
 
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first else { return }
-        finishSelection(url.lastPathComponent)
+        finishSelection(url.lastPathComponent, image: nil)
     }
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
@@ -85,16 +85,16 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
     }
 
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        finishSelection("촬영한 사진")
+        finishSelection("촬영한 사진", image: info[.originalImage] as? UIImage)
     }
 
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true)
     }
 
-    private func finishSelection(_ name: String) {
+    private func finishSelection(_ name: String, image: UIImage?) {
         dismiss(animated: true) { [weak self] in
-            self?.onAttachmentSelected?(name)
+            self?.onAttachmentSelected?(name, image)
         }
     }
 
