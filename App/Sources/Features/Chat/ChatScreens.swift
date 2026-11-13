@@ -1,3 +1,4 @@
+import CoreLocation
 import UIKit
 import Network
 
@@ -141,13 +142,14 @@ final class QuestionListViewController: AppPageViewController {
 }
 
 @MainActor
-final class ChatConversationViewController: UIViewController, UITextFieldDelegate {
+final class ChatConversationViewController: UIViewController, UITextFieldDelegate, @preconcurrency CLLocationManagerDelegate {
     private let initialQuestion: String?
     private let scrollView = UIScrollView()
     private let messagesStack = UIStackView()
     private let inputField = UITextField()
     private let stopAnswerButton = UIButton(type: .system)
     private let networkMonitor = NWPathMonitor()
+    private let locationManager = CLLocationManager()
     private var isLiked = false
     private var generationTimer: DispatchWorkItem?
     private var pendingAnswerCard: UIView?
@@ -156,6 +158,9 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var pendingStatusRow: UIView?
     private var retryWhenOnline = false
     private var isOffline = false
+    private var locationCardTitle: UILabel?
+    private var locationCardSubtitle: UILabel?
+    private var locationProgress: UIProgressView?
 
     init(question: String?) {
         initialQuestion = question
@@ -167,6 +172,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppStyle.canvas
+        locationManager.delegate = self
         configureMessages()
         configureComposer()
         observeNetworkStatus()
@@ -680,12 +686,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
                 self.present(preview, animated: true)
             }
             picker.onLocationRequested = { [weak self] in
-                guard let self else { return }
-                let location = ChatLocationViewController()
-                location.onLocationSelected = { [weak self] value in
-                    self?.addMessage("위치 첨부: \(value)", outgoing: true)
-                }
-                self.present(location, animated: true)
+                self?.beginLocationMeasurement()
             }
             self.present(picker, animated: true)
         }, for: .touchUpInside)
@@ -715,6 +716,142 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor),
             inputField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
         ])
+    }
+
+    private func beginLocationMeasurement() {
+        addUserMessage("지금 내 위치 알려줘")
+        messagesStack.addArrangedSubview(makeLocationMeasurementCard())
+        scrollToLatestMessage()
+
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse:
+            locationManager.requestLocation()
+        case .denied, .restricted:
+            updateLocationMeasurement(
+                title: "위치 권한이 필요해요",
+                subtitle: "설정에서 위치 접근을 허용한 뒤 다시 시도해 주세요.",
+                progress: 1
+            )
+        @unknown default:
+            updateLocationMeasurement(
+                title: "위치를 확인할 수 없어요",
+                subtitle: "위치 설정을 확인한 뒤 다시 시도해 주세요.",
+                progress: 1
+            )
+        }
+    }
+
+    private func makeLocationMeasurementCard() -> UIView {
+        let card = AppStyle.card()
+        card.layer.cornerRadius = 24
+        card.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.08).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 14
+        card.layer.shadowOffset = CGSize(width: 0, height: 6)
+
+        let iconContainer = UIView()
+        iconContainer.backgroundColor = AppStyle.paleBlue
+        iconContainer.layer.cornerRadius = 12
+        iconContainer.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        iconContainer.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        let pinPath = Bundle.main.path(forResource: "chat-location-pin", ofType: "png")
+        let pin = UIImageView(image: pinPath.flatMap(UIImage.init(contentsOfFile:)))
+        pin.contentMode = .scaleAspectFit
+        pin.translatesAutoresizingMaskIntoConstraints = false
+        iconContainer.addSubview(pin)
+        NSLayoutConstraint.activate([
+            pin.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
+            pin.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
+            pin.widthAnchor.constraint(equalToConstant: 24),
+            pin.heightAnchor.constraint(equalToConstant: 24)
+        ])
+
+        let title = AppStyle.label("현재 위치를 확인하고 있어요…", size: 15, weight: .medium)
+        let subtitle = AppStyle.label("잠시만 기다려 주세요. 보통 몇 초면 끝나요.", size: 12, color: AppStyle.muted)
+        subtitle.numberOfLines = 1
+        let labels = UIStackView(arrangedSubviews: [title, subtitle])
+        labels.axis = .vertical
+        labels.spacing = 2
+        let row = UIStackView(arrangedSubviews: [iconContainer, labels])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 10
+
+        let progress = UIProgressView(progressViewStyle: .default)
+        progress.progress = 0.42
+        progress.progressTintColor = AppStyle.blue
+        progress.trackTintColor = UIColor(red: 0.90, green: 0.94, blue: 0.99, alpha: 1)
+        progress.layer.cornerRadius = 3
+        progress.clipsToBounds = true
+        progress.heightAnchor.constraint(equalToConstant: 6).isActive = true
+
+        let content = UIStackView(arrangedSubviews: [row, progress])
+        content.axis = .vertical
+        content.spacing = 10
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+
+        locationCardTitle = title
+        locationCardSubtitle = subtitle
+        locationProgress = progress
+        return card
+    }
+
+    private func updateLocationMeasurement(title: String, subtitle: String, progress: Float) {
+        locationCardTitle?.text = title
+        locationCardSubtitle?.text = subtitle
+        locationProgress?.setProgress(progress, animated: true)
+        scrollToLatestMessage()
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            manager.requestLocation()
+        case .denied, .restricted:
+            updateLocationMeasurement(
+                title: "위치 권한이 필요해요",
+                subtitle: "설정에서 위치 접근을 허용한 뒤 다시 시도해 주세요.",
+                progress: 1
+            )
+        default:
+            break
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard locations.last != nil else { return }
+        updateLocationMeasurement(
+            title: "현재 위치를 확인했어요",
+            subtitle: "위치 정보가 질문에 첨부됐어요.",
+            progress: 1
+        )
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        updateLocationMeasurement(
+            title: "위치를 확인하지 못했어요",
+            subtitle: "잠시 후 다시 시도해 주세요.",
+            progress: 1
+        )
+    }
+
+    private func scrollToLatestMessage() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            let bottom = CGPoint(x: 0, y: max(0, self.scrollView.contentSize.height - self.scrollView.bounds.height))
+            self.scrollView.setContentOffset(bottom, animated: true)
+        }
     }
 
     private func addMessage(_ text: String, outgoing: Bool) {
