@@ -13,15 +13,13 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         Conversation(title: "기숙사 하루 일과가 어떻게 돼?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
         Conversation(title: "기숙사 방 배정은 어떻게 돼?", time: "3일 전", department: "소프트웨어개발과", olderThanWeek: false),
         Conversation(title: "전공 선택은 어떻게 하는 게 좋아?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
-        Conversation(title: "동아리는 언제 정해?", time: "지난주", department: "소프트웨어개발과", olderThanWeek: true),
+        Conversation(title: "동아리는 언제 정해?", time: "지난주", department: "소프트웨어개발과", olderThanWeek: false),
         Conversation(title: "입학하려면 뭘 준비해야 해?", time: "10월 28일", department: "소프트웨어개발과", olderThanWeek: true),
         Conversation(title: "과랑 전공이랑 뭐가 달라?", time: "10월 21일", department: "소프트웨어개발과", olderThanWeek: true),
         Conversation(title: "후배한테 해주고 싶은 조언 있어?", time: "10월 18일", department: "소프트웨어개발과", olderThanWeek: true)
     ]
 
     private let searchField = UITextField()
-    private let periodControl = UISegmentedControl(items: ["지난 7일", "이전"])
-    private let resultsCountLabel = AppStyle.label("", size: 14, color: AppStyle.muted)
     private let resultsStack = UIStackView()
     private let clearSearchButton = UIButton(type: .system)
     private var newConversationButton: UIView?
@@ -30,7 +28,9 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "기록"
-        contentStack.spacing = 14
+        view.backgroundColor = UIColor(red: 0.965, green: 0.976, blue: 0.988, alpha: 1)
+        contentStack.spacing = 16
+        contentStack.setCustomSpacing(24, after: resultsStack)
         if conversations.isEmpty {
             navigationController?.setNavigationBarHidden(true, animated: false)
             addEmptyHistoryState()
@@ -38,20 +38,34 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         }
 
         addHeading("지난 대화", subtitle: "이전 대화를 이어서 볼 수 있어요.")
+        if let heading = contentStack.arrangedSubviews.first as? UIStackView,
+           let title = heading.arrangedSubviews.first as? UILabel {
+            title.font = .systemFont(ofSize: 28, weight: .bold)
+            title.textColor = AppStyle.ink
+        }
+        if let heading = contentStack.arrangedSubviews.first as? UIStackView,
+           heading.arrangedSubviews.count > 1,
+           let subtitle = heading.arrangedSubviews[1] as? UILabel {
+            subtitle.font = .systemFont(ofSize: 14, weight: .medium)
+        }
         addSearchField()
 
-        periodControl.selectedSegmentIndex = 0
-        periodControl.addAction(UIAction { [weak self] _ in self?.renderConversations() }, for: .valueChanged)
-        contentStack.addArrangedSubview(periodControl)
-        contentStack.addArrangedSubview(resultsCountLabel)
-
         resultsStack.axis = .vertical
+        resultsStack.spacing = 16
         contentStack.addArrangedSubview(resultsStack)
         renderConversations()
 
         let newConversation = AppStyle.button("새 대화 시작", primary: true) { [weak self] in
             self?.tabBarController?.selectedIndex = 1
         }
+        var buttonConfiguration = UIButton.Configuration.filled()
+        buttonConfiguration.title = "새 대화 시작"
+        buttonConfiguration.baseBackgroundColor = AppStyle.blue
+        buttonConfiguration.baseForegroundColor = .white
+        buttonConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20)
+        newConversation.configuration = buttonConfiguration
+        newConversation.layer.cornerRadius = 12
+        newConversation.clipsToBounds = true
         newConversationButton = newConversation
         contentStack.addArrangedSubview(newConversation)
     }
@@ -155,7 +169,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         container.backgroundColor = .white
         container.layer.cornerRadius = 24
         container.layer.borderWidth = 1
-        container.layer.borderColor = UIColor(red: 0.66, green: 0.80, blue: 0.98, alpha: 1).cgColor
+        container.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
         container.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.10).cgColor
         container.layer.shadowOpacity = 1
         container.layer.shadowRadius = 8
@@ -183,16 +197,9 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         let query = searchField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let isSearching = !query.isEmpty
         clearSearchButton.isHidden = !isSearching
-        periodControl.isHidden = isSearching
         newConversationButton?.isHidden = isSearching
 
-        let isOlderSelected = periodControl.selectedSegmentIndex == 1
-        let filtered = conversations.filter { conversation in
-            (isSearching || conversation.olderThanWeek == isOlderSelected)
-                && (query.isEmpty || conversation.title.localizedCaseInsensitiveContains(query))
-        }
-        resultsCountLabel.isHidden = isSearching && filtered.isEmpty
-        resultsCountLabel.text = isSearching ? "검색 결과 \(filtered.count)개" : "지난 대화 \(filtered.count)개"
+        let filtered = conversations.filter { query.isEmpty || $0.title.localizedCaseInsensitiveContains(query) }
         guard !filtered.isEmpty else {
             if isSearching {
                 resultsStack.addArrangedSubview(makeNoSearchResultsState())
@@ -201,7 +208,13 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
             }
             return
         }
-        addConversationCard(filtered, query: query)
+        if isSearching {
+            addConversationCard(filtered, query: query)
+            return
+        }
+
+        addConversationSection("지난 7일", conversations: filtered.filter { !$0.olderThanWeek }, query: query)
+        addConversationSection("이전", conversations: filtered.filter(\.olderThanWeek), query: query)
     }
 
     private func makeNoSearchResultsState() -> UIView {
@@ -248,7 +261,22 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         return container
     }
 
+    private func addConversationSection(_ title: String, conversations: [Conversation], query: String) {
+        guard !conversations.isEmpty else { return }
+        let section = UIStackView()
+        section.axis = .vertical
+        section.spacing = 8
+        let heading = AppStyle.label(title, size: 14, weight: .medium, color: UIColor(red: 0.42, green: 0.47, blue: 0.56, alpha: 1))
+        section.addArrangedSubview(heading)
+        section.addArrangedSubview(makeConversationCard(conversations, query: query))
+        resultsStack.addArrangedSubview(section)
+    }
+
     private func addConversationCard(_ conversations: [Conversation], query: String) {
+        resultsStack.addArrangedSubview(makeConversationCard(conversations, query: query))
+    }
+
+    private func makeConversationCard(_ conversations: [Conversation], query: String) -> UIView {
         let card = UIView()
         card.backgroundColor = .white
         card.layer.cornerRadius = 24
@@ -265,10 +293,10 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         rows.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(rows)
         NSLayoutConstraint.activate([
-            rows.topAnchor.constraint(equalTo: card.topAnchor, constant: 4),
-            rows.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            rows.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -4)
+            rows.topAnchor.constraint(equalTo: card.topAnchor, constant: 2),
+            rows.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 17),
+            rows.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -17),
+            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -2)
         ])
 
         for (index, conversation) in conversations.enumerated() {
@@ -281,23 +309,21 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
                 rows.addArrangedSubview(divider)
             }
         }
-        resultsStack.addArrangedSubview(card)
+        return card
     }
 
     private func makeConversationRow(_ conversation: Conversation, query: String) -> ConversationRowView {
         let title = UILabel()
         title.attributedText = highlightedTitle(conversation.title, query: query)
         title.numberOfLines = 1
-        let subtitle = AppStyle.label("\(conversation.time) · \(conversation.department)", size: 12, color: UIColor(red: 0.60, green: 0.65, blue: 0.73, alpha: 1))
-        subtitle.numberOfLines = 1
-        let labels = UIStackView(arrangedSubviews: [title, subtitle])
-        labels.axis = .vertical
-        labels.spacing = 4
+        title.font = .systemFont(ofSize: 15)
+        title.textColor = AppStyle.ink
+        title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let chevron = UIImageView(image: image(named: "history-chevron"))
         chevron.contentMode = .scaleAspectFit
-        chevron.widthAnchor.constraint(equalToConstant: 12).isActive = true
-        chevron.heightAnchor.constraint(equalToConstant: 12).isActive = true
-        let content = UIStackView(arrangedSubviews: [labels, chevron])
+        chevron.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        chevron.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        let content = UIStackView(arrangedSubviews: [title, chevron])
         content.axis = .horizontal
         content.alignment = .center
         content.spacing = 12
