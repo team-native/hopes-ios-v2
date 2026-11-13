@@ -5,7 +5,8 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     private let titleField = UITextField()
     private let bodyView = UITextView()
     private let bodyPlaceholder = "내용을 입력하세요"
-    private let selectedBoard = "10기"
+    private var selectedBoard = "10기"
+    private let boardValue = AppStyle.label("10기", size: 15, weight: .medium)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,26 +38,46 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         contentStack.addArrangedSubview(makePrivacyNotice())
     }
 
-    private func makeBoardRow() -> UIView {
+    private func makeBoardRow() -> UIButton {
         let label = AppStyle.label("게시판", size: 14, weight: .medium, color: AppStyle.muted)
-        let value = AppStyle.label(selectedBoard, size: 15, weight: .medium)
         let chevron = UIImageView(image: UIImage(systemName: "chevron.down"))
         chevron.tintColor = AppStyle.muted
         chevron.contentMode = .scaleAspectFit
         chevron.widthAnchor.constraint(equalToConstant: 16).isActive = true
         chevron.heightAnchor.constraint(equalToConstant: 16).isActive = true
 
-        let row = UIStackView(arrangedSubviews: [label, UIView(), value, chevron])
+        let row = UIStackView(arrangedSubviews: [label, UIView(), boardValue, chevron])
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 8
         row.isLayoutMarginsRelativeArrangement = true
         row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16)
-        row.backgroundColor = .white
-        row.layer.cornerRadius = 16
-        row.layer.borderWidth = 1
-        row.layer.borderColor = AppStyle.line.cgColor
-        return row
+        let button = UIButton(type: .custom)
+        button.addSubview(row)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            row.topAnchor.constraint(equalTo: button.topAnchor),
+            row.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            row.bottomAnchor.constraint(equalTo: button.bottomAnchor),
+            button.heightAnchor.constraint(equalToConstant: 54)
+        ])
+        button.backgroundColor = .white
+        button.layer.cornerRadius = 16
+        button.layer.borderWidth = 1
+        button.layer.borderColor = AppStyle.line.cgColor
+        button.addAction(UIAction { [weak self] _ in self?.presentBoardPicker() }, for: .touchUpInside)
+        return button
+    }
+
+    private func presentBoardPicker() {
+        view.endEditing(true)
+        let picker = CommunityBoardPickerViewController(selectedBoard: selectedBoard)
+        picker.onSelect = { [weak self] board in
+            self?.selectedBoard = board
+            self?.boardValue.text = board
+        }
+        present(picker, animated: true)
     }
 
     private func configureTitleField() {
@@ -128,7 +149,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
             showMessage("제목과 내용을 입력해주세요")
             return
         }
-        CommunityPostStore.shared.add(title: titleText, body: bodyText, category: "질문", anonymous: false)
+        CommunityPostStore.shared.add(title: titleText, body: bodyText, category: "질문", grade: selectedBoard)
         view.endEditing(true)
         navigationController?.popViewController(animated: true)
     }

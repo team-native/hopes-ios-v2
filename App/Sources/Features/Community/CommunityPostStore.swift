@@ -27,9 +27,9 @@ final class CommunityPostStore {
 
     private init() {}
 
-    func add(title: String, body: String, category: String, anonymous: Bool) {
+    func add(title: String, body: String, category: String, grade: String) {
         let newPost = CommunityPost(
-            grade: anonymous ? "익명" : "10기",
+            grade: grade,
             title: title,
             body: body,
             time: "방금 전",
