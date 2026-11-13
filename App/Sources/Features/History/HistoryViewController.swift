@@ -24,6 +24,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     private let resultsCountLabel = AppStyle.label("", size: 14, color: AppStyle.muted)
     private let resultsStack = UIStackView()
     private let clearSearchButton = UIButton(type: .system)
+    private var newConversationButton: UIView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,9 +48,11 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         contentStack.addArrangedSubview(resultsStack)
         renderConversations()
 
-        contentStack.addArrangedSubview(AppStyle.button("새 대화 시작", primary: true) { [weak self] in
+        let newConversation = AppStyle.button("새 대화 시작", primary: true) { [weak self] in
             self?.tabBarController?.selectedIndex = 1
-        })
+        }
+        newConversationButton = newConversation
+        contentStack.addArrangedSubview(newConversation)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -180,18 +183,68 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         let isSearching = !query.isEmpty
         clearSearchButton.isHidden = !isSearching
         periodControl.isHidden = isSearching
+        newConversationButton?.isHidden = isSearching
 
         let isOlderSelected = periodControl.selectedSegmentIndex == 1
         let filtered = conversations.filter { conversation in
             (isSearching || conversation.olderThanWeek == isOlderSelected)
                 && (query.isEmpty || conversation.title.localizedCaseInsensitiveContains(query))
         }
+        resultsCountLabel.isHidden = isSearching && filtered.isEmpty
         resultsCountLabel.text = isSearching ? "검색 결과 \(filtered.count)개" : "지난 대화 \(filtered.count)개"
         guard !filtered.isEmpty else {
-            resultsStack.addArrangedSubview(AppStyle.label("대화 기록이 없어요", size: 14, color: AppStyle.muted))
+            if isSearching {
+                resultsStack.addArrangedSubview(makeNoSearchResultsState())
+            } else {
+                resultsStack.addArrangedSubview(AppStyle.label("대화 기록이 없어요", size: 14, color: AppStyle.muted))
+            }
             return
         }
         addConversationCard(filtered, query: query)
+    }
+
+    private func makeNoSearchResultsState() -> UIView {
+        let illustration = UIView()
+        illustration.backgroundColor = .white
+        illustration.layer.cornerRadius = 44
+        illustration.layer.borderWidth = 1
+        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        illustration.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.10).cgColor
+        illustration.layer.shadowOpacity = 1
+        illustration.layer.shadowRadius = 14
+        illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
+        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
+        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
+
+        let icon = UIImageView(image: image(named: "history-search-empty"))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        illustration.addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 36),
+            icon.heightAnchor.constraint(equalToConstant: 36)
+        ])
+
+        let title = AppStyle.label("검색 결과가 없어요", size: 18, weight: .medium)
+        title.textAlignment = .center
+        let subtitle = AppStyle.label("다른 단어로 검색해 보세요.", size: 14, color: AppStyle.muted)
+        subtitle.textAlignment = .center
+        let content = UIStackView(arrangedSubviews: [illustration, title, subtitle])
+        content.axis = .vertical
+        content.alignment = .center
+        content.spacing = 12
+
+        let container = UIView()
+        container.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.55),
+            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+        return container
     }
 
     private func addConversationCard(_ conversations: [Conversation], query: String) {
