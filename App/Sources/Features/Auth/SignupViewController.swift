@@ -89,7 +89,17 @@ final class SignupViewController: AppPageViewController {
             showMessage("입력 항목과 약관 동의를 확인해주세요")
             return
         }
-        let alert = UIAlertController(title: "가입 신청 완료", message: "계정 생성 API 연결 전 임시 완료 상태예요. 로그인 화면으로 돌아갑니다.", preferredStyle: .alert)
+        let verification = EmailVerificationViewController(email: email)
+        verification.onVerified = { [weak self] in self?.completeSignup() }
+        push(verification)
+    }
+
+    private func completeSignup() {
+        let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let email = emailField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard let selectedDepartment else { return }
+        UserProfileStore.shared.update(name: name, department: selectedDepartment, email: email)
+        let alert = UIAlertController(title: "가입 신청 완료", message: "가입 API 연결 전 임시 완료 상태예요. Hopes를 시작해볼까요?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
             self?.navigationController?.setViewControllers([OnboardingViewController()], animated: true)
         })
