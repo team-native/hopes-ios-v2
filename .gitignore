@@ -1,0 +1,8 @@
+# Tuist and Xcode
+.DS_Store
+Derived/
+.build/
+.tuist-cache/
+.tuist-bin/
+*.xcodeproj/
+*.xcworkspace/
