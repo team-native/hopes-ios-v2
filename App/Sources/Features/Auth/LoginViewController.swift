@@ -63,7 +63,7 @@ final class LoginViewController: AppPageViewController {
         forgot.setTitleColor(AppStyle.muted, for: .normal)
         forgot.titleLabel?.font = .systemFont(ofSize: 13)
         forgot.addAction(UIAction { [weak self] _ in
-            self?.showMessage("비밀번호 재설정 화면은 다음 인증 화면 이슈에서 연결할게요")
+            self?.push(PasswordResetViewController())
         }, for: .touchUpInside)
         options.addArrangedSubview(forgot)
         form.addArrangedSubview(options)
