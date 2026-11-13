@@ -17,6 +17,7 @@ final class CommunityPostDetailViewController: AppPageViewController {
     private var titleLabel: UILabel?
     private var bodyLabel: UILabel?
     private var commentCountLabel: UILabel?
+    private var shouldSimulateCommentFailure = true
 
     init(post: CommunityPost, isMine: Bool = false) {
         self.post = post
@@ -210,6 +211,43 @@ final class CommunityPostDetailViewController: AppPageViewController {
         commentStack.addArrangedSubview(stack)
     }
 
+    private func addFailedComment(text: String) -> UIStackView {
+        let author = AppStyle.label("10기 (나)", size: 12, weight: .medium, color: AppStyle.blue)
+        let status = AppStyle.label("· 전송 실패", size: 12, color: AppStyle.muted)
+        let retry = UIButton(type: .system)
+        retry.setTitle("· 다시 시도", for: .normal)
+        retry.setTitleColor(AppStyle.muted, for: .normal)
+        retry.titleLabel?.font = .systemFont(ofSize: 12)
+        let more = AppStyle.label("···", size: 14, color: AppStyle.muted)
+        let header = UIStackView(arrangedSubviews: [author, status, retry, UIView(), more])
+        header.axis = .horizontal
+        header.alignment = .center
+        header.spacing = 4
+
+        let textLabel = AppStyle.label(text, size: 14, color: UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1))
+        let card = UIStackView(arrangedSubviews: [header, textLabel])
+        card.axis = .vertical
+        card.spacing = 6
+        card.backgroundColor = .white
+        card.isLayoutMarginsRelativeArrangement = true
+        card.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 13, leading: 14, bottom: 13, trailing: 14)
+        commentStack.addArrangedSubview(card)
+        retry.addAction(UIAction { [weak self, weak card] _ in
+            guard let self, let card else { return }
+            self.retryFailedComment(text: text, card: card)
+        }, for: .touchUpInside)
+        return card
+    }
+
+    private func retryFailedComment(text: String, card: UIStackView) {
+        commentStack.removeArrangedSubview(card)
+        card.removeFromSuperview()
+        addComment(author: "나", text: text)
+        CommunityPostStore.shared.addComment(postTitle: post.title, text: text)
+        post = CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: post.comments + 1, likes: post.likes, category: post.category)
+        commentCountLabel?.text = "댓글 \(post.comments)"
+    }
+
     private func configureCommentEditState() {
         commentEditState.axis = .horizontal
         commentEditState.alignment = .center
@@ -301,8 +339,18 @@ final class CommunityPostDetailViewController: AppPageViewController {
             cancelCommentEdit()
             return
         }
+        if shouldSimulateCommentFailure {
+            // The prototype has no comment API yet; this reproduces a transient send failure once per detail session.
+            shouldSimulateCommentFailure = false
+            _ = addFailedComment(text: text)
+            commentField.text = nil
+            view.endEditing(true)
+            return
+        }
         addComment(author: "나", text: text)
         CommunityPostStore.shared.addComment(postTitle: post.title, text: text)
+        post = CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time, comments: post.comments + 1, likes: post.likes, category: post.category)
+        commentCountLabel?.text = "댓글 \(post.comments)"
         commentField.text = nil
         view.endEditing(true)
     }
