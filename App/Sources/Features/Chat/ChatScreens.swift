@@ -3,17 +3,24 @@ import UIKit
 @MainActor
 final class ChatHomeViewController: AppPageViewController {
     private var selectedDepartment = UserDefaults.standard.string(forKey: "chat.selectedDepartment") ?? "소프트웨어개발과"
+    private var selectedMajor: String? = UserDefaults.standard.string(forKey: "chat.selectedMajor") ?? "Frontend"
     private let departmentButton = UIButton(type: .system)
-    private let questions = [
-        "학교에 입학하기 전에 준비하면 좋은 것은?",
-        "전공 수업은 어떤 방식으로 진행되나요?",
-        "기숙사 생활에서 가장 좋은 점은 무엇인가요?"
-    ]
+    private let majorButton = UIButton(type: .system)
+    private let recommendedHeader = AppStyle.label("", size: 18, weight: .bold)
+    private let recommendedStack = UIStackView()
+    private var questions: [String] {
+        [
+            "기숙사 하루 일과가 어떻게 돼?",
+            "입학하려면 뭘 준비해야 해?",
+            "\(selectedMajor ?? "전공")은 뭐부터 공부하면 좋아?",
+            "후배한테 해주고 싶은 조언 있어?"
+        ]
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "채팅"
-        addHeading("궁금한 점을 물어보세요", subtitle: "학과를 고르면 질문을 추천해드려요")
+        addHeading("무엇이 궁금한가요?", subtitle: "학과와 전공에 맞는 질문을 추천해드려요")
 
         addSection("학과")
         departmentButton.setTitle("학과 · \(selectedDepartment)     ⌄", for: .normal)
@@ -26,17 +33,20 @@ final class ChatHomeViewController: AppPageViewController {
         departmentButton.heightAnchor.constraint(equalToConstant: 52).isActive = true
         departmentButton.addAction(UIAction { [weak self] _ in self?.openDepartmentPicker() }, for: .touchUpInside)
         contentStack.addArrangedSubview(departmentButton)
+        addSection("전공")
+        configureSelectionButton(majorButton, title: "전공 · \(selectedMajor ?? "선택 안 함")")
+        majorButton.addAction(UIAction { [weak self] _ in self?.openMajorPicker() }, for: .touchUpInside)
+        contentStack.addArrangedSubview(majorButton)
         addRow("\(selectedDepartment) 선배 질문 보기", symbol: "chevron.right") { [weak self] in
             guard let self else { return }
             self.push(QuestionListViewController(category: self.selectedDepartment))
         }
 
-        addSection("추천 질문")
-        questions.forEach { question in
-            addRow(question, symbol: "bubble.left") { [weak self] in
-                self?.push(ChatConversationViewController(question: question))
-            }
-        }
+        contentStack.addArrangedSubview(recommendedHeader)
+        recommendedStack.axis = .vertical
+        recommendedStack.spacing = 10
+        contentStack.addArrangedSubview(recommendedStack)
+        renderRecommendedQuestions()
 
         contentStack.addArrangedSubview(AppStyle.button("새 대화 시작", primary: true) { [weak self] in
             self?.push(ChatConversationViewController(question: nil))
@@ -50,8 +60,51 @@ final class ChatHomeViewController: AppPageViewController {
             self.selectedDepartment = department
             UserDefaults.standard.set(department, forKey: "chat.selectedDepartment")
             self.departmentButton.setTitle("학과 · \(department)     ⌄", for: .normal)
+            self.renderRecommendedQuestions()
         }
         present(picker, animated: true)
+    }
+
+    private func openMajorPicker() {
+        let picker = MajorPickerViewController(selectedMajor: selectedMajor)
+        picker.onComplete = { [weak self] major in
+            guard let self else { return }
+            self.selectedMajor = major
+            if let major {
+                UserDefaults.standard.set(major, forKey: "chat.selectedMajor")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "chat.selectedMajor")
+            }
+            self.majorButton.setTitle("전공 · \(major ?? "선택 안 함")     ⌄", for: .normal)
+            self.renderRecommendedQuestions()
+        }
+        present(picker, animated: true)
+    }
+
+    private func configureSelectionButton(_ button: UIButton, title: String) {
+        button.setTitle(title + "     ⌄", for: .normal)
+        button.setTitleColor(AppStyle.ink, for: .normal)
+        button.contentHorizontalAlignment = .leading
+        button.backgroundColor = .white
+        button.layer.cornerRadius = 14
+        button.layer.borderWidth = 1
+        button.layer.borderColor = AppStyle.line.cgColor
+        button.heightAnchor.constraint(equalToConstant: 52).isActive = true
+    }
+
+    private func renderRecommendedQuestions() {
+        recommendedHeader.text = "\(selectedDepartment) · \(selectedMajor ?? "전공") 추천 질문"
+        recommendedStack.arrangedSubviews.forEach { view in
+            recommendedStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+        questions.forEach { question in
+            let button = AppStyle.button(question) { [weak self] in
+                self?.push(ChatConversationViewController(question: question))
+            }
+            button.contentHorizontalAlignment = .leading
+            recommendedStack.addArrangedSubview(button)
+        }
     }
 }
 
