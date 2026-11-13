@@ -1,76 +1,115 @@
 import UIKit
 
 @MainActor
-final class EditProfileViewController: AppPageViewController {
+final class EditProfileViewController: AppPageViewController, UITextFieldDelegate, UITextViewDelegate {
     private let nameField = UITextField()
-    private let emailField = UITextField()
-    private let departmentButton = UIButton(type: .system)
-    private var department: String
-
-    init() {
-        department = UserProfileStore.shared.department
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    private let introductionView = UITextView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "프로필 수정"
-        addHeading("프로필 수정", subtitle: "학교생활에 필요한 정보를 관리해요")
+        title = nil
+        hidesBottomBarWhenPushed = true
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        contentStack.spacing = 14
+        addHeader()
+        addProfileForm()
 
-        addField("이름", field: nameField, value: UserProfileStore.shared.name)
-        addField("이메일", field: emailField, value: UserProfileStore.shared.email, keyboard: .emailAddress)
-        contentStack.addArrangedSubview(AppStyle.label("학과", size: 14, weight: .semibold))
-        departmentButton.setTitle(department + "  ⌄", for: .normal)
-        departmentButton.setTitleColor(AppStyle.ink, for: .normal)
-        departmentButton.contentHorizontalAlignment = .leading
-        departmentButton.backgroundColor = .white
-        departmentButton.layer.cornerRadius = 12
-        departmentButton.layer.borderWidth = 1
-        departmentButton.layer.borderColor = AppStyle.line.cgColor
-        departmentButton.heightAnchor.constraint(equalToConstant: 48).isActive = true
-        departmentButton.addAction(UIAction { [weak self] _ in self?.chooseDepartment() }, for: .touchUpInside)
-        contentStack.addArrangedSubview(departmentButton)
+        let saveButton = AppStyle.button("저장", primary: true) { [weak self] in self?.save() }
+        saveButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        contentStack.addArrangedSubview(saveButton)
 
-        contentStack.addArrangedSubview(AppStyle.button("저장하기", primary: true) { [weak self] in self?.save() })
+        DispatchQueue.main.async { [weak self] in
+            self?.introductionView.becomeFirstResponder()
+        }
     }
 
-    private func addField(_ title: String, field: UITextField, value: String, keyboard: UIKeyboardType = .default) {
-        contentStack.addArrangedSubview(AppStyle.label(title, size: 14, weight: .semibold))
-        field.text = value
-        field.keyboardType = keyboard
-        field.autocapitalizationType = .none
-        field.borderStyle = .roundedRect
-        field.heightAnchor.constraint(equalToConstant: 48).isActive = true
-        contentStack.addArrangedSubview(field)
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
-    private func chooseDepartment() {
-        let sheet = UIAlertController(title: "학과 선택", message: nil, preferredStyle: .actionSheet)
-        ["소프트웨어과", "인공지능과", "게임과", "스마트IoT과"].forEach { value in
-            sheet.addAction(UIAlertAction(title: value, style: .default) { [weak self] _ in
-                guard let self else { return }
-                self.department = value
-                self.departmentButton.setTitle(value + "  ⌄", for: .normal)
-            })
-        }
-        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = departmentButton
-            popover.sourceRect = departmentButton.bounds
-        }
-        present(sheet, animated: true)
+    private func addHeader() {
+        let backButton = UIButton(type: .system)
+        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        backButton.tintColor = AppStyle.ink
+        backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        backButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        backButton.addAction(UIAction { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        }, for: .touchUpInside)
+
+        let title = AppStyle.label("프로필 수정", size: 18, weight: .medium)
+        let subtitle = AppStyle.label("마이페이지 > 프로필 수정", size: 12, color: AppStyle.muted)
+        let labels = UIStackView(arrangedSubviews: [title, subtitle])
+        labels.axis = .vertical
+        let header = UIStackView(arrangedSubviews: [backButton, labels])
+        header.axis = .horizontal
+        header.alignment = .center
+        header.spacing = 12
+        contentStack.addArrangedSubview(header)
+    }
+
+    private func addProfileForm() {
+        let card = AppStyle.card()
+        card.layer.cornerRadius = 24
+        let nameLabel = AppStyle.label("이름", size: 14, color: AppStyle.muted)
+        nameField.text = UserProfileStore.shared.name
+        nameField.font = .systemFont(ofSize: 15)
+        nameField.textColor = AppStyle.ink
+        nameField.borderStyle = .none
+        nameField.layer.cornerRadius = 16
+        nameField.layer.borderWidth = 1
+        nameField.layer.borderColor = AppStyle.line.cgColor
+        nameField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 14, height: 1))
+        nameField.leftViewMode = .always
+        nameField.heightAnchor.constraint(equalToConstant: 54).isActive = true
+
+        let introductionLabel = AppStyle.label("자기소개 (AI 응답 개인화에 활용돼요)", size: 14, color: AppStyle.muted)
+        introductionView.text = UserProfileStore.shared.introduction
+        introductionView.font = .systemFont(ofSize: 15)
+        introductionView.textColor = AppStyle.ink
+        introductionView.backgroundColor = .white
+        introductionView.layer.cornerRadius = 16
+        introductionView.layer.borderWidth = 1.5
+        introductionView.layer.borderColor = AppStyle.blue.withAlphaComponent(0.5).cgColor
+        introductionView.textContainerInset = UIEdgeInsets(top: 14, left: 12, bottom: 12, right: 12)
+        introductionView.heightAnchor.constraint(equalToConstant: 94).isActive = true
+        introductionView.delegate = self
+
+        let fields = UIStackView(arrangedSubviews: [nameLabel, nameField, introductionLabel, introductionView])
+        fields.axis = .vertical
+        fields.spacing = 10
+        fields.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(fields)
+        NSLayoutConstraint.activate([
+            fields.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
+            fields.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            fields.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            fields.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+        ])
+        contentStack.addArrangedSubview(card)
+    }
+
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        textView.layer.borderColor = AppStyle.blue.withAlphaComponent(0.55).cgColor
+    }
+
+    func textViewDidEndEditing(_ textView: UITextView) {
+        textView.layer.borderColor = AppStyle.line.cgColor
     }
 
     private func save() {
         let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let email = emailField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !name.isEmpty, email.contains("@") else {
-            showMessage("이름과 이메일을 확인해주세요")
+        guard !name.isEmpty else {
+            showMessage("이름을 입력해주세요")
             return
         }
-        UserProfileStore.shared.update(name: name, department: department, email: email)
+        UserProfileStore.shared.update(
+            name: name,
+            department: UserProfileStore.shared.department,
+            email: UserProfileStore.shared.email,
+            introduction: introductionView.text
+        )
         navigationController?.popViewController(animated: true)
     }
 }
