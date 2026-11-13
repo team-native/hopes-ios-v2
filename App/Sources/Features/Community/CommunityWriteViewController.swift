@@ -181,7 +181,25 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         setTitleError(false)
     }
 
-    @objc private func cancel() { navigationController?.popViewController(animated: true) }
+    @objc private func cancel() {
+        let hasDraft = !(titleField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || (!bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && bodyView.text != bodyPlaceholder)
+        guard hasDraft else {
+            navigationController?.popViewController(animated: true)
+            return
+        }
+
+        let alert = UIAlertController(
+            title: "작성을 그만둘까요?",
+            message: "지금 나가면 작성 중인 글이 사라져요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "계속 쓰기", style: .cancel))
+        alert.addAction(UIAlertAction(title: "나가기", style: .destructive) { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        })
+        present(alert, animated: true)
+    }
 
     private func publish() {
         view.endEditing(true)
