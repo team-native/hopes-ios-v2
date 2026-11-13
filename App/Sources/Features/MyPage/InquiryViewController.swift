@@ -6,12 +6,14 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
     private let secondaryTextColor = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
     private let emailField = UITextField()
     private let messageView = UITextView()
-    private let messagePlaceholder = "문의 내용을 자세히 적어주세요"
+    private let messagePlaceholder = "예: 답변이 너무 짧게 나와요."
     private let messageErrorPlaceholder = "예: 답변이 너무 짧게 나와요."
     private let focusedPreviewMessage = "추천 질문이 학과를 바꿔도 그대로 나와요"
     private let showsInputPreview = ProcessInfo.processInfo.arguments.contains("--inquiry-input-preview")
     private let showsErrorPreview = ProcessInfo.processInfo.arguments.contains("--inquiry-error-preview")
     private var messageHeightConstraint: NSLayoutConstraint!
+    private var messageMinimumHeightConstraint: NSLayoutConstraint!
+    private var submitButtonBottomConstraint: NSLayoutConstraint?
     private var emailErrorRow: UIView!
     private var messageErrorRow: UIView!
     private var hasEmailError = false
@@ -24,7 +26,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         title = nil
         hidesBottomBarWhenPushed = true
         navigationController?.setNavigationBarHidden(true, animated: false)
-        contentStack.spacing = 14
+        contentStack.spacing = 16
         scrollView.keyboardDismissMode = .interactive
         scrollView.contentInsetAdjustmentBehavior = .never
         if let topConstraint = scrollView.constraints.first(where: {
@@ -35,32 +37,26 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
 
         let header = makeHeader()
         contentStack.addArrangedSubview(header)
-        contentStack.setCustomSpacing(12, after: header)
         contentStack.addArrangedSubview(makeContactCard())
-
-        let submitButton = AppStyle.button("문의 보내기", primary: true) { [weak self] in
-            self?.submit()
-        }
-        submitButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
-        submitButton.layer.cornerRadius = 12
-        submitButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
-        submitButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        contentStack.addArrangedSubview(submitButton)
+        contentStack.addArrangedSubview(makeMailInfo())
+        pinSubmitButtonToBottom()
 
         keyboardObserver = NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillChangeFrameNotification,
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            guard let self,
-                  let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+            guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
                   let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else { return }
-            let keyboardFrame = self.view.convert(frame, from: nil)
-            let overlap = max(0, self.view.bounds.maxY - keyboardFrame.minY)
-            self.scrollView.contentInset.bottom = overlap
-            self.scrollView.verticalScrollIndicatorInsets.bottom = overlap
-            UIView.animate(withDuration: duration) {
-                self.view.layoutIfNeeded()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let keyboardFrame = self.view.convert(frame, from: nil)
+                let safeAreaBottom = self.view.bounds.maxY - self.view.safeAreaInsets.bottom
+                let overlap = max(0, safeAreaBottom - keyboardFrame.minY)
+                self.submitButtonBottomConstraint?.constant = -(16 + overlap)
+                UIView.animate(withDuration: duration, delay: 0, options: .beginFromCurrentState) {
+                    self.view.layoutIfNeeded()
+                }
             }
         }
 
@@ -70,7 +66,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             messageView.textColor = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
             messageHeightConstraint.constant = 150
             displayValidationErrors(emailInvalid: true, messageEmpty: true)
-        } else {
+        } else if showsInputPreview {
             DispatchQueue.main.async { [weak self] in
                 self?.messageView.becomeFirstResponder()
             }
@@ -86,13 +82,13 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
-        scrollView.contentInset.bottom = 0
-        scrollView.verticalScrollIndicatorInsets.bottom = 0
     }
 
     private func makeHeader() -> UIView {
         let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(named: "inquiry-chevron-left"), for: .normal)
+        backButton.setImage(UIImage(named: "inquiry-back-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        backButton.accessibilityLabel = "뒤로"
+        backButton.accessibilityIdentifier = "inquiry-back"
         backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.addAction(UIAction { [weak self] _ in
@@ -126,7 +122,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         configureEmailField()
         configureMessageView()
 
-        let emailLabel = AppStyle.label("답변 받을 이메일", size: 14, weight: .medium, color: secondaryTextColor)
+        let emailLabel = AppStyle.label("이메일", size: 14, weight: .medium, color: secondaryTextColor)
         emailErrorRow = makeErrorRow("이메일 형식이 올바르지 않아요.")
         let emailGroup = makeFieldGroup(label: emailLabel, field: emailField, errorRow: emailErrorRow)
         let messageLabel = AppStyle.label("문의 내용", size: 14, weight: .medium, color: secondaryTextColor)
@@ -147,6 +143,72 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             fields.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
         ])
         return card
+    }
+
+    private func makeMailInfo() -> UIView {
+        let chip = UIView()
+        chip.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+        chip.layer.cornerRadius = 12
+        chip.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            chip.widthAnchor.constraint(equalToConstant: 36),
+            chip.heightAnchor.constraint(equalToConstant: 36)
+        ])
+
+        let icon = UIImageView(image: UIImage(named: "inquiry-mail-icon")?.withRenderingMode(.alwaysOriginal))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        chip.addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.centerXAnchor.constraint(equalTo: chip.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 18),
+            icon.heightAnchor.constraint(equalToConstant: 18)
+        ])
+
+        let label = AppStyle.label("이메일 문의: gsm-chatbot@gsm.hs.kr", size: 14, weight: .medium, color: primaryTextColor)
+        let row = UIStackView(arrangedSubviews: [chip, label])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 12
+        row.isLayoutMarginsRelativeArrangement = true
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16)
+        row.backgroundColor = .white
+        row.layer.cornerRadius = 24
+        row.layer.borderWidth = 1
+        row.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+        row.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
+        row.layer.shadowOpacity = 0.05
+        row.layer.shadowRadius = 4
+        row.layer.shadowOffset = CGSize(width: 0, height: 4)
+        return row
+    }
+
+    private func pinSubmitButtonToBottom() {
+        let button = AppStyle.button("문의 보내기", primary: true) { [weak self] in
+            self?.submit()
+        }
+        button.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        button.layer.cornerRadius = 12
+        button.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
+        button.accessibilityIdentifier = "inquiry-submit"
+        button.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(button)
+
+        if let bottomConstraint = view.constraints.first(where: {
+            $0.firstItem === scrollView && $0.firstAttribute == .bottom
+        }) {
+            bottomConstraint.isActive = false
+        }
+        NSLayoutConstraint.activate([
+            button.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            button.heightAnchor.constraint(equalToConstant: 50),
+            scrollView.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -16)
+        ])
+        let bottomConstraint = button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        bottomConstraint.isActive = true
+        submitButtonBottomConstraint = bottomConstraint
     }
 
     private func makeFieldGroup(label: UILabel, field: UIView, errorRow: UIView) -> UIView {
@@ -179,7 +241,11 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
     }
 
     private func configureEmailField() {
-        emailField.text = UserProfileStore.shared.email
+        emailField.text = nil
+        emailField.attributedPlaceholder = NSAttributedString(string: "이메일", attributes: [
+            .font: UIFont.systemFont(ofSize: 15),
+            .foregroundColor: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+        ])
         emailField.font = .systemFont(ofSize: 15)
         emailField.textColor = primaryTextColor
         emailField.keyboardType = .emailAddress
@@ -204,21 +270,26 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         messageView.font = .systemFont(ofSize: 15)
         messageView.backgroundColor = .white
         messageView.layer.cornerRadius = 16
-        messageView.layer.borderWidth = 1.5
-        messageView.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
+        messageView.layer.borderWidth = showsInputPreview ? 1.5 : 1
+        messageView.layer.borderColor = (showsInputPreview
+            ? UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)
+            : UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)).cgColor
         messageView.textContainerInset = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
         messageView.textContainer.lineFragmentPadding = 0
         messageView.keyboardType = .default
         messageView.returnKeyType = .send
         messageView.autocorrectionType = .yes
-        messageView.heightAnchor.constraint(greaterThanOrEqualToConstant: 55).isActive = true
-        messageHeightConstraint = messageView.heightAnchor.constraint(equalToConstant: 55)
+        messageMinimumHeightConstraint = messageView.heightAnchor.constraint(greaterThanOrEqualToConstant: 160)
+        messageMinimumHeightConstraint.isActive = true
+        messageHeightConstraint = messageView.heightAnchor.constraint(equalToConstant: 160)
         messageHeightConstraint.priority = .defaultHigh
         messageHeightConstraint.isActive = true
         messageView.delegate = self
     }
 
     func textViewDidBeginEditing(_ textView: UITextView) {
+        textView.layer.borderWidth = 1.5
+        textView.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
         guard textView.text == messagePlaceholder || textView.text == messageErrorPlaceholder else { return }
         textView.text = ""
         textView.textColor = primaryTextColor
@@ -226,7 +297,8 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             hasMessageError = false
             messageErrorRow.isHidden = true
             messageView.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
-            messageHeightConstraint.constant = 55
+            messageMinimumHeightConstraint.constant = 160
+            messageHeightConstraint.constant = 160
         }
     }
 
@@ -247,11 +319,26 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         return true
     }
 
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        guard !hasEmailError else { return }
+        textField.layer.borderWidth = 1.5
+        textField.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
+    }
+
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        guard !hasEmailError else { return }
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+    }
+
     func textViewDidEndEditing(_ textView: UITextView) {
+        textView.layer.borderWidth = 1
+        textView.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
         guard textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         textView.text = messagePlaceholder
         textView.textColor = secondaryTextColor
-        messageHeightConstraint.constant = 55
+        messageMinimumHeightConstraint.constant = 160
+        messageHeightConstraint.constant = 160
     }
 
     func textViewDidChange(_ textView: UITextView) {
@@ -259,10 +346,13 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             hasMessageError = false
             messageErrorRow.isHidden = true
             messageView.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
+            messageMinimumHeightConstraint.constant = 160
         }
         let fittingSize = CGSize(width: textView.bounds.width, height: .greatestFiniteMagnitude)
         let measuredHeight = textView.sizeThatFits(fittingSize).height
-        messageHeightConstraint.constant = min(max(55, measuredHeight), 160)
+        let minimumHeight: CGFloat = hasMessageError ? 150 : 160
+        messageMinimumHeightConstraint.constant = minimumHeight
+        messageHeightConstraint.constant = min(max(minimumHeight, measuredHeight), 220)
     }
 
     private func submit() {
@@ -294,9 +384,11 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         messageView.layer.borderColor = (messageEmpty
             ? UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
             : UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)).cgColor
+        messageView.layer.borderWidth = messageEmpty ? 1.5 : 1
         if messageEmpty {
             messageView.text = messageErrorPlaceholder
             messageView.textColor = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+            messageMinimumHeightConstraint.constant = 150
             messageHeightConstraint.constant = 150
         }
     }
