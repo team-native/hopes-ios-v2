@@ -141,7 +141,7 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
             post.title.lowercased().contains(normalizedQuery) || post.body.lowercased().contains(normalizedQuery)
         }
         guard !posts.isEmpty else {
-            resultsStack.addArrangedSubview(AppStyle.label("검색 결과가 없어요", size: 14, color: AppStyle.muted))
+            resultsStack.addArrangedSubview(makeEmptyState())
             return
         }
         posts.forEach { post in
@@ -152,6 +152,53 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
             row.titleLabel?.numberOfLines = 2
             resultsStack.addArrangedSubview(row)
         }
+    }
+
+    private func makeEmptyState() -> UIView {
+        let illustration = UIView()
+        illustration.backgroundColor = .white
+        illustration.layer.cornerRadius = 44
+        illustration.layer.borderWidth = 1
+        illustration.layer.borderColor = AppStyle.line.cgColor
+        illustration.layer.shadowColor = UIColor(red: 0.10, green: 0.25, blue: 0.50, alpha: 1).cgColor
+        illustration.layer.shadowOpacity = 0.10
+        illustration.layer.shadowRadius = 14
+        illustration.layer.shadowOffset = CGSize(width: 0, height: 6)
+        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
+        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
+
+        let icon = UIImageView(image: UIImage(systemName: "magnifyingglass"))
+        icon.tintColor = AppStyle.blue
+        icon.contentMode = .scaleAspectFit
+        illustration.addSubview(icon)
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            icon.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 36),
+            icon.heightAnchor.constraint(equalToConstant: 36)
+        ])
+
+        let title = AppStyle.label("검색 결과가 없어요", size: 18, weight: .semibold)
+        title.textAlignment = .center
+        let subtitle = AppStyle.label("다른 단어로 검색하거나 게시판을 바꿔 보세요.", size: 14, color: AppStyle.muted)
+        subtitle.textAlignment = .center
+        let state = UIStackView(arrangedSubviews: [illustration, title, subtitle])
+        state.axis = .vertical
+        state.alignment = .center
+        state.spacing = 12
+
+        let container = UIView()
+        container.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, constant: -100).isActive = true
+        container.addSubview(state)
+        state.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            state.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            state.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            subtitle.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 12),
+            subtitle.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -12)
+        ])
+        return container
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
