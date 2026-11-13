@@ -25,6 +25,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     private let resultsStack = UIStackView()
     private let clearSearchButton = UIButton(type: .system)
     private var newConversationButton: UIView?
+    private weak var revealedRow: ConversationRowView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -271,7 +272,8 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         ])
 
         for (index, conversation) in conversations.enumerated() {
-            rows.addArrangedSubview(makeConversationRow(conversation, query: query))
+            let row = makeConversationRow(conversation, query: query)
+            rows.addArrangedSubview(row)
             if index < conversations.count - 1 {
                 let divider = UIView()
                 divider.backgroundColor = UIColor(red: 0.90, green: 0.93, blue: 0.97, alpha: 1)
@@ -282,12 +284,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         resultsStack.addArrangedSubview(card)
     }
 
-    private func makeConversationRow(_ conversation: Conversation, query: String) -> UIControl {
-        let row = UIControl()
-        row.addAction(UIAction { [weak self] _ in
-            self?.push(ChatConversationViewController(question: conversation.title))
-        }, for: .touchUpInside)
-
+    private func makeConversationRow(_ conversation: Conversation, query: String) -> ConversationRowView {
         let title = UILabel()
         title.attributedText = highlightedTitle(conversation.title, query: query)
         title.numberOfLines = 1
@@ -304,17 +301,24 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         content.axis = .horizontal
         content.alignment = .center
         content.spacing = 12
-        content.translatesAutoresizingMaskIntoConstraints = false
-        row.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: row.topAnchor, constant: 16),
-            content.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: row.trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -16),
-            row.heightAnchor.constraint(greaterThanOrEqualToConstant: 64)
-        ])
+        let row = ConversationRowView()
         row.accessibilityLabel = "\(conversation.title), \(conversation.time), \(conversation.department)"
         row.accessibilityTraits = .button
+        row.onOpen = { [weak self] in
+            self?.push(ChatConversationViewController(question: conversation.title))
+        }
+        row.onDelete = { [weak self, weak row] in
+            guard let self else { return }
+            if let row, self.revealedRow === row { self.revealedRow = nil }
+            self.conversations.removeAll { $0.title == conversation.title && $0.time == conversation.time }
+            self.renderConversations()
+        }
+        row.onBeginSwipe = { [weak self, weak row] in
+            guard let self, let row, self.revealedRow !== row else { return }
+            self.revealedRow?.setRevealed(false, animated: true)
+            self.revealedRow = row
+        }
+        row.configure(content: content, trashImage: UIImage(systemName: "trash"))
         return row
     }
 
@@ -338,5 +342,109 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         renderConversations()
         view.endEditing(true)
         return true
+    }
+}
+
+@MainActor
+private final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
+    var onOpen: (() -> Void)?
+    var onDelete: (() -> Void)?
+    var onBeginSwipe: (() -> Void)?
+
+    private let revealWidth: CGFloat = 80
+    private let contentButton = UIButton(type: .custom)
+    private let deleteButton = UIButton(type: .system)
+    private var startOffset: CGFloat = 0
+    private var offset: CGFloat = 0
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        build()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func configure(content: UIView, trashImage: UIImage?) {
+        content.translatesAutoresizingMaskIntoConstraints = false
+        contentButton.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: contentButton.topAnchor, constant: 14),
+            content.leadingAnchor.constraint(equalTo: contentButton.leadingAnchor, constant: 16),
+            content.trailingAnchor.constraint(equalTo: contentButton.trailingAnchor, constant: -16),
+            content.bottomAnchor.constraint(equalTo: contentButton.bottomAnchor, constant: -14)
+        ])
+        var configuration = UIButton.Configuration.plain()
+        configuration.image = trashImage
+        configuration.imagePlacement = .top
+        configuration.imagePadding = 2
+        configuration.title = "삭제"
+        configuration.baseForegroundColor = .white
+        configuration.contentInsets = .zero
+        deleteButton.configuration = configuration
+        deleteButton.addAction(UIAction { [weak self] _ in self?.onDelete?() }, for: .touchUpInside)
+        contentButton.addAction(UIAction { [weak self] _ in self?.onOpen?() }, for: .touchUpInside)
+    }
+
+    func setRevealed(_ revealed: Bool, animated: Bool) {
+        offset = revealed ? -revealWidth : 0
+        let changes = { self.contentButton.transform = CGAffineTransform(translationX: self.offset, y: 0) }
+        if animated {
+            UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut], animations: changes)
+        } else {
+            changes()
+        }
+    }
+
+    private func build() {
+        backgroundColor = UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1)
+        clipsToBounds = true
+
+        deleteButton.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(deleteButton)
+        NSLayoutConstraint.activate([
+            deleteButton.topAnchor.constraint(equalTo: topAnchor),
+            deleteButton.trailingAnchor.constraint(equalTo: trailingAnchor),
+            deleteButton.bottomAnchor.constraint(equalTo: bottomAnchor),
+            deleteButton.widthAnchor.constraint(equalToConstant: revealWidth)
+        ])
+
+        contentButton.backgroundColor = .white
+        contentButton.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(contentButton)
+        NSLayoutConstraint.activate([
+            contentButton.topAnchor.constraint(equalTo: topAnchor),
+            contentButton.leadingAnchor.constraint(equalTo: leadingAnchor),
+            contentButton.trailingAnchor.constraint(equalTo: trailingAnchor),
+            contentButton.bottomAnchor.constraint(equalTo: bottomAnchor),
+            heightAnchor.constraint(greaterThanOrEqualToConstant: 64)
+        ])
+
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        pan.delegate = self
+        contentButton.addGestureRecognizer(pan)
+    }
+
+    @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: self).x
+        switch gesture.state {
+        case .began:
+            startOffset = offset
+            onBeginSwipe?()
+        case .changed:
+            offset = min(0, max(-revealWidth, startOffset + translation))
+            contentButton.transform = CGAffineTransform(translationX: offset, y: 0)
+        case .ended, .cancelled, .failed:
+            setRevealed(offset <= -revealWidth / 2, animated: true)
+        default:
+            break
+        }
+    }
+
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
+        let velocity = pan.velocity(in: self)
+        return abs(velocity.x) > abs(velocity.y)
     }
 }
