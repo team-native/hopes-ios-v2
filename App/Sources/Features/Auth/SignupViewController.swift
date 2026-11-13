@@ -91,7 +91,7 @@ final class SignupViewController: AppPageViewController {
         }
         let alert = UIAlertController(title: "가입 신청 완료", message: "계정 생성 API 연결 전 임시 완료 상태예요. 로그인 화면으로 돌아갑니다.", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
+            self?.navigationController?.setViewControllers([OnboardingViewController()], animated: true)
         })
         present(alert, animated: true)
     }
