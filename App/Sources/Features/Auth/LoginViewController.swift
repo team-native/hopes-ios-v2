@@ -90,10 +90,15 @@ final class LoginViewController: AppPageViewController {
         signupButton.setTitleColor(AppStyle.blue, for: .normal)
         signupButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
         signupButton.addAction(UIAction { [weak self] _ in
-            self?.showMessage("회원가입 화면은 별도 인증 페이지 이슈에서 구현할게요")
+            self?.push(SignupViewController())
         }, for: .touchUpInside)
         signup.addArrangedSubview(signupButton)
         contentStack.addArrangedSubview(signup)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
     }
 
     private func updateRememberButton() {
