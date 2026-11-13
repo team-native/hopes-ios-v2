@@ -26,7 +26,7 @@ final class CommunityViewController: AppPageViewController {
         actions.spacing = 10
         actions.distribution = .fillEqually
         actions.addArrangedSubview(AppStyle.button("검색", action: { [weak self] in
-            self?.showMessage("게시글 검색은 검색 화면 이슈에서 연결할게요")
+            self?.push(CommunitySearchViewController())
         }))
         actions.addArrangedSubview(AppStyle.button("글 작성하기", primary: true, action: { [weak self] in
             self?.push(CommunityWriteViewController())
