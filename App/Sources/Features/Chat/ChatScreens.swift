@@ -644,18 +644,25 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         case .authorizedAlways, .authorizedWhenInUse:
             locationManager.requestLocation()
         case .denied, .restricted:
-            updateLocationMeasurement(
-                title: "위치 권한이 필요해요",
-                subtitle: "설정에서 위치 접근을 허용한 뒤 다시 시도해 주세요.",
-                progress: 1
-            )
+            showLocationFailure()
         @unknown default:
-            updateLocationMeasurement(
-                title: "위치를 확인할 수 없어요",
-                subtitle: "위치 설정을 확인한 뒤 다시 시도해 주세요.",
-                progress: 1
-            )
+            showLocationFailure()
         }
+    }
+
+    private func showLocationFailure() {
+        guard locationCard != nil else { return }
+        let failure = ChatLocationFailureCardView(
+            onSettingsRequested: { [weak self] in self?.openLocationSettings() },
+            onRetryRequested: { [weak self] in self?.beginLocationMeasurement(isRetry: true) }
+        )
+        replaceLocationCard(with: failure)
+        scrollToLatestMessage()
+    }
+
+    private func openLocationSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     private func makeLocationMeasurementCard() -> UIView {
@@ -847,11 +854,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         case .authorizedAlways, .authorizedWhenInUse:
             manager.requestLocation()
         case .denied, .restricted:
-            updateLocationMeasurement(
-                title: "위치 권한이 필요해요",
-                subtitle: "설정에서 위치 접근을 허용한 뒤 다시 시도해 주세요.",
-                progress: 1
-            )
+            showLocationFailure()
         default:
             break
         }
@@ -896,11 +899,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        updateLocationMeasurement(
-            title: "위치를 확인하지 못했어요",
-            subtitle: "잠시 후 다시 시도해 주세요.",
-            progress: 1
-        )
+        showLocationFailure()
     }
 
     private func scrollToLatestMessage() {
