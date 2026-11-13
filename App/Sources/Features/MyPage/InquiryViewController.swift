@@ -7,9 +7,15 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
     private let emailField = UITextField()
     private let messageView = UITextView()
     private let messagePlaceholder = "문의 내용을 자세히 적어주세요"
+    private let messageErrorPlaceholder = "예: 답변이 너무 짧게 나와요."
     private let focusedPreviewMessage = "추천 질문이 학과를 바꿔도 그대로 나와요"
     private let showsInputPreview = ProcessInfo.processInfo.arguments.contains("--inquiry-input-preview")
+    private let showsErrorPreview = ProcessInfo.processInfo.arguments.contains("--inquiry-error-preview")
     private var messageHeightConstraint: NSLayoutConstraint!
+    private var emailErrorRow: UIView!
+    private var messageErrorRow: UIView!
+    private var hasEmailError = false
+    private var hasMessageError = false
     private var keyboardObserver: NSObjectProtocol?
 
     override func viewDidLoad() {
@@ -58,8 +64,16 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             }
         }
 
-        DispatchQueue.main.async { [weak self] in
-            self?.messageView.becomeFirstResponder()
+        if showsErrorPreview {
+            emailField.text = "s26055@gsm"
+            messageView.text = messageErrorPlaceholder
+            messageView.textColor = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+            messageHeightConstraint.constant = 150
+            displayValidationErrors(emailInvalid: true, messageEmpty: true)
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.messageView.becomeFirstResponder()
+            }
         }
     }
 
@@ -78,8 +92,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
 
     private func makeHeader() -> UIView {
         let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        backButton.tintColor = primaryTextColor
+        backButton.setImage(UIImage(named: "inquiry-chevron-left"), for: .normal)
         backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.addAction(UIAction { [weak self] _ in
@@ -114,11 +127,13 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         configureMessageView()
 
         let emailLabel = AppStyle.label("답변 받을 이메일", size: 14, weight: .medium, color: secondaryTextColor)
-        let emailGroup = makeFieldGroup(label: emailLabel, field: emailField)
+        emailErrorRow = makeErrorRow("이메일 형식이 올바르지 않아요.")
+        let emailGroup = makeFieldGroup(label: emailLabel, field: emailField, errorRow: emailErrorRow)
         let messageLabel = AppStyle.label("문의 내용", size: 14, weight: .medium, color: secondaryTextColor)
         emailLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
         messageLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
-        let messageGroup = makeFieldGroup(label: messageLabel, field: messageView)
+        messageErrorRow = makeErrorRow("문의 내용을 입력해 주세요.")
+        let messageGroup = makeFieldGroup(label: messageLabel, field: messageView, errorRow: messageErrorRow)
 
         let fields = UIStackView(arrangedSubviews: [emailGroup, messageGroup])
         fields.axis = .vertical
@@ -134,11 +149,33 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         return card
     }
 
-    private func makeFieldGroup(label: UILabel, field: UIView) -> UIView {
-        let group = UIStackView(arrangedSubviews: [label, field])
+    private func makeFieldGroup(label: UILabel, field: UIView, errorRow: UIView) -> UIView {
+        let group = UIStackView(arrangedSubviews: [label, field, errorRow])
         group.axis = .vertical
         group.spacing = 6
+        group.setCustomSpacing(4, after: field)
         return group
+    }
+
+    private func makeErrorRow(_ message: String) -> UIView {
+        let icon = UIImageView(image: UIImage(named: "inquiry-error-alert"))
+        icon.contentMode = .scaleAspectFit
+        icon.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 14).isActive = true
+
+        let label = AppStyle.label(
+            message,
+            size: 12,
+            color: UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
+        )
+        label.heightAnchor.constraint(equalToConstant: 16).isActive = true
+
+        let row = UIStackView(arrangedSubviews: [icon, label])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 4
+        row.isHidden = true
+        return row
     }
 
     private func configureEmailField() {
@@ -158,6 +195,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         emailField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
         emailField.leftViewMode = .always
         emailField.heightAnchor.constraint(equalToConstant: 54).isActive = true
+        emailField.addTarget(self, action: #selector(emailDidChange), for: .editingChanged)
     }
 
     private func configureMessageView() {
@@ -181,9 +219,15 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
     }
 
     func textViewDidBeginEditing(_ textView: UITextView) {
-        guard textView.text == messagePlaceholder else { return }
+        guard textView.text == messagePlaceholder || textView.text == messageErrorPlaceholder else { return }
         textView.text = ""
         textView.textColor = primaryTextColor
+        if hasMessageError {
+            hasMessageError = false
+            messageErrorRow.isHidden = true
+            messageView.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
+            messageHeightConstraint.constant = 55
+        }
     }
 
     func textView(
@@ -211,6 +255,11 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
     }
 
     func textViewDidChange(_ textView: UITextView) {
+        if hasMessageError, !textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            hasMessageError = false
+            messageErrorRow.isHidden = true
+            messageView.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
+        }
         let fittingSize = CGSize(width: textView.bounds.width, height: .greatestFiniteMagnitude)
         let measuredHeight = textView.sizeThatFits(fittingSize).height
         messageHeightConstraint.constant = min(max(55, measuredHeight), 160)
@@ -218,13 +267,156 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
 
     private func submit() {
         let email = emailField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let message = messageView.text == messagePlaceholder || (showsInputPreview && messageView.text == focusedPreviewMessage)
+        let isPlaceholder = messageView.text == messagePlaceholder || messageView.text == messageErrorPlaceholder
+        let message = isPlaceholder || (showsInputPreview && messageView.text == focusedPreviewMessage)
             ? ""
             : messageView.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard email.contains("@"), !message.isEmpty else {
-            showMessage("이메일과 문의 내용을 확인해주세요")
+        let emailInvalid = !email.contains("@")
+        let messageEmpty = message.isEmpty
+        guard !emailInvalid, !messageEmpty else {
+            view.endEditing(true)
+            displayValidationErrors(emailInvalid: emailInvalid, messageEmpty: messageEmpty)
             return
         }
-        showMessage("문의 접수 UI를 완료했어요. 문의 API 연결 후 실제 전송됩니다")
+        view.endEditing(true)
+        push(InquiryCompletionViewController(email: email))
+    }
+
+    private func displayValidationErrors(emailInvalid: Bool, messageEmpty: Bool) {
+        hasEmailError = emailInvalid
+        hasMessageError = messageEmpty
+        emailErrorRow.isHidden = !emailInvalid
+        messageErrorRow.isHidden = !messageEmpty
+        emailField.layer.borderWidth = emailInvalid ? 1.5 : 1
+        emailField.layer.borderColor = (emailInvalid
+            ? UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
+            : UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)).cgColor
+        messageView.layer.borderColor = (messageEmpty
+            ? UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
+            : UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)).cgColor
+        if messageEmpty {
+            messageView.text = messageErrorPlaceholder
+            messageView.textColor = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+            messageHeightConstraint.constant = 150
+        }
+    }
+
+    @objc private func emailDidChange() {
+        guard hasEmailError else { return }
+        let email = emailField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard email.contains("@") else { return }
+        hasEmailError = false
+        emailErrorRow.isHidden = true
+        emailField.layer.borderWidth = 1
+        emailField.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+    }
+}
+
+@MainActor
+final class InquiryCompletionViewController: UIViewController {
+    private let email: String
+
+    init(email: String) {
+        self.email = email
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
+        hidesBottomBarWhenPushed = true
+        navigationController?.setNavigationBarHidden(true, animated: false)
+
+        let backButton = UIButton(type: .system)
+        backButton.setImage(UIImage(named: "inquiry-chevron-left"), for: .normal)
+        backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        backButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        backButton.addAction(UIAction { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        }, for: .touchUpInside)
+
+        let title = AppStyle.label("문의하기", size: 18, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let header = UIStackView(arrangedSubviews: [backButton, title])
+        header.axis = .horizontal
+        header.alignment = .center
+        header.spacing = 12
+        header.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(header)
+
+        let badge = UIView()
+        badge.backgroundColor = .white
+        badge.layer.cornerRadius = 44
+        badge.layer.borderWidth = 1
+        badge.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+        badge.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.09).cgColor
+        badge.layer.shadowOpacity = 1
+        badge.layer.shadowRadius = 14
+        badge.layer.shadowOffset = CGSize(width: 0, height: 8)
+
+        let mailIcon = UIImageView(image: UIImage(named: "inquiry-mail"))
+        mailIcon.contentMode = .scaleAspectFit
+        mailIcon.translatesAutoresizingMaskIntoConstraints = false
+        badge.addSubview(mailIcon)
+
+        let titleText = NSMutableAttributedString(string: "문의를 ", attributes: [
+            .font: UIFont.systemFont(ofSize: 22, weight: .bold),
+            .foregroundColor: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+        ])
+        titleText.append(NSAttributedString(string: "보냈어요", attributes: [
+            .font: UIFont.systemFont(ofSize: 22, weight: .bold),
+            .foregroundColor: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        ]))
+        let doneTitle = UILabel()
+        doneTitle.attributedText = titleText
+        doneTitle.textAlignment = .center
+
+        let description = AppStyle.label(
+            "\(email)로 답변을 보내드릴게요.",
+            size: 14,
+            weight: .medium,
+            color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+        )
+        description.textAlignment = .center
+
+        let content = UIStackView(arrangedSubviews: [badge, doneTitle, description])
+        content.axis = .vertical
+        content.alignment = .center
+        content.spacing = 12
+        content.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(content)
+
+        let confirm = AppStyle.button("확인", primary: true) { [weak self] in
+            self?.navigationController?.popToRootViewController(animated: true)
+        }
+        confirm.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        confirm.layer.cornerRadius = 12
+        confirm.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
+        confirm.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        confirm.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(confirm)
+
+        NSLayoutConstraint.activate([
+            header.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            header.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            header.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            badge.widthAnchor.constraint(equalToConstant: 88),
+            badge.heightAnchor.constraint(equalToConstant: 88),
+            mailIcon.centerXAnchor.constraint(equalTo: badge.centerXAnchor),
+            mailIcon.centerYAnchor.constraint(equalTo: badge.centerYAnchor),
+            mailIcon.widthAnchor.constraint(equalToConstant: 36),
+            mailIcon.heightAnchor.constraint(equalToConstant: 36),
+            content.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            content.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            content.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
+            content.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+            confirm.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            confirm.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            confirm.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            confirm.heightAnchor.constraint(equalToConstant: 50)
+        ])
     }
 }
