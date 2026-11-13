@@ -129,7 +129,7 @@ final class MyActivityViewController: AppPageViewController {
         if selectedTab == 0 {
             let posts = CommunityPostStore.shared.myPosts
             guard !posts.isEmpty else {
-                itemsStack.addArrangedSubview(AppStyle.label("작성한 글이 없어요", size: 14, color: AppStyle.muted))
+                addPostsEmptyState()
                 return
             }
             posts.forEach { post in
@@ -148,6 +148,66 @@ final class MyActivityViewController: AppPageViewController {
         comments.forEach { comment in
             addCommentCard(comment)
         }
+    }
+
+    private func addPostsEmptyState() {
+        let illustration = UIView()
+        illustration.backgroundColor = .white
+        illustration.layer.cornerRadius = 44
+        illustration.layer.borderWidth = 1
+        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        illustration.layer.shadowColor = UIColor(red: 0.10, green: 0.25, blue: 0.50, alpha: 1).cgColor
+        illustration.layer.shadowOpacity = 0.09
+        illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
+        illustration.layer.shadowRadius = 14
+        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
+        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
+
+        let assetPath = Bundle.main.path(forResource: "empty-state-pen", ofType: "png")
+        let pen = UIImageView(image: assetPath.flatMap(UIImage.init(contentsOfFile:)))
+        pen.contentMode = .scaleAspectFit
+        pen.translatesAutoresizingMaskIntoConstraints = false
+        illustration.addSubview(pen)
+        NSLayoutConstraint.activate([
+            pen.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
+            pen.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
+            pen.widthAnchor.constraint(equalToConstant: 36),
+            pen.heightAnchor.constraint(equalToConstant: 36)
+        ])
+
+        let title = AppStyle.label("아직 작성한 글이 없어요", size: 18, weight: .medium)
+        title.textAlignment = .center
+        let subtitle = AppStyle.label("궁금한 걸 커뮤니티에 물어보세요.", size: 14, weight: .medium, color: AppStyle.muted)
+        subtitle.textAlignment = .center
+        let writeButton = UIButton(type: .system)
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = "글쓰기"
+        configuration.baseBackgroundColor = AppStyle.blue
+        configuration.baseForegroundColor = .white
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        writeButton.configuration = configuration
+        writeButton.layer.cornerRadius = 10
+        writeButton.clipsToBounds = true
+        writeButton.addAction(UIAction { [weak self] _ in
+            self?.push(CommunityWriteViewController())
+        }, for: .touchUpInside)
+
+        let messageStack = UIStackView(arrangedSubviews: [illustration, title, subtitle, writeButton])
+        messageStack.axis = .vertical
+        messageStack.alignment = .center
+        messageStack.spacing = 12
+
+        let container = UIView()
+        container.addSubview(messageStack)
+        messageStack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.72),
+            messageStack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            messageStack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            messageStack.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
+            messageStack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor)
+        ])
+        itemsStack.addArrangedSubview(container)
     }
 
     private func addCommentCard(_ comment: CommunityComment) {
