@@ -149,6 +149,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var isLiked = false
     private var generationTimer: DispatchWorkItem?
     private var pendingAnswerCard: UIView?
+    private var answerFailureCard: UIView?
 
     init(question: String?) {
         initialQuestion = question
@@ -277,7 +278,54 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         stopAnswerButton.isHidden = true
         inputField.isEnabled = true
         inputField.placeholder = "추가 질문 입력…"
-        presentMessage("답변 생성을 중지했어요")
+        if let pendingAnswerCard {
+            messagesStack.removeArrangedSubview(pendingAnswerCard)
+            pendingAnswerCard.removeFromSuperview()
+            self.pendingAnswerCard = nil
+        }
+        addAnswerFailure()
+    }
+
+    private func addAnswerFailure() {
+        let card = UIView()
+        let alertIcon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
+        alertIcon.tintColor = UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1)
+        alertIcon.contentMode = .scaleAspectFit
+        alertIcon.widthAnchor.constraint(equalToConstant: 20).isActive = true
+        alertIcon.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        let heading = AppStyle.label("답변을 만들지 못했어요", size: 15, weight: .semibold, color: UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1))
+        let headline = UIStackView(arrangedSubviews: [alertIcon, heading])
+        headline.axis = .horizontal
+        headline.alignment = .center
+        headline.spacing = 8
+        let detail = AppStyle.label("일시적인 오류예요. 같은 질문으로 다시 시도할 수 있어요.", size: 14, weight: .medium, color: AppStyle.muted)
+        let retry = UIButton(type: .system)
+        retry.setTitle("다시 시도", for: .normal)
+        retry.setTitleColor(AppStyle.muted, for: .normal)
+        retry.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        retry.contentHorizontalAlignment = .leading
+        retry.addAction(UIAction { [weak self] _ in
+            guard let self else { return }
+            self.messagesStack.removeArrangedSubview(card)
+            card.removeFromSuperview()
+            self.answerFailureCard = nil
+            self.beginAnswerGeneration()
+        }, for: .touchUpInside)
+        let content = UIStackView(arrangedSubviews: [headline, detail, retry])
+        content.axis = .vertical
+        content.spacing = 6
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        messagesStack.addArrangedSubview(card)
+        answerFailureCard = card
     }
 
     private func addConversationHeader() {
