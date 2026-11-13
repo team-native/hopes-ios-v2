@@ -16,6 +16,7 @@ final class CommunityPostDetailViewController: AppPageViewController {
     private var categoryLabel: UILabel?
     private var titleLabel: UILabel?
     private var bodyLabel: UILabel?
+    private var commentCountLabel: UILabel?
 
     init(post: CommunityPost, isMine: Bool = false) {
         self.post = post
@@ -72,7 +73,9 @@ final class CommunityPostDetailViewController: AppPageViewController {
         likeButton.addAction(UIAction { [weak self] _ in self?.toggleLike() }, for: .touchUpInside)
         contentStack.addArrangedSubview(likeButton)
 
-        addSection("댓글 \(post.comments)")
+        let commentCount = AppStyle.label("댓글 \(post.comments)", size: 18, weight: .bold)
+        commentCountLabel = commentCount
+        contentStack.addArrangedSubview(commentCount)
         commentStack.axis = .vertical
         commentStack.spacing = 12
         contentStack.addArrangedSubview(commentStack)
@@ -232,11 +235,37 @@ final class CommunityPostDetailViewController: AppPageViewController {
         sheet.addAction(UIAlertAction(title: "댓글 수정", style: .default) { [weak self] _ in
             self?.beginCommentEdit(text: text, label: label)
         })
+        sheet.addAction(UIAlertAction(title: "댓글 삭제", style: .destructive) { [weak self, weak label] _ in
+            guard let self, let label else { return }
+            self.confirmCommentDeletion(text: text, label: label)
+        })
         sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
         if let popover = sheet.popoverPresentationController {
             popover.barButtonItem = navigationItem.rightBarButtonItem
         }
         present(sheet, animated: true)
+    }
+
+    private func confirmCommentDeletion(text: String, label: UILabel) {
+        let alert = UIAlertController(
+            title: "댓글을 삭제할까요?",
+            message: "삭제한 댓글은 되돌릴 수 없어요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self, weak label] _ in
+            guard let self, let label else { return }
+            CommunityPostStore.shared.deleteComment(postTitle: self.post.title, text: text)
+            if let commentCard = label.superview, self.commentStack.arrangedSubviews.contains(commentCard) {
+                self.commentStack.removeArrangedSubview(commentCard)
+                commentCard.removeFromSuperview()
+            }
+            self.post = CommunityPost(grade: self.post.grade, title: self.post.title, body: self.post.body, time: self.post.time, comments: max(0, self.post.comments - 1), likes: self.post.likes, category: self.post.category)
+            self.commentCountLabel?.text = "댓글 \(self.post.comments)"
+            if self.editingComment == text { self.cancelCommentEdit() }
+            if self.editingCommentLabel === label { self.editingCommentLabel = nil }
+        })
+        present(alert, animated: true)
     }
 
     private func beginCommentEdit(text: String, label: UILabel) {
