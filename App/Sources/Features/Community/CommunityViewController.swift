@@ -12,58 +12,156 @@ struct CommunityPost {
 
 @MainActor
 final class CommunityViewController: AppPageViewController {
+    private let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+    private let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+    private let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+    private let defaultBorder = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
+    private let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    private let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+    private let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
     private let postStack = UIStackView()
-    private var selectedCategory = "전체"
-    private var categoryFilters: UIStackView?
+    private var selectedBoard = "전체"
+    private var boardFilters: UIStackView?
     private var publishToast: UIView?
     private var showingLoadError = ProcessInfo.processInfo.arguments.contains("--community-load-error")
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "커뮤니티"
-        addHeading("커뮤니티", subtitle: "학교생활 이야기를 나눠보세요")
-
-        let actions = UIStackView()
-        actions.axis = .horizontal
-        actions.spacing = 10
-        actions.distribution = .fillEqually
-        actions.addArrangedSubview(AppStyle.button("검색", action: { [weak self] in
-            self?.push(CommunitySearchViewController())
-        }))
-        actions.addArrangedSubview(AppStyle.button("글 작성하기", primary: true, action: { [weak self] in
-            self?.push(CommunityWriteViewController())
-        }))
-        contentStack.addArrangedSubview(actions)
-
-        let filters = UIStackView()
-        filters.axis = .horizontal
-        filters.spacing = 8
-        ["전체", "질문", "정보"].forEach { category in
-            let button = UIButton(type: .system)
-            button.setTitle(category, for: .normal)
-            button.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
-            button.layer.cornerRadius = 16
-            button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
-            button.addAction(UIAction { [weak self] _ in self?.selectCategory(category) }, for: .touchUpInside)
-            button.accessibilityIdentifier = category
-            filters.addArrangedSubview(button)
+        title = nil
+        contentStack.spacing = 16
+        if let topConstraint = scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .top
+        }) {
+            topConstraint.constant = 8
         }
-        filters.addArrangedSubview(UIView())
-        categoryFilters = filters
-        contentStack.addArrangedSubview(filters)
+
+        addHeader()
+        addBoardFilters()
 
         postStack.axis = .vertical
-        postStack.spacing = 12
+        postStack.spacing = 10
         contentStack.addArrangedSubview(postStack)
+        addWriteButton()
         renderPosts()
+        view.accessibilityIdentifier = "community-home-screen"
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
         if isViewLoaded {
             renderPosts()
             if CommunityPostStore.shared.consumePublishedToast() { showPublishToast() }
         }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+
+    private func addHeader() {
+        let title = AppStyle.label("커뮤니티", size: 28, weight: .bold, color: ink)
+        title.attributedText = NSAttributedString(string: "커뮤니티", attributes: [
+            .font: UIFont.systemFont(ofSize: 28, weight: .bold),
+            .foregroundColor: ink,
+            .kern: -0.4
+        ])
+        title.heightAnchor.constraint(equalToConstant: 38).isActive = true
+        title.numberOfLines = 1
+        title.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        let search = makeHeaderButton(asset: "community-search-icon", identifier: "community-search", label: "게시글 검색")
+        search.addAction(UIAction { [weak self] _ in
+            self?.push(CommunitySearchViewController())
+        }, for: .touchUpInside)
+        let profile = makeHeaderButton(asset: "community-profile-icon", identifier: "community-my-activity", label: "내 활동")
+        profile.addAction(UIAction { [weak self] _ in
+            self?.push(MyActivityViewController())
+        }, for: .touchUpInside)
+
+        let header = UIStackView(arrangedSubviews: [title, search, profile])
+        header.axis = .horizontal
+        header.alignment = .center
+        header.spacing = 8
+        contentStack.addArrangedSubview(header)
+    }
+
+    private func makeHeaderButton(asset: String, identifier: String, label: String) -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(UIImage(named: asset)?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.imageView?.contentMode = .scaleAspectFit
+        button.backgroundColor = .white
+        button.layer.cornerRadius = 14
+        button.layer.borderWidth = 1
+        button.layer.borderColor = line.cgColor
+        button.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).withAlphaComponent(0.05).cgColor
+        button.layer.shadowOpacity = 1
+        button.layer.shadowRadius = 4
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.accessibilityIdentifier = identifier
+        button.accessibilityLabel = label
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 44),
+            button.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        return button
+    }
+
+    private func addBoardFilters() {
+        let filters = UIStackView()
+        filters.axis = .horizontal
+        filters.alignment = .center
+        filters.spacing = 8
+        ["전체", "8기", "9기", "10기", "11기"].forEach { board in
+            let button = UIButton(type: .system)
+            button.translatesAutoresizingMaskIntoConstraints = false
+            var configuration = UIButton.Configuration.plain()
+            configuration.title = board
+            configuration.baseForegroundColor = secondary
+            configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .systemFont(ofSize: 14, weight: .medium)
+                return outgoing
+            }
+            configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+            button.configuration = configuration
+            button.layer.cornerRadius = 20
+            button.layer.borderWidth = 1
+            button.accessibilityIdentifier = "community-board-\(board)"
+            button.addAction(UIAction { [weak self] _ in self?.selectBoard(board) }, for: .touchUpInside)
+            filters.addArrangedSubview(button)
+        }
+        filters.addArrangedSubview(UIView())
+        boardFilters = filters
+        contentStack.addArrangedSubview(filters)
+        selectFilterAppearance()
+    }
+
+    private func addWriteButton() {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(UIImage(named: "community-write-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.imageView?.contentMode = .scaleAspectFit
+        button.backgroundColor = brandBlue
+        button.layer.cornerRadius = 28
+        button.layer.shadowColor = brandBlue.withAlphaComponent(0.28).cgColor
+        button.layer.shadowOpacity = 1
+        button.layer.shadowRadius = 12
+        button.layer.shadowOffset = CGSize(width: 0, height: 8)
+        button.accessibilityIdentifier = "community-write-post"
+        button.accessibilityLabel = "글 작성하기"
+        button.addAction(UIAction { [weak self] _ in
+            self?.push(CommunityWriteViewController())
+        }, for: .touchUpInside)
+        view.addSubview(button)
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 56),
+            button.heightAnchor.constraint(equalToConstant: 56),
+            button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24)
+        ])
     }
 
     private func showPublishToast() {
@@ -125,15 +223,9 @@ final class CommunityViewController: AppPageViewController {
         }
     }
 
-    private func selectCategory(_ category: String) {
-        selectedCategory = category
-        if let filters = categoryFilters {
-            filters.arrangedSubviews.compactMap { $0 as? UIButton }.forEach { button in
-                let selected = button.accessibilityIdentifier == category
-                button.backgroundColor = selected ? AppStyle.blue : .white
-                button.setTitleColor(selected ? .white : AppStyle.ink, for: .normal)
-            }
-        }
+    private func selectBoard(_ board: String) {
+        selectedBoard = board
+        selectFilterAppearance()
         renderPosts()
     }
 
@@ -147,9 +239,9 @@ final class CommunityViewController: AppPageViewController {
             selectFilterAppearance()
             return
         }
-        let visiblePosts = CommunityPostStore.shared.posts.filter { selectedCategory == "전체" || $0.category == selectedCategory }
+        let visiblePosts = CommunityPostStore.shared.posts.filter { selectedBoard == "전체" || $0.grade == selectedBoard }
         if visiblePosts.isEmpty {
-            postStack.addArrangedSubview(AppStyle.label("아직 게시글이 없어요", size: 15, color: AppStyle.muted))
+            postStack.addArrangedSubview(makeEmptyState())
         } else {
             visiblePosts.forEach { post in postStack.addArrangedSubview(makePostCard(post)) }
         }
@@ -224,39 +316,77 @@ final class CommunityViewController: AppPageViewController {
     }
 
     private func selectFilterAppearance() {
-        guard let filters = categoryFilters else { return }
+        guard let filters = boardFilters else { return }
         filters.arrangedSubviews.compactMap { $0 as? UIButton }.forEach { button in
-            let selected = button.accessibilityIdentifier == selectedCategory
-            button.backgroundColor = selected ? AppStyle.blue : .white
-            button.setTitleColor(selected ? .white : AppStyle.ink, for: .normal)
+            let selected = button.accessibilityIdentifier == "community-board-\(selectedBoard)"
+            button.backgroundColor = selected ? softBlue : .white
+            button.layer.borderColor = selected ? UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor : defaultBorder.cgColor
+            var configuration = button.configuration
+            configuration?.baseForegroundColor = selected ? brandBlue : secondary
+            button.configuration = configuration
         }
     }
 
     private func makePostCard(_ post: CommunityPost) -> UIView {
-        let card = AppStyle.card()
-        let authorText = post.grade == "익명" ? "익명" : "\(post.grade) · 익명"
-        let author = AppStyle.label(authorText, size: 12, weight: .medium, color: AppStyle.muted)
-        let title = AppStyle.label(post.title, size: 16, weight: .bold)
-        let body = AppStyle.label(post.body, size: 14, color: AppStyle.muted)
-        body.numberOfLines = 2
-        let footer = UIStackView()
-        footer.axis = .horizontal
-        footer.spacing = 14
-        footer.addArrangedSubview(AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: AppStyle.muted))
-        footer.addArrangedSubview(UIView())
-        footer.addArrangedSubview(AppStyle.label("♡  \(post.likes)", size: 12, color: AppStyle.muted))
-        footer.addArrangedSubview(AppStyle.label("댓글  \(post.comments)", size: 12, color: AppStyle.muted))
+        let badge = UIView()
+        badge.backgroundColor = softBlue
+        badge.layer.cornerRadius = 12
+        let badgeLabel = AppStyle.label(post.grade, size: 12, color: brandBlue)
+        badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        badge.addSubview(badgeLabel)
+        NSLayoutConstraint.activate([
+            badgeLabel.topAnchor.constraint(equalTo: badge.topAnchor, constant: 4),
+            badgeLabel.leadingAnchor.constraint(equalTo: badge.leadingAnchor, constant: 10),
+            badgeLabel.trailingAnchor.constraint(equalTo: badge.trailingAnchor, constant: -10),
+            badgeLabel.bottomAnchor.constraint(equalTo: badge.bottomAnchor, constant: -4),
+            badge.heightAnchor.constraint(equalToConstant: 24),
+            badge.widthAnchor.constraint(greaterThanOrEqualToConstant: 39)
+        ])
 
-        let stack = UIStackView(arrangedSubviews: [author, title, body, footer])
+        let head = UIStackView(arrangedSubviews: [badge, UIView()])
+        head.axis = .horizontal
+        head.alignment = .center
+
+        let title = AppStyle.label(post.title, size: 15, weight: .medium, color: ink)
+        title.attributedText = NSAttributedString(string: post.title, attributes: [
+            .font: UIFont.systemFont(ofSize: 15, weight: .medium),
+            .foregroundColor: ink,
+            .kern: -0.1
+        ])
+        let body = AppStyle.label(post.body, size: 14, weight: .medium, color: secondary)
+        body.numberOfLines = 2
+        let footer = UIStackView(arrangedSubviews: [
+            AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: tertiary),
+            UIView(),
+            makeStat(icon: "community-heart-icon", count: post.likes, identifier: "community-like-count"),
+            makeStat(icon: "community-comment-icon", count: post.comments, identifier: "community-comment-count")
+        ])
+        footer.axis = .horizontal
+        footer.alignment = .center
+        footer.spacing = 8
+
+        let stack = UIStackView(arrangedSubviews: [head, title, body, footer])
         stack.axis = .vertical
-        stack.spacing = 9
+        stack.spacing = 8
+        stack.isLayoutMarginsRelativeArrangement = true
+        stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
         stack.translatesAutoresizingMaskIntoConstraints = false
+
+        let card = UIView()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = line.cgColor
+        card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).withAlphaComponent(0.05).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 8
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
         card.addSubview(stack)
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            stack.topAnchor.constraint(equalTo: card.topAnchor),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor)
         ])
         let button = UIButton(type: .custom)
         button.backgroundColor = .clear
@@ -275,6 +405,37 @@ final class CommunityViewController: AppPageViewController {
         card.accessibilityLabel = "\(post.title), 댓글 \(post.comments)개"
         card.accessibilityTraits = .button
         return card
+    }
+
+    private func makeStat(icon: String, count: Int, identifier: String) -> UIStackView {
+        let image = UIImageView(image: UIImage(named: icon)?.withRenderingMode(.alwaysOriginal))
+        image.contentMode = .scaleAspectFit
+        image.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            image.widthAnchor.constraint(equalToConstant: 14),
+            image.heightAnchor.constraint(equalToConstant: 14)
+        ])
+        let value = AppStyle.label("\(count)", size: 12, color: tertiary)
+        let stat = UIStackView(arrangedSubviews: [image, value])
+        stat.axis = .horizontal
+        stat.alignment = .center
+        stat.spacing = 4
+        stat.accessibilityIdentifier = identifier
+        return stat
+    }
+
+    private func makeEmptyState() -> UIView {
+        let label = AppStyle.label("아직 게시글이 없어요", size: 15, color: secondary)
+        label.textAlignment = .center
+        let container = UIView()
+        container.heightAnchor.constraint(equalToConstant: 150).isActive = true
+        container.addSubview(label)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+        return container
     }
 
 }
