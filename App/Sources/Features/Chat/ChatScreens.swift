@@ -1,4 +1,5 @@
 import UIKit
+import Network
 
 @MainActor
 final class ChatHomeViewController: AppPageViewController {
@@ -146,10 +147,15 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private let messagesStack = UIStackView()
     private let inputField = UITextField()
     private let stopAnswerButton = UIButton(type: .system)
+    private let networkMonitor = NWPathMonitor()
     private var isLiked = false
     private var generationTimer: DispatchWorkItem?
     private var pendingAnswerCard: UIView?
     private var answerFailureCard: UIView?
+    private var offlineBanner: UIView?
+    private var pendingStatusRow: UIView?
+    private var retryWhenOnline = false
+    private var isOffline = false
 
     init(question: String?) {
         initialQuestion = question
@@ -163,6 +169,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         view.backgroundColor = AppStyle.canvas
         configureMessages()
         configureComposer()
+        observeNetworkStatus()
 
         if let initialQuestion {
             addConversationHeader()
@@ -221,7 +228,90 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         ])
     }
 
+    private func observeNetworkStatus() {
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async { self?.updateNetworkStatus(isOffline: path.status != .satisfied) }
+        }
+        networkMonitor.start(queue: DispatchQueue(label: "kr.hs.gsm.hopes.chat-network"))
+    }
+
+    private func updateNetworkStatus(isOffline: Bool) {
+        guard self.isOffline != isOffline else { return }
+        self.isOffline = isOffline
+        if isOffline {
+            showOfflineBanner()
+            inputField.placeholder = "오프라인 상태예요"
+            inputField.isEnabled = false
+            if generationTimer != nil {
+                generationTimer?.cancel()
+                generationTimer = nil
+                if let pendingAnswerCard {
+                    messagesStack.removeArrangedSubview(pendingAnswerCard)
+                    pendingAnswerCard.removeFromSuperview()
+                    self.pendingAnswerCard = nil
+                }
+                stopAnswerButton.isHidden = true
+                retryWhenOnline = true
+                showPendingStatus()
+            }
+        } else {
+            offlineBanner?.removeFromSuperview()
+            offlineBanner = nil
+            pendingStatusRow?.removeFromSuperview()
+            pendingStatusRow = nil
+            inputField.placeholder = "추가 질문 입력…"
+            inputField.isEnabled = true
+            if retryWhenOnline {
+                retryWhenOnline = false
+                beginAnswerGeneration()
+            }
+        }
+    }
+
+    private func showOfflineBanner() {
+        guard offlineBanner == nil else { return }
+        let banner = UIStackView()
+        banner.axis = .horizontal
+        banner.alignment = .center
+        banner.spacing = 8
+        banner.isLayoutMarginsRelativeArrangement = true
+        banner.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        banner.backgroundColor = AppStyle.ink
+        banner.layer.cornerRadius = 14
+        let icon = UIImageView(image: UIImage(systemName: "wifi.slash"))
+        icon.tintColor = .white
+        icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        let message = AppStyle.label("인터넷 연결이 끊겼어요. 연결되면 자동으로 다시 시도해요.", size: 12, color: .white)
+        banner.addArrangedSubview(icon)
+        banner.addArrangedSubview(message)
+        messagesStack.insertArrangedSubview(banner, at: min(1, messagesStack.arrangedSubviews.count))
+        offlineBanner = banner
+    }
+
+    private func showPendingStatus() {
+        guard pendingStatusRow == nil else { return }
+        let row = UIStackView()
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 6
+        let clock = UIImageView(image: UIImage(systemName: "clock"))
+        clock.tintColor = AppStyle.muted
+        clock.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        clock.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        row.addArrangedSubview(UIView())
+        row.addArrangedSubview(clock)
+        row.addArrangedSubview(AppStyle.label("연결되면 전송돼요", size: 12, color: AppStyle.muted))
+        messagesStack.addArrangedSubview(row)
+        pendingStatusRow = row
+    }
+
     private func beginAnswerGeneration() {
+        if isOffline {
+            retryWhenOnline = true
+            showPendingStatus()
+            return
+        }
         let card = AppStyle.card()
         card.layer.cornerRadius = 24
         card.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.08).cgColor
