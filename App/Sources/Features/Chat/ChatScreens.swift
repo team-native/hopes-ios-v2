@@ -127,12 +127,26 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         inputField.returnKeyType = .send
         inputField.delegate = self
         inputField.heightAnchor.constraint(equalToConstant: 46).isActive = true
+        let attach = UIButton(type: .system)
+        attach.setImage(UIImage(systemName: "plus.circle"), for: .normal)
+        attach.tintColor = AppStyle.blue
+        attach.widthAnchor.constraint(equalToConstant: 38).isActive = true
+        attach.heightAnchor.constraint(equalToConstant: 42).isActive = true
+        attach.addAction(UIAction { [weak self] _ in
+            guard let self else { return }
+            let picker = ChatAttachmentPickerViewController()
+            picker.onAttachmentSelected = { [weak self] fileName in
+                self?.addMessage("첨부했어요: \(fileName)", outgoing: true)
+            }
+            self.present(picker, animated: true)
+        }, for: .touchUpInside)
         let send = UIButton(type: .system)
         send.setImage(UIImage(systemName: "arrow.up.circle.fill"), for: .normal)
         send.tintColor = AppStyle.blue
         send.addAction(UIAction { [weak self] _ in self?.sendMessage() }, for: .touchUpInside)
         send.widthAnchor.constraint(equalToConstant: 42).isActive = true
         send.heightAnchor.constraint(equalToConstant: 42).isActive = true
+        composer.addArrangedSubview(attach)
         composer.addArrangedSubview(inputField)
         composer.addArrangedSubview(send)
         view.addSubview(composer)
