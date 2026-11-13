@@ -1,11 +1,6 @@
 import UIKit
 
 @MainActor
-final class CommunityViewController: AppPageViewController {
-    override func viewDidLoad() { super.viewDidLoad(); title = "커뮤니티"; addHeading("커뮤니티") }
-}
-
-@MainActor
 final class HistoryViewController: AppPageViewController {
     override func viewDidLoad() { super.viewDidLoad(); title = "기록"; addHeading("지난 대화") }
 }
