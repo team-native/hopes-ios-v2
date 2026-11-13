@@ -9,7 +9,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         let olderThanWeek: Bool
     }
 
-    private let conversations = [
+    private var conversations: [Conversation] = ProcessInfo.processInfo.arguments.contains("--empty-history") ? [] : [
         Conversation(title: "기숙사 하루 일과가 어떻게 돼?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
         Conversation(title: "기숙사 방 배정은 어떻게 돼?", time: "3일 전", department: "소프트웨어개발과", olderThanWeek: false),
         Conversation(title: "전공 선택은 어떻게 하는 게 좋아?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
@@ -29,6 +29,12 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         super.viewDidLoad()
         title = "기록"
         contentStack.spacing = 14
+        if conversations.isEmpty {
+            navigationController?.setNavigationBarHidden(true, animated: false)
+            addEmptyHistoryState()
+            return
+        }
+
         addHeading("지난 대화", subtitle: "이전 대화를 이어서 볼 수 있어요.")
         addSearchField()
 
@@ -44,6 +50,68 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         contentStack.addArrangedSubview(AppStyle.button("새 대화 시작", primary: true) { [weak self] in
             self?.tabBarController?.selectedIndex = 1
         })
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(conversations.isEmpty, animated: animated)
+    }
+
+    private func addEmptyHistoryState() {
+        let illustration = UIView()
+        illustration.backgroundColor = .white
+        illustration.layer.cornerRadius = 44
+        illustration.layer.borderWidth = 1
+        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        illustration.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.10).cgColor
+        illustration.layer.shadowOpacity = 1
+        illustration.layer.shadowRadius = 14
+        illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
+        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
+        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
+
+        let icon = UIImageView(image: image(named: "history-empty-chat"))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        illustration.addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 36),
+            icon.heightAnchor.constraint(equalToConstant: 36)
+        ])
+
+        let title = AppStyle.label("아직 대화가 없어요", size: 18, weight: .medium)
+        title.textAlignment = .center
+        let subtitle = AppStyle.label("선배에게 첫 질문을 해보세요.", size: 14, color: AppStyle.muted)
+        subtitle.textAlignment = .center
+        let button = UIButton(type: .system)
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = "채팅 시작하기"
+        configuration.baseBackgroundColor = AppStyle.blue
+        configuration.baseForegroundColor = .white
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        button.configuration = configuration
+        button.layer.cornerRadius = 10
+        button.clipsToBounds = true
+        button.addAction(UIAction { [weak self] _ in
+            self?.tabBarController?.selectedIndex = 1
+        }, for: .touchUpInside)
+
+        let content = UIStackView(arrangedSubviews: [illustration, title, subtitle, button])
+        content.axis = .vertical
+        content.alignment = .center
+        content.spacing = 12
+
+        let container = UIView()
+        container.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.72),
+            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+        contentStack.addArrangedSubview(container)
     }
 
     private func addSearchField() {
