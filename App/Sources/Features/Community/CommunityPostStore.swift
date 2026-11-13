@@ -59,4 +59,13 @@ final class CommunityPostStore {
         myPosts = myPosts.map { $0.title == original.title && $0.body == original.body ? updated : $0 }
         return updated
     }
+
+    func updateComment(postTitle: String, oldText: String, newText: String) {
+        guard let index = myComments.firstIndex(where: { $0.postTitle == postTitle && $0.text == oldText }) else {
+            myComments.insert(CommunityComment(postTitle: postTitle, text: newText, time: "방금 전"), at: 0)
+            return
+        }
+        let comment = myComments[index]
+        myComments[index] = CommunityComment(postTitle: comment.postTitle, text: newText, time: comment.time)
+    }
 }

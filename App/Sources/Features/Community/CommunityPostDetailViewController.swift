@@ -9,6 +9,10 @@ final class CommunityPostDetailViewController: AppPageViewController {
     private let commentStack = UIStackView()
     private let commentField = UITextField()
     private let likeButton = UIButton(type: .system)
+    private let commentEditState = UIStackView()
+    private let commentEditLabel = AppStyle.label("댓글 수정 중", size: 12, color: AppStyle.blue)
+    private var editingComment: String?
+    private weak var editingCommentLabel: UILabel?
     private var categoryLabel: UILabel?
     private var titleLabel: UILabel?
     private var bodyLabel: UILabel?
@@ -69,9 +73,11 @@ final class CommunityPostDetailViewController: AppPageViewController {
         contentStack.addArrangedSubview(commentStack)
         [
             ("10기", "나도 저녁 시간대에 좀 느려지는 것 같아"),
-            ("9기", "기숙사 와이파이는 층마다 차이가 있더라")
+            ("9기", "기숙사 와이파이는 층마다 차이가 있더라"),
+            ("나", CommunityPostStore.shared.myComments.first(where: { $0.postTitle == post.title })?.text ?? "오 고마워, 내일 아침에 말씀드려 볼게.")
         ].forEach { addComment(author: $0.0, text: $0.1) }
 
+        configureCommentEditState()
         let composer = UIStackView()
         composer.axis = .horizontal
         composer.spacing = 8
@@ -85,13 +91,31 @@ final class CommunityPostDetailViewController: AppPageViewController {
         sendButton.addAction(UIAction { [weak self] _ in self?.submitComment() }, for: .touchUpInside)
         composer.addArrangedSubview(commentField)
         composer.addArrangedSubview(sendButton)
-        contentStack.addArrangedSubview(composer)
+        let composerGroup = UIStackView(arrangedSubviews: [commentEditState, composer])
+        composerGroup.axis = .vertical
+        composerGroup.spacing = 8
+        contentStack.addArrangedSubview(composerGroup)
     }
 
     private func addComment(author: String, text: String) {
-        let authorLabel = AppStyle.label("\(author) · 익명", size: 12, weight: .medium, color: AppStyle.muted)
+        let isOwnComment = author == "나"
+        let authorLabel = AppStyle.label(isOwnComment ? "10기 (나) · 방금" : "\(author) · 익명", size: 12, weight: .medium, color: AppStyle.muted)
         let textLabel = AppStyle.label(text, size: 14)
-        let stack = UIStackView(arrangedSubviews: [authorLabel, textLabel])
+        if isOwnComment { editingCommentLabel = textLabel }
+        let header = UIStackView(arrangedSubviews: [authorLabel, UIView()])
+        if isOwnComment {
+            let more = UIButton(type: .system)
+            more.setImage(UIImage(systemName: "ellipsis"), for: .normal)
+            more.tintColor = AppStyle.muted
+            more.widthAnchor.constraint(equalToConstant: 28).isActive = true
+            more.heightAnchor.constraint(equalToConstant: 24).isActive = true
+            more.addAction(UIAction { [weak self, weak textLabel] _ in
+                guard let self, let textLabel else { return }
+                self.showOwnCommentActions(text: textLabel.text ?? "", label: textLabel)
+            }, for: .touchUpInside)
+            header.addArrangedSubview(more)
+        }
+        let stack = UIStackView(arrangedSubviews: [header, textLabel])
         stack.axis = .vertical
         stack.spacing = 6
         stack.backgroundColor = .white
@@ -99,6 +123,56 @@ final class CommunityPostDetailViewController: AppPageViewController {
         stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 13, leading: 14, bottom: 13, trailing: 14)
         stack.layer.cornerRadius = 14
         commentStack.addArrangedSubview(stack)
+    }
+
+    private func configureCommentEditState() {
+        commentEditState.axis = .horizontal
+        commentEditState.alignment = .center
+        commentEditState.spacing = 8
+        let pen = UIImageView(image: UIImage(systemName: "pencil"))
+        pen.tintColor = AppStyle.blue
+        pen.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        pen.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        let cancel = UIButton(type: .system)
+        cancel.setTitle("취소", for: .normal)
+        cancel.setTitleColor(AppStyle.muted, for: .normal)
+        cancel.titleLabel?.font = .systemFont(ofSize: 12)
+        cancel.addAction(UIAction { [weak self] _ in self?.cancelCommentEdit() }, for: .touchUpInside)
+        commentEditState.addArrangedSubview(pen)
+        commentEditState.addArrangedSubview(commentEditLabel)
+        commentEditState.addArrangedSubview(UIView())
+        commentEditState.addArrangedSubview(cancel)
+        commentEditState.isHidden = true
+    }
+
+    private func showOwnCommentActions(text: String, label: UILabel) {
+        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        sheet.addAction(UIAlertAction(title: "댓글 수정", style: .default) { [weak self] _ in
+            self?.beginCommentEdit(text: text, label: label)
+        })
+        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
+        if let popover = sheet.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
+        present(sheet, animated: true)
+    }
+
+    private func beginCommentEdit(text: String, label: UILabel) {
+        editingComment = text
+        editingCommentLabel = label
+        commentField.text = text
+        commentField.placeholder = "댓글 수정"
+        commentEditState.isHidden = false
+        commentField.becomeFirstResponder()
+    }
+
+    private func cancelCommentEdit() {
+        editingComment = nil
+        editingCommentLabel = nil
+        commentField.text = nil
+        commentField.placeholder = "댓글을 입력해보세요"
+        commentEditState.isHidden = true
+        view.endEditing(true)
     }
 
     private func toggleLike() {
@@ -110,6 +184,12 @@ final class CommunityPostDetailViewController: AppPageViewController {
 
     private func submitComment() {
         guard let text = commentField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return }
+        if let oldText = editingComment {
+            editingCommentLabel?.text = text
+            CommunityPostStore.shared.updateComment(postTitle: post.title, oldText: oldText, newText: text)
+            cancelCommentEdit()
+            return
+        }
         addComment(author: "나", text: text)
         CommunityPostStore.shared.addComment(postTitle: post.title, text: text)
         commentField.text = nil
