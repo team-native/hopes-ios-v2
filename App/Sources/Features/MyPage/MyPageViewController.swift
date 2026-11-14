@@ -2,6 +2,14 @@ import UIKit
 
 @MainActor
 final class MyPageViewController: AppPageViewController {
+    private struct MenuItem {
+        let icon: String
+        let title: String
+        let subtitle: String
+        let identifier: String
+        let action: Selector
+    }
+
     private let canvas = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
     private let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
     private let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
@@ -64,8 +72,29 @@ final class MyPageViewController: AppPageViewController {
         contentStack.addArrangedSubview(header)
     }
 
-    private func addProfileCard() {
+}
+
+@MainActor
+extension MyPageViewController {
+    func addProfileCard() {
+        let profile = makeProfileRow()
         let card = makeCard(cornerRadius: 28, shadowRadius: 14, shadowYOffset: 6)
+        let editButton = makeProfileEditButton()
+        let content = UIStackView(arrangedSubviews: [profile, editButton])
+        content.axis = .vertical
+        content.spacing = 16
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor, constant: 20),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+        ])
+        contentStack.addArrangedSubview(card)
+    }
+
+    private func makeProfileRow() -> UIStackView {
         let profile = UIStackView()
         profile.axis = .horizontal
         profile.alignment = .center
@@ -86,8 +115,10 @@ final class MyPageViewController: AppPageViewController {
         ])
 
         let profileText = UIStackView(arrangedSubviews: [
-            styledLabel(UserProfileStore.shared.name, size: 18, weight: .medium, color: ink, lineHeight: 26, kern: -0.2),
-            styledLabel("\(UserProfileStore.shared.department) · \(UserProfileStore.shared.generation)", size: 14, weight: .medium, color: secondary, lineHeight: 20),
+            styledLabel(UserProfileStore.shared.name, size: 18, weight: .medium, color: ink, lineHeight: 26,
+                kern: -0.2),
+            styledLabel("\(UserProfileStore.shared.department) · \(UserProfileStore.shared.generation)", size: 14,
+                weight: .medium, color: secondary, lineHeight: 20),
             styledLabel(UserProfileStore.shared.email, size: 12, color: tertiary, lineHeight: 16)
         ])
         profileText.axis = .vertical
@@ -95,6 +126,10 @@ final class MyPageViewController: AppPageViewController {
         profile.addArrangedSubview(avatar)
         profile.addArrangedSubview(profileText)
 
+        return profile
+    }
+
+    private func makeProfileEditButton() -> UIButton {
         let editButton = UIButton(type: .system)
         editButton.translatesAutoresizingMaskIntoConstraints = false
         editButton.setTitle("프로필 수정", for: .normal)
@@ -107,21 +142,14 @@ final class MyPageViewController: AppPageViewController {
         editButton.addTarget(self, action: #selector(editProfile), for: .touchUpInside)
         NSLayoutConstraint.activate([editButton.heightAnchor.constraint(equalToConstant: 36)])
 
-        let content = UIStackView(arrangedSubviews: [profile, editButton])
-        content.axis = .vertical
-        content.spacing = 16
-        content.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor, constant: 20),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
-        ])
-        contentStack.addArrangedSubview(card)
+        return editButton
     }
 
-    private func addStatsCard() {
+}
+
+@MainActor
+extension MyPageViewController {
+    func addStatsCard() {
         let card = makeCard(cornerRadius: 24, shadowRadius: 10, shadowYOffset: 4)
         let stats = UIStackView()
         stats.axis = .horizontal
@@ -166,20 +194,30 @@ final class MyPageViewController: AppPageViewController {
         contentStack.addArrangedSubview(card)
     }
 
-    private func addMenuCard() {
+    func addMenuCard() {
         let card = makeCard(cornerRadius: 24, shadowRadius: 10, shadowYOffset: 4)
         let rows = UIStackView()
         rows.axis = .vertical
         rows.alignment = .fill
 
-        let menuItems: [(String, String, String, String, Selector)] = [
-            ("mypage-activity-icon", "내 활동", "작성글 · 댓글 모아보기", "mypage-activity", #selector(openActivity)),
-            ("mypage-personal-icon", "개인 설정", "AI 답변 스타일 관리", "mypage-personal-settings", #selector(openPersonalSettings)),
-            ("mypage-notification-icon", "알림", "새 답변 · 공지", "mypage-notifications", #selector(openNotifications)),
-            ("mypage-inquiry-icon", "문의하기", "gsm-chatbot@gsm.hs.kr", "mypage-inquiry", #selector(openInquiry))
+        let menuItems: [MenuItem] = [
+            MenuItem(icon: "mypage-activity-icon", title: "내 활동", subtitle: "작성글 · 댓글 모아보기",
+                identifier: "mypage-activity", action: #selector(openActivity)),
+            MenuItem(icon: "mypage-personal-icon", title: "개인 설정", subtitle: "AI 답변 스타일 관리",
+                identifier: "mypage-personal-settings", action: #selector(openPersonalSettings)),
+            MenuItem(icon: "mypage-notification-icon", title: "알림", subtitle: "새 답변 · 공지",
+                identifier: "mypage-notifications", action: #selector(openNotifications)),
+            MenuItem(icon: "mypage-inquiry-icon", title: "문의하기", subtitle: "gsm-chatbot@gsm.hs.kr",
+                identifier: "mypage-inquiry", action: #selector(openInquiry))
         ]
         for (index, item) in menuItems.enumerated() {
-            rows.addArrangedSubview(makeMenuRow(icon: item.0, title: item.1, subtitle: item.2, identifier: item.3, action: item.4))
+            rows.addArrangedSubview(makeMenuRow(
+                icon: item.icon,
+                title: item.title,
+                subtitle: item.subtitle,
+                identifier: item.identifier,
+                action: item.action
+            ))
             if index < menuItems.count - 1 {
                 let divider = UIView()
                 divider.backgroundColor = line
@@ -199,7 +237,13 @@ final class MyPageViewController: AppPageViewController {
         contentStack.addArrangedSubview(card)
     }
 
-    private func makeMenuRow(icon: String, title: String, subtitle: String, identifier: String, action: Selector) -> UIView {
+    func makeMenuRow(
+        icon: String,
+        title: String,
+        subtitle: String,
+        identifier: String,
+        action: Selector
+    ) -> UIView {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.backgroundColor = .clear
@@ -254,7 +298,7 @@ final class MyPageViewController: AppPageViewController {
         return button
     }
 
-    private func makeCard(cornerRadius: CGFloat, shadowRadius: CGFloat, shadowYOffset: CGFloat) -> UIView {
+    func makeCard(cornerRadius: CGFloat, shadowRadius: CGFloat, shadowYOffset: CGFloat) -> UIView {
         let card = UIView()
         card.backgroundColor = .white
         card.layer.cornerRadius = cornerRadius
@@ -267,7 +311,14 @@ final class MyPageViewController: AppPageViewController {
         return card
     }
 
-    private func styledLabel(_ text: String, size: CGFloat, weight: UIFont.Weight = .regular, color: UIColor, lineHeight: CGFloat, kern: CGFloat = 0) -> UILabel {
+    func styledLabel(
+        _ text: String,
+        size: CGFloat,
+        weight: UIFont.Weight = .regular,
+        color: UIColor,
+        lineHeight: CGFloat,
+        kern: CGFloat = 0
+    ) -> UILabel {
         let label = UILabel()
         label.numberOfLines = 0
         let paragraph = NSMutableParagraphStyle()

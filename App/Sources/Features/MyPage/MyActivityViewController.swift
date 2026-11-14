@@ -2,15 +2,15 @@ import UIKit
 
 @MainActor
 final class MyActivityViewController: AppPageViewController {
-    private let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
-    private let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
-    private let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
-    private let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
-    private let subtleLine = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
-    private let tabsStack = UIStackView()
-    private let itemsStack = UIStackView()
-    private var selectedTab = 0
-    private var previousNavigationBarHidden = false
+    let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+    let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+    let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+    let subtleLine = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+    let tabsStack = UIStackView()
+    let itemsStack = UIStackView()
+    var selectedTab = 0
+    var previousNavigationBarHidden = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -120,8 +120,10 @@ final class MyActivityViewController: AppPageViewController {
         values.forEach { value in
             let (button, title, selected) = value
             button?.setTitle(title, for: .normal)
-            button?.setTitleColor(selected ? UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1) : secondary, for: .normal)
-            button?.tintColor = selected ? UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1) : secondary
+            button?.setTitleColor(selected ? UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255,
+                alpha: 1) : secondary, for: .normal)
+            button?.tintColor = selected ? UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255,
+                alpha: 1) : secondary
             button?.isSelected = selected
             button?.backgroundColor = selected ? softBlue : .white
             button?.layer.borderWidth = 1
@@ -158,7 +160,17 @@ final class MyActivityViewController: AppPageViewController {
         }
     }
 
-    private func addPostCard(_ post: CommunityPost) {
+}
+
+@MainActor
+extension MyActivityViewController {
+    func addPostCard(_ post: CommunityPost) {
+        let content = makePostContent(post)
+        let card = makePostCardContainer(content: content, post: post)
+        itemsStack.addArrangedSubview(card)
+    }
+
+    private func makePostContent(_ post: CommunityPost) -> UIStackView {
         let badge = makeBadge(post.grade)
         let more = UIImageView(image: UIImage(named: "my-activity-more-icon")?.withRenderingMode(.alwaysOriginal))
         more.contentMode = .scaleAspectFit
@@ -203,6 +215,10 @@ final class MyActivityViewController: AppPageViewController {
         content.isLayoutMarginsRelativeArrangement = true
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
 
+        return content
+    }
+
+    private func makePostCardContainer(content: UIStackView, post: CommunityPost) -> UIControl {
         let card = UIControl()
         card.backgroundColor = .white
         card.layer.cornerRadius = 24
@@ -225,15 +241,17 @@ final class MyActivityViewController: AppPageViewController {
         }, for: .touchUpInside)
         card.accessibilityLabel = "\(post.title), 좋아요 \(post.likes), 댓글 \(post.comments)개"
         card.accessibilityTraits = .button
-        card.accessibilityIdentifier = "my-activity-post-\(CommunityPostStore.shared.myPosts.firstIndex(where: { $0.title == post.title }) ?? 0)"
-        itemsStack.addArrangedSubview(card)
+        let postIndex = CommunityPostStore.shared.myPosts.firstIndex { $0.title == post.title } ?? 0
+        card.accessibilityIdentifier = "my-activity-post-\(postIndex)"
+        return card
     }
 
-    private func makeBadge(_ text: String) -> UIView {
+    func makeBadge(_ text: String) -> UIView {
         let badge = UIView()
         badge.backgroundColor = softBlue
         badge.layer.cornerRadius = 12
-        let label = AppStyle.label(text, size: 12, color: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1))
+        let label = AppStyle.label(text, size: 12, color: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255,
+            alpha: 1))
         label.translatesAutoresizingMaskIntoConstraints = false
         badge.addSubview(label)
         NSLayoutConstraint.activate([
@@ -247,7 +265,7 @@ final class MyActivityViewController: AppPageViewController {
         return badge
     }
 
-    private func makeStat(icon: String, count: Int) -> UIStackView {
+    func makeStat(icon: String, count: Int) -> UIStackView {
         let image = UIImageView(image: UIImage(named: icon)?.withRenderingMode(.alwaysOriginal))
         image.contentMode = .scaleAspectFit
         image.translatesAutoresizingMaskIntoConstraints = false
@@ -263,14 +281,29 @@ final class MyActivityViewController: AppPageViewController {
         return stat
     }
 
-    private func lineStyle(height: CGFloat) -> NSMutableParagraphStyle {
+    func lineStyle(height: CGFloat) -> NSMutableParagraphStyle {
         let style = NSMutableParagraphStyle()
         style.minimumLineHeight = height
         style.maximumLineHeight = height
         return style
     }
 
-    private func addPostsEmptyState() {
+    func addPostsEmptyState() {
+        let content = makePostsEmptyStateContent()
+        let container = UIView()
+        container.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.72),
+            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            content.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            content.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
+            content.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor)
+        ])
+        itemsStack.addArrangedSubview(container)
+    }
+
+    private func makePostsEmptyStateContent() -> UIStackView {
         let illustration = UIView()
         illustration.backgroundColor = .white
         illustration.layer.cornerRadius = 44
@@ -317,67 +350,6 @@ final class MyActivityViewController: AppPageViewController {
         messageStack.alignment = .center
         messageStack.spacing = 12
 
-        let container = UIView()
-        container.addSubview(messageStack)
-        messageStack.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.72),
-            messageStack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            messageStack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            messageStack.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
-            messageStack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor)
-        ])
-        itemsStack.addArrangedSubview(container)
+        return messageStack
     }
-
-    private func addCommentCard(_ comment: CommunityComment) {
-        let card = UIControl()
-        card.backgroundColor = .white
-        card.layer.cornerRadius = 24
-        card.layer.borderWidth = 1
-        card.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
-        card.layer.shadowColor = UIColor(red: 0.10, green: 0.25, blue: 0.50, alpha: 1).cgColor
-        card.layer.shadowOpacity = 0.07
-        card.layer.shadowOffset = CGSize(width: 0, height: 4)
-        card.layer.shadowRadius = 8
-
-        let boardBadge = AppStyle.label(comment.board, size: 12, color: AppStyle.blue)
-        boardBadge.backgroundColor = AppStyle.paleBlue
-        boardBadge.textAlignment = .center
-        boardBadge.layer.cornerRadius = 14
-        boardBadge.clipsToBounds = true
-        boardBadge.setContentHuggingPriority(.required, for: .horizontal)
-        let postTitle = AppStyle.label(comment.postTitle, size: 12, color: AppStyle.muted)
-        postTitle.numberOfLines = 1
-        let header = UIStackView(arrangedSubviews: [boardBadge, postTitle])
-        header.axis = .horizontal
-        header.alignment = .center
-        header.spacing = 8
-
-        let body = AppStyle.label(comment.text, size: 15)
-        let time = AppStyle.label(comment.time, size: 12, color: UIColor(red: 0.60, green: 0.65, blue: 0.73, alpha: 1))
-        let content = UIStackView(arrangedSubviews: [header, body, time])
-        content.axis = .vertical
-        content.spacing = 6
-        content.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(content)
-
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14)
-        ])
-
-        card.addAction(UIAction { [weak self] _ in
-            guard let post = CommunityPostStore.shared.posts.first(where: { $0.title == comment.postTitle }) else {
-                self?.showMessage("원 게시글을 찾을 수 없어요")
-                return
-            }
-            self?.push(CommunityPostDetailViewController(post: post))
-        }, for: .touchUpInside)
-        card.accessibilityLabel = "\(comment.board), \(comment.postTitle), \(comment.text), \(comment.time)"
-        itemsStack.addArrangedSubview(card)
-    }
-
 }

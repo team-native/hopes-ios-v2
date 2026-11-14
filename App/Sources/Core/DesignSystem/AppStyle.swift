@@ -8,7 +8,12 @@ enum AppStyle {
     static let line = UIColor(red: 0.91, green: 0.92, blue: 0.94, alpha: 1)
     static let canvas = UIColor(red: 0.975, green: 0.98, blue: 0.99, alpha: 1)
 
-    static func label(_ text: String, size: CGFloat, weight: UIFont.Weight = .regular, color: UIColor = ink) -> UILabel {
+    static func label(
+        _ text: String,
+        size: CGFloat,
+        weight: UIFont.Weight = .regular,
+        color: UIColor = ink
+    ) -> UILabel {
         let label = UILabel()
         label.text = text
         label.font = .systemFont(ofSize: size, weight: weight)
@@ -26,7 +31,11 @@ enum AppStyle {
         button.layer.cornerRadius = 14
         button.layer.borderWidth = primary ? 0 : 1
         button.layer.borderColor = line.cgColor
-        button.contentEdgeInsets = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
+        var configuration = UIButton.Configuration.filled()
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16)
+        configuration.baseBackgroundColor = primary ? blue : .white
+        configuration.baseForegroundColor = primary ? .white : ink
+        button.configuration = configuration
         button.addAction(UIAction { _ in action() }, for: .touchUpInside)
         return button
     }
@@ -84,7 +93,12 @@ class AppPageViewController: UIViewController {
         contentStack.addArrangedSubview(AppStyle.label(title, size: 18, weight: .bold))
     }
 
-    func addRow(_ title: String, subtitle: String? = nil, symbol: String = "chevron.right", action: @escaping () -> Void) {
+    func addRow(
+        _ title: String,
+        subtitle: String? = nil,
+        symbol: String = "chevron.right",
+        action: @escaping () -> Void
+    ) {
         let button = UIButton(type: .system)
         button.backgroundColor = .white
         button.layer.cornerRadius = 16

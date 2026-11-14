@@ -2,19 +2,19 @@ import UIKit
 
 @MainActor
 final class CommunityWriteViewController: AppPageViewController, UITextViewDelegate {
-    private let titleField = UITextField()
-    private let bodyView = UITextView()
-    private let fieldBorderColor = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
-    private let bodyPlaceholder = "내용을 입력하세요"
-    private var selectedBoard = "10기"
-    private let boardValue = AppStyle.label("10기", size: 15, weight: .medium)
-    private let titleErrorLabel = AppStyle.label("", size: 12, color: .systemRed)
-    private let bodyErrorLabel = AppStyle.label("", size: 12, color: .systemRed)
-    private var titleErrorRow: UIStackView?
-    private var bodyErrorRow: UIStackView?
-    private var registrationErrorBanner: UIStackView?
-    private var shouldSimulateRegistrationFailure = true
-    private var previousNavigationBarHidden = false
+    let titleField = UITextField()
+    let bodyView = UITextView()
+    let fieldBorderColor = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
+    let bodyPlaceholder = "내용을 입력하세요"
+    var selectedBoard = "10기"
+    let boardValue = AppStyle.label("10기", size: 15, weight: .medium)
+    let titleErrorLabel = AppStyle.label("", size: 12, color: .systemRed)
+    let bodyErrorLabel = AppStyle.label("", size: 12, color: .systemRed)
+    var titleErrorRow: UIStackView?
+    var bodyErrorRow: UIStackView?
+    var registrationErrorBanner: UIStackView?
+    var shouldSimulateRegistrationFailure = true
+    var previousNavigationBarHidden = false
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -35,6 +35,34 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         }
         scrollView.keyboardDismissMode = .interactive
 
+        let header = makeHeader()
+        let registerButton = makeRegisterButton()
+        header.addArrangedSubview(registerButton)
+        contentStack.addArrangedSubview(header)
+
+        contentStack.addArrangedSubview(makeRegistrationErrorBanner())
+        configureFormFields()
+        contentStack.addArrangedSubview(makePrivacyNotice())
+        view.accessibilityIdentifier = "community-write-screen"
+    }
+
+    private func configureFormFields() {
+        contentStack.addArrangedSubview(makeBoardRow())
+        configureTitleField()
+        contentStack.addArrangedSubview(makeInputGroup(field: titleField, error: titleErrorLabel))
+        configureBodyView()
+        contentStack.addArrangedSubview(makeInputGroup(field: bodyView, error: bodyErrorLabel))
+        contentStack.addArrangedSubview(UIView())
+    }
+
+    private func makeInputGroup(field: UIView, error: UILabel) -> UIStackView {
+        let group = UIStackView(arrangedSubviews: [field, makeErrorRow(error)])
+        group.axis = .vertical
+        group.spacing = 6
+        return group
+    }
+
+    private func makeRegisterButton() -> UIButton {
         let registerButton = UIButton(type: .system)
         var registerConfiguration = UIButton.Configuration.filled()
         registerConfiguration.title = "등록"
@@ -47,25 +75,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         registerButton.accessibilityIdentifier = "community-register-post"
         registerButton.addAction(UIAction { [weak self] _ in self?.publish() }, for: .touchUpInside)
         registerButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
-        let header = makeHeader()
-        header.addArrangedSubview(registerButton)
-        contentStack.addArrangedSubview(header)
-
-        contentStack.addArrangedSubview(makeRegistrationErrorBanner())
-        contentStack.addArrangedSubview(makeBoardRow())
-        configureTitleField()
-        let titleGroup = UIStackView(arrangedSubviews: [titleField, makeErrorRow(titleErrorLabel)])
-        titleGroup.axis = .vertical
-        titleGroup.spacing = 6
-        contentStack.addArrangedSubview(titleGroup)
-        configureBodyView()
-        let bodyGroup = UIStackView(arrangedSubviews: [bodyView, makeErrorRow(bodyErrorLabel)])
-        bodyGroup.axis = .vertical
-        bodyGroup.spacing = 6
-        contentStack.addArrangedSubview(bodyGroup)
-        contentStack.addArrangedSubview(UIView())
-        contentStack.addArrangedSubview(makePrivacyNotice())
-        view.accessibilityIdentifier = "community-write-screen"
+        return registerButton
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -104,7 +114,8 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
 
     private func makeBoardRow() -> UIButton {
         let label = AppStyle.label("게시판", size: 14, weight: .medium, color: AppStyle.muted)
-        let chevron = UIImageView(image: UIImage(named: "community-write-chevron-icon")?.withRenderingMode(.alwaysOriginal))
+        let chevronImage = UIImage(named: "community-write-chevron-icon")?.withRenderingMode(.alwaysOriginal)
+        let chevron = UIImageView(image: chevronImage)
         chevron.contentMode = .scaleAspectFit
         chevron.widthAnchor.constraint(equalToConstant: 16).isActive = true
         chevron.heightAnchor.constraint(equalToConstant: 16).isActive = true
@@ -224,6 +235,10 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         return banner
     }
 
+}
+
+@MainActor
+extension CommunityWriteViewController {
     func textViewDidBeginEditing(_ textView: UITextView) {
         if textView.text == bodyPlaceholder {
             textView.text = ""
@@ -239,7 +254,8 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
             textView.text = bodyPlaceholder
             textView.textColor = AppStyle.muted
         }
-        bodyView.layer.borderColor = bodyErrorRow?.isHidden == false ? UIColor.systemRed.cgColor : fieldBorderColor.cgColor
+        let borderColor = bodyErrorRow?.isHidden == false ? UIColor.systemRed.cgColor : fieldBorderColor.cgColor
+        bodyView.layer.borderColor = borderColor
     }
 
     func textViewDidChange(_ textView: UITextView) {
@@ -253,8 +269,10 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     }
 
     @objc private func cancel() {
-        let hasDraft = !(titleField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            || (!bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && bodyView.text != bodyPlaceholder)
+        let titleHasDraft = !(titleField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let bodyHasDraft = !bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            bodyView.text != bodyPlaceholder
+        let hasDraft = titleHasDraft || bodyHasDraft
         guard hasDraft else {
             navigationController?.popViewController(animated: true)
             return
@@ -272,10 +290,20 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         present(alert, animated: true)
     }
 
-    private func publish() {
+}
+
+@MainActor
+extension CommunityWriteViewController {
+}
+
+@MainActor
+extension CommunityWriteViewController {
+    func publish() {
         view.endEditing(true)
         let titleText = titleField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let bodyText = bodyView.text == bodyPlaceholder ? "" : bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let bodyText = bodyView.text == bodyPlaceholder
+            ? ""
+            : bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines)
         setTitleError(titleText.isEmpty)
         setBodyError(bodyText.isEmpty)
         guard !titleText.isEmpty, !bodyText.isEmpty else {

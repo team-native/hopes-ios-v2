@@ -2,6 +2,13 @@ import UIKit
 
 @MainActor
 final class AppTabBarController: UITabBarController {
+    private struct TabItem {
+        let controller: UIViewController
+        let title: String
+        let image: String
+        let selectedImage: String?
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
@@ -27,18 +34,39 @@ final class AppTabBarController: UITabBarController {
         }
         tabBar.standardAppearance = appearance
         tabBar.scrollEdgeAppearance = appearance
-        let tabs: [(UIViewController, String, String, String?)] = [
-            (HomeViewController(), "홈", "home-tab-icon-inactive", "home-tab-icon"),
-            (ChatHomeViewController(), "채팅", "chat-tab-icon", nil),
-            (CommunityViewController(), "커뮤니티", "community-tab-icon", nil),
-            (HistoryViewController(), "기록", "history-tab-icon", nil),
-            (MyPageViewController(), "마이페이지", "mypage-tab-icon", "mypage-tab-icon-selected")
+        let tabs: [TabItem] = [
+            TabItem(
+                controller: HomeViewController(),
+                title: "홈",
+                image: "home-tab-icon-inactive",
+                selectedImage: "home-tab-icon"
+            ),
+            TabItem(controller: ChatHomeViewController(), title: "채팅", image: "chat-tab-icon", selectedImage: nil),
+            TabItem(
+                controller: CommunityViewController(),
+                title: "커뮤니티",
+                image: "community-tab-icon",
+                selectedImage: nil
+            ),
+            TabItem(controller: HistoryViewController(), title: "기록", image: "history-tab-icon", selectedImage: nil),
+            TabItem(
+                controller: MyPageViewController(),
+                title: "마이페이지",
+                image: "mypage-tab-icon",
+                selectedImage: "mypage-tab-icon-selected"
+            )
         ]
-        viewControllers = tabs.map { controller, title, image, selectedImage in
-            let navigation = UINavigationController(rootViewController: controller)
-            let icon = UIImage(named: image)?.withRenderingMode(.alwaysTemplate)
-            let selectedIcon = selectedImage.flatMap { UIImage(named: $0)?.withRenderingMode(.alwaysTemplate) } ?? icon
-            navigation.tabBarItem = UITabBarItem(title: title, image: icon, selectedImage: selectedIcon)
+        viewControllers = makeNavigationControllers(for: tabs)
+    }
+
+    private func makeNavigationControllers(for tabs: [TabItem]) -> [UIViewController] {
+        tabs.map { item in
+            let navigation = UINavigationController(rootViewController: item.controller)
+            let icon = UIImage(named: item.image)?.withRenderingMode(.alwaysTemplate)
+            let selectedIcon = item.selectedImage.flatMap {
+                UIImage(named: $0)?.withRenderingMode(.alwaysTemplate)
+            } ?? icon
+            navigation.tabBarItem = UITabBarItem(title: item.title, image: icon, selectedImage: selectedIcon)
             return navigation
         }
     }

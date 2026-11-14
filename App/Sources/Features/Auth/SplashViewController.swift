@@ -77,8 +77,10 @@ final class SplashViewController: UIViewController {
         tagline.font = .systemFont(ofSize: 12)
         tagline.textAlignment = .center
         let slogan = NSMutableAttributedString(string: tagline.text ?? "")
-        slogan.addAttribute(.foregroundColor, value: UIColor(red: 111 / 255, green: 127 / 255, blue: 153 / 255, alpha: 1), range: NSRange(location: 0, length: slogan.length))
-        slogan.addAttribute(.foregroundColor, value: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1), range: NSRange(location: 8, length: 6))
+        slogan.addAttribute(.foregroundColor, value: UIColor(red: 111 / 255, green: 127 / 255, blue: 153 / 255,
+            alpha: 1), range: NSRange(location: 0, length: slogan.length))
+        slogan.addAttribute(.foregroundColor, value: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255,
+            alpha: 1), range: NSRange(location: 8, length: 6))
         tagline.attributedText = slogan
         tagline.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tagline)

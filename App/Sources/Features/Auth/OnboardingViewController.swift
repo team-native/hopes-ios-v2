@@ -29,12 +29,14 @@ final class OnboardingViewController: UIViewController {
         let heading = makeLabel("선배 답변을\n더 정확하게 받는 방법", size: 28, weight: .bold, color: AppStyle.ink)
         heading.attributedText = styledText(
             "선배 답변을\n더 정확하게 받는 방법",
-            size: 28,
-            weight: .bold,
-            color: AppStyle.ink,
-            lineHeight: 38,
-            kern: -0.4,
-            highlight: "선배"
+            style: TextStyle(
+                size: 28,
+                weight: .bold,
+                color: AppStyle.ink,
+                lineHeight: 38,
+                kern: -0.4,
+                highlight: "선배"
+            )
         )
         contentStack.addArrangedSubview(heading)
 
@@ -45,11 +47,14 @@ final class OnboardingViewController: UIViewController {
         )
         subtitle.attributedText = styledText(
             "질문에 학년, 관심 전공, 상황을 같이 적으면 더 현실적인 답변을 받을 수 있어요.",
-            size: 15,
-            weight: .regular,
-            color: AppStyle.muted,
-            lineHeight: 24,
-            kern: -0.1
+            style: TextStyle(
+                size: 15,
+                weight: .regular,
+                color: AppStyle.muted,
+                lineHeight: 24,
+                kern: -0.1,
+                highlight: nil
+            )
         )
         contentStack.addArrangedSubview(subtitle)
         contentStack.addArrangedSubview(makeTip(number: "1", label: "질문 전에,", text: "입학 / 전공 / 학교생활 중 카테고리를 골라요."))
@@ -115,7 +120,14 @@ final class OnboardingViewController: UIViewController {
         copy.axis = .vertical
         copy.spacing = 2
         if let body = copy.arrangedSubviews.last as? UILabel {
-            body.attributedText = styledText(text, size: 15, weight: .medium, color: AppStyle.ink, lineHeight: 24, kern: -0.1)
+            body.attributedText = styledText(text, style: TextStyle(
+                size: 15,
+                weight: .medium,
+                color: AppStyle.ink,
+                lineHeight: 24,
+                kern: -0.1,
+                highlight: nil
+            ))
         }
         row.addArrangedSubview(badge)
         row.addArrangedSubview(copy)
@@ -131,26 +143,28 @@ final class OnboardingViewController: UIViewController {
         return label
     }
 
-    private func styledText(
-        _ text: String,
-        size: CGFloat,
-        weight: UIFont.Weight,
-        color: UIColor,
-        lineHeight: CGFloat,
-        kern: CGFloat,
-        highlight: String? = nil
-    ) -> NSAttributedString {
+    private struct TextStyle {
+        let size: CGFloat
+        let weight: UIFont.Weight
+        let color: UIColor
+        let lineHeight: CGFloat
+        let kern: CGFloat
+        let highlight: String?
+    }
+
+    private func styledText(_ text: String, style: TextStyle) -> NSAttributedString {
         let paragraph = NSMutableParagraphStyle()
-        paragraph.minimumLineHeight = lineHeight
-        paragraph.maximumLineHeight = lineHeight
+        paragraph.minimumLineHeight = style.lineHeight
+        paragraph.maximumLineHeight = style.lineHeight
         let result = NSMutableAttributedString(string: text, attributes: [
-            .font: UIFont.systemFont(ofSize: size, weight: weight),
-            .foregroundColor: color,
+            .font: UIFont.systemFont(ofSize: style.size, weight: style.weight),
+            .foregroundColor: style.color,
             .paragraphStyle: paragraph,
-            .kern: kern
+            .kern: style.kern
         ])
-        if let highlight, let range = text.range(of: highlight) {
-            result.addAttribute(.foregroundColor, value: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1), range: NSRange(range, in: text))
+        if let highlight = style.highlight, let range = text.range(of: highlight) {
+            result.addAttribute(.foregroundColor, value: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255,
+                alpha: 1), range: NSRange(range, in: text))
         }
         return result
     }

@@ -88,7 +88,9 @@ final class AnnouncementDetailViewController: AppPageViewController {
     private func announcementBody() -> NSAttributedString {
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineSpacing = 4
-        let text = "선배 답변 데이터가 업데이트됐어요. 학과·전공별 추천 질문이 더 정확해지고, 기숙사·입학 관련 답변이 최신 내용으로 바뀌었어요.\n\n이용 중 불편한 점은 마이페이지 > 문의하기로 알려 주세요."
+        let text = "선배 답변 데이터가 업데이트됐어요. 학과·전공별 추천 질문이 더 정확해지고, "
+            + "기숙사·입학 관련 답변이 최신 내용으로 바뀌었어요.\n\n"
+            + "이용 중 불편한 점은 마이페이지 > 문의하기로 알려 주세요."
         return NSAttributedString(
             string: text,
             attributes: [

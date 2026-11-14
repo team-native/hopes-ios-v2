@@ -25,7 +25,13 @@ final class UserProfileStore {
         defaults.set(true, forKey: "profile.saveToastPending")
     }
 
-    func update(name: String, department: String, email: String, generation: String? = nil, introduction: String? = nil) {
+    func update(
+        name: String,
+        department: String,
+        email: String,
+        generation: String? = nil,
+        introduction: String? = nil
+    ) {
         defaults.set(name, forKey: "profile.name")
         defaults.set(department, forKey: "profile.department")
         defaults.set(email, forKey: "profile.email")

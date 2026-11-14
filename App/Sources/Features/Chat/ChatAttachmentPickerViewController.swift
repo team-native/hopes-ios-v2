@@ -3,7 +3,8 @@ import UIKit
 import UniformTypeIdentifiers
 
 @MainActor
-final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewControllerDelegate, UIDocumentPickerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewControllerDelegate,
+    UIDocumentPickerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     var onAttachmentSelected: ((String, UIImage?) -> Void)?
     var onLocationRequested: (() -> Void)?
 
@@ -86,7 +87,10 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         controller.dismiss(animated: true)
     }
 
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+    func imagePickerController(
+        _ picker: UIImagePickerController,
+        didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+    ) {
         finishSelection("촬영한 사진", image: info[.originalImage] as? UIImage)
     }
 
