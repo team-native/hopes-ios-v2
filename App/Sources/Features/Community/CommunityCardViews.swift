@@ -111,23 +111,24 @@ extension CommunityViewController {
         head.axis = .horizontal
         head.alignment = .center
 
-        let title = AppStyle.label(post.title, size: 15, weight: .medium, color: ink)
-        title.attributedText = NSAttributedString(string: post.title, attributes: [
-            .font: UIFont.systemFont(ofSize: 15, weight: .medium),
-            .foregroundColor: ink,
-            .kern: -0.1
-        ])
-        let body = AppStyle.label(post.body, size: 14, weight: .medium, color: secondary)
+        let title = makeCommunityLabel(post.title, size: 15, weight: .medium, color: ink, lineHeight: 24, kern: -0.1)
+        let body = makeCommunityLabel(post.body, size: 14, weight: .medium, color: secondary, lineHeight: 20)
         body.numberOfLines = 2
         let footer = UIStackView(arrangedSubviews: [
-            AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: tertiary),
+            makeCommunityLabel(
+                "\(post.grade) · \(post.time)",
+                size: 12,
+                weight: .regular,
+                color: tertiary,
+                lineHeight: 16
+            ),
             UIView(),
             makeStat(icon: "community-heart-icon", count: post.likes, identifier: "community-like-count"),
             makeStat(icon: "community-comment-icon", count: post.comments, identifier: "community-comment-count")
         ])
         footer.axis = .horizontal
         footer.alignment = .center
-        footer.spacing = 8
+        footer.spacing = 12
 
         let stack = UIStackView(arrangedSubviews: [head, title, body, footer])
         stack.axis = .vertical
@@ -137,6 +138,28 @@ extension CommunityViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         return stack
+    }
+
+    private func makeCommunityLabel(
+        _ text: String,
+        size: CGFloat,
+        weight: UIFont.Weight,
+        color: UIColor,
+        lineHeight: CGFloat,
+        kern: CGFloat = 0
+    ) -> UILabel {
+        let label = UILabel()
+        label.numberOfLines = 0
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.minimumLineHeight = lineHeight
+        paragraphStyle.maximumLineHeight = lineHeight
+        label.attributedText = NSAttributedString(string: text, attributes: [
+            .font: UIFont.systemFont(ofSize: size, weight: weight),
+            .foregroundColor: color,
+            .paragraphStyle: paragraphStyle,
+            .kern: kern
+        ])
+        return label
     }
 
     private func makePostCardContainer(content stack: UIStackView, post: CommunityPost) -> UIView {
@@ -184,7 +207,7 @@ extension CommunityViewController {
             image.widthAnchor.constraint(equalToConstant: 14),
             image.heightAnchor.constraint(equalToConstant: 14)
         ])
-        let value = AppStyle.label("\(count)", size: 12, color: tertiary)
+        let value = makeCommunityLabel("\(count)", size: 12, weight: .regular, color: tertiary, lineHeight: 16)
         let stat = UIStackView(arrangedSubviews: [image, value])
         stat.axis = .horizontal
         stat.alignment = .center
