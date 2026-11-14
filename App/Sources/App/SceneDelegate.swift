@@ -17,7 +17,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             window.rootViewController = UINavigationController(rootViewController: InquiryViewController())
         } else if arguments.contains("--inquiry-done-preview") {
             window.rootViewController = UINavigationController(
-                rootViewController: InquiryCompletionViewController(email: "s26055@gsm.hs.kr")
+                rootViewController: InquiryCompletionViewController(email: "preview@example.invalid")
             )
         } else if arguments.contains("--settings-preview") {
             let tabs = AppTabBarController()

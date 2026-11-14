@@ -63,7 +63,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         }
 
         if showsErrorPreview {
-            emailField.text = "s26055@gsm"
+            emailField.text = "preview"
             messageView.text = messageErrorPlaceholder
             messageView.textColor = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
             messageHeightConstraint.constant = 150
