@@ -2,17 +2,18 @@ import UIKit
 
 @MainActor
 enum HomePreviewStateViews {
-    static func notificationButton(borderColor: UIColor, action: @escaping () -> Void) -> UIButton {
+    static func notificationButton(action: @escaping () -> Void) -> UIButton {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "home-notification-icon"), for: .normal)
-        button.backgroundColor = .white
-        button.layer.cornerRadius = 14
-        button.layer.borderWidth = 1
-        button.layer.borderColor = borderColor.cgColor
-        button.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.05).cgColor
-        button.layer.shadowOpacity = 1
-        button.layer.shadowRadius = 8
-        button.layer.shadowOffset = CGSize(width: 0, height: 4)
+        let imageView = UIImageView(image: UIImage(named: "home-notification-icon")?.withRenderingMode(.alwaysOriginal))
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(imageView)
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: button.topAnchor, constant: -12),
+            imageView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: -16),
+            imageView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: 16),
+            imageView.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: 20)
+        ])
         button.addAction(UIAction { _ in action() }, for: .touchUpInside)
         button.widthAnchor.constraint(equalToConstant: 44).isActive = true
         button.heightAnchor.constraint(equalToConstant: 44).isActive = true

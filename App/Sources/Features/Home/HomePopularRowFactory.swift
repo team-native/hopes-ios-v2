@@ -81,7 +81,7 @@ enum HomePopularRowFactory {
         row.alignment = .center
         row.spacing = 10
         row.isLayoutMarginsRelativeArrangement = true
-        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16)
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16)
         row.backgroundColor = .white
         row.layer.cornerRadius = 20
         row.layer.borderWidth = 1
@@ -95,9 +95,9 @@ enum HomePopularRowFactory {
 
 @MainActor
 enum HomeLoadingHeaderFactory {
-    static func make(borderColor: UIColor, action: @escaping () -> Void) -> UIView {
+    static func make(action: @escaping () -> Void) -> UIView {
         let spacer = UIView()
-        let notification = HomePreviewStateViews.notificationButton(borderColor: borderColor, action: action)
+        let notification = HomePreviewStateViews.notificationButton(action: action)
         let header = UIStackView(arrangedSubviews: [spacer, notification])
         header.axis = .horizontal
         header.alignment = .center
