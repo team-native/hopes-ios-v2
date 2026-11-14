@@ -270,7 +270,11 @@ private extension WelcomeViewController {
         guard !didOpenLogin else { return }
         didOpenLogin = true
         let navigation = UINavigationController(rootViewController: LoginViewController())
-        navigation.modalPresentationStyle = .fullScreen
+        navigation.modalPresentationStyle = .overFullScreen
+        navigation.modalTransitionStyle = .coverVertical
+        navigation.modalPresentationCapturesStatusBarAppearance = true
+        navigation.view.backgroundColor = .clear
+        navigation.view.isOpaque = false
         navigation.setNavigationBarHidden(true, animated: false)
         present(navigation, animated: true)
     }
