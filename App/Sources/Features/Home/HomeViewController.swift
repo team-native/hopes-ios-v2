@@ -254,7 +254,9 @@ private extension HomeViewController {
     }
 
     @objc func openCommunity() {
-        tabBarController?.selectedIndex = 2
+        let community = CommunityViewController()
+        community.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(community, animated: true)
     }
 
     @objc func openNotifications() {
