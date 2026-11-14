@@ -38,6 +38,7 @@ final class CommunityViewController: AppPageViewController {
     let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     let defaultBorder = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
     let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    let canvas = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
     let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
     let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
     let postStack = UIStackView()
@@ -49,6 +50,7 @@ final class CommunityViewController: AppPageViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = nil
+        view.backgroundColor = canvas
         contentStack.spacing = 16
         if let topConstraint = scrollView.constraints.first(where: {
             $0.firstItem === contentStack && $0.firstAttribute == .top
@@ -163,6 +165,7 @@ final class CommunityViewController: AppPageViewController {
         }
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
         button.configuration = configuration
+        button.heightAnchor.constraint(equalToConstant: 38).isActive = true
         button.layer.cornerRadius = 20
         button.layer.borderWidth = 1
         button.accessibilityIdentifier = "community-board-\(board)"
@@ -190,8 +193,8 @@ final class CommunityViewController: AppPageViewController {
         NSLayoutConstraint.activate([
             button.widthAnchor.constraint(equalToConstant: 56),
             button.heightAnchor.constraint(equalToConstant: 56),
-            button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
-            button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24)
+            button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30)
         ])
     }
 
