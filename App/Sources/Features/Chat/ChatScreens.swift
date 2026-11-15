@@ -30,6 +30,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var composerView: UIStackView?
     var messageSendButton: UIButton?
     private var attachmentTrayView: ChatAttachmentTrayView?
+    private var attachmentTrayHeightConstraint: NSLayoutConstraint?
     private var composerScrollConstraint: NSLayoutConstraint?
     private var attachmentTrayScrollConstraint: NSLayoutConstraint?
     var successToastView: UIView?
@@ -109,52 +110,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         NSLayoutConstraint.activate([
             stopAnswerButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             stopAnswerButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -76)
-        ])
-    }
-
-    func configureComposer() {
-        let composer = makeComposerContainer()
-        composerView = composer
-        let attach = makeAttachmentButton()
-        let send = makeSendButton()
-        messageSendButton = send
-        let mic = makeVoiceButton()
-        composer.addArrangedSubview(attach)
-        composer.addArrangedSubview(inputField)
-        composer.addArrangedSubview(mic)
-        composer.addArrangedSubview(send)
-        view.addSubview(composer)
-
-        let tray = ChatAttachmentTrayView()
-        attachmentTrayView = tray
-        tray.isHidden = true
-        tray.onRemove = { [weak self] identifier in
-            guard let self else { return }
-            self.selectedAttachments.removeAll { $0.id == identifier }
-            self.refreshAttachmentTray()
-        }
-        tray.onSend = { [weak self] question in self?.sendAttachmentQuestion(question) }
-        tray.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(tray)
-
-        let showComposerConstraint = scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor)
-        let showTrayConstraint = scrollView.bottomAnchor.constraint(equalTo: tray.topAnchor)
-        showComposerConstraint.isActive = true
-        composerScrollConstraint = showComposerConstraint
-        attachmentTrayScrollConstraint = showTrayConstraint
-        view.keyboardLayoutGuide.usesBottomSafeArea = true
-        view.keyboardLayoutGuide.followsUndockedKeyboard = false
-
-        NSLayoutConstraint.activate([
-            composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            composer.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -8),
-            composer.heightAnchor.constraint(equalToConstant: 52),
-            tray.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tray.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tray.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tray.heightAnchor.constraint(equalToConstant: 225),
-            inputField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
         ])
     }
 
@@ -286,6 +241,59 @@ extension ChatConversationViewController {
 
 @MainActor
 private extension ChatConversationViewController {
+    func configureComposer() {
+        let composer = makeComposerContainer()
+        composerView = composer
+        let attach = makeAttachmentButton()
+        let send = makeSendButton()
+        messageSendButton = send
+        let mic = makeVoiceButton()
+        composer.addArrangedSubview(attach)
+        composer.addArrangedSubview(inputField)
+        composer.addArrangedSubview(mic)
+        composer.addArrangedSubview(send)
+        view.addSubview(composer)
+
+        let tray = ChatAttachmentTrayView()
+        attachmentTrayView = tray
+        tray.isHidden = true
+        tray.onRemove = { [weak self] identifier in
+            guard let self else { return }
+            self.selectedAttachments.removeAll { $0.id == identifier }
+            self.refreshAttachmentTray()
+        }
+        tray.onSend = { [weak self] question in self?.sendAttachmentQuestion(question) }
+        tray.onPreferredHeightChange = { [weak self] height in
+            guard let self, let heightConstraint = self.attachmentTrayHeightConstraint else { return }
+            heightConstraint.constant = height
+            UIView.animate(withDuration: 0.2) { self.view.layoutIfNeeded() }
+        }
+        tray.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tray)
+
+        let showComposerConstraint = scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor)
+        let showTrayConstraint = scrollView.bottomAnchor.constraint(equalTo: tray.topAnchor)
+        showComposerConstraint.isActive = true
+        composerScrollConstraint = showComposerConstraint
+        attachmentTrayScrollConstraint = showTrayConstraint
+        view.keyboardLayoutGuide.usesBottomSafeArea = true
+        view.keyboardLayoutGuide.followsUndockedKeyboard = false
+
+        let trayHeightConstraint = tray.heightAnchor.constraint(equalToConstant: 225)
+        attachmentTrayHeightConstraint = trayHeightConstraint
+        NSLayoutConstraint.activate([
+            composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            composer.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -8),
+            composer.heightAnchor.constraint(equalToConstant: 52),
+            tray.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tray.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tray.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            trayHeightConstraint,
+            inputField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
+        ])
+    }
+
     func addAttachments(_ attachments: [ChatAttachmentItem]) {
         selectedAttachments.append(contentsOf: attachments)
         refreshAttachmentTray()
