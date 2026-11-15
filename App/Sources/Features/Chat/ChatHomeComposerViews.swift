@@ -2,6 +2,65 @@ import UIKit
 
 @MainActor
 extension ChatHomeViewController {
+    func makeRecommendationSkeleton() -> UIView {
+        let card = UIView()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = line.cgColor
+        card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.05).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 8
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
+
+        let rows = UIStackView()
+        rows.axis = .vertical
+        rows.spacing = 0
+        rows.isLayoutMarginsRelativeArrangement = true
+        rows.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 5, leading: 17, bottom: 5, trailing: 17)
+        rows.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(rows)
+        NSLayoutConstraint.activate([
+            rows.topAnchor.constraint(equalTo: card.topAnchor),
+            rows.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            rows.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor),
+            card.heightAnchor.constraint(equalToConstant: 250)
+        ])
+
+        for _ in 0..<4 {
+            let icon = makeSkeletonBlock(width: 36, height: 36, radius: 12)
+            let title = makeSkeletonBlock(width: 220, height: 12, radius: 6)
+            let subtitle = makeSkeletonBlock(width: 144, height: 10, radius: 5)
+            let labels = UIStackView(arrangedSubviews: [title, subtitle])
+            labels.axis = .vertical
+            labels.alignment = .leading
+            labels.spacing = 8
+
+            let row = UIStackView(arrangedSubviews: [icon, labels])
+            row.axis = .horizontal
+            row.alignment = .center
+            row.spacing = 12
+            row.heightAnchor.constraint(equalToConstant: 60).isActive = true
+            rows.addArrangedSubview(row)
+        }
+        card.accessibilityLabel = "추천 질문을 불러오는 중"
+        card.accessibilityIdentifier = "chat-recommendation-skeleton"
+        return card
+    }
+
+    private func makeSkeletonBlock(width: CGFloat, height: CGFloat, radius: CGFloat) -> UIView {
+        let block = UIView()
+        block.translatesAutoresizingMaskIntoConstraints = false
+        block.backgroundColor = UIColor(red: 237 / 255, green: 241 / 255, blue: 247 / 255, alpha: 1)
+        block.layer.cornerRadius = radius
+        NSLayoutConstraint.activate([
+            block.widthAnchor.constraint(equalToConstant: width),
+            block.heightAnchor.constraint(equalToConstant: height)
+        ])
+        return block
+    }
+
     func makeBasicQuestionList() -> UIView {
         let card = UIView()
         card.backgroundColor = .white

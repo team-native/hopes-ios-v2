@@ -54,6 +54,59 @@ extension ChatHomeViewController {
         infoBanner.isHidden = true
     }
 
+    func configureRecommendationFailureNotice() {
+        recommendationFailureNotice.translatesAutoresizingMaskIntoConstraints = false
+        recommendationFailureNotice.backgroundColor = softBlue
+        recommendationFailureNotice.layer.cornerRadius = 14
+
+        let icon = UIImageView(image: UIImage(named: "home-alert-icon"))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+
+        let message = UILabel()
+        message.text = "맞춤 추천을 불러오지 못했어요.\n기본 질문을 보여드려요."
+        message.font = .systemFont(ofSize: 12)
+        message.textColor = secondary
+        message.numberOfLines = 2
+        message.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        let retry = UIButton(type: .system)
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = "다시 시도"
+        configuration.baseForegroundColor = brandBlue
+        configuration.baseBackgroundColor = .white
+        configuration.cornerStyle = .medium
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10)
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 12, weight: .medium)
+            return outgoing
+        }
+        retry.configuration = configuration
+        retry.accessibilityIdentifier = "chat-retry-recommendations"
+        retry.addTarget(self, action: #selector(retryRecommendations), for: .touchUpInside)
+
+        let row = UIStackView(arrangedSubviews: [icon, message, retry])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 8
+        row.translatesAutoresizingMaskIntoConstraints = false
+        recommendationFailureNotice.addSubview(row)
+        NSLayoutConstraint.activate([
+            icon.widthAnchor.constraint(equalToConstant: 18),
+            icon.heightAnchor.constraint(equalToConstant: 18),
+            retry.widthAnchor.constraint(equalToConstant: 84),
+            retry.heightAnchor.constraint(equalToConstant: 36),
+            row.leadingAnchor.constraint(equalTo: recommendationFailureNotice.leadingAnchor, constant: 12),
+            row.trailingAnchor.constraint(equalTo: recommendationFailureNotice.trailingAnchor, constant: -12),
+            row.centerYAnchor.constraint(equalTo: recommendationFailureNotice.centerYAnchor),
+            recommendationFailureNotice.heightAnchor.constraint(equalToConstant: 60)
+        ])
+        recommendationFailureNotice.accessibilityIdentifier = "chat-recommendation-failure"
+        contentStack.addArrangedSubview(recommendationFailureNotice)
+        recommendationFailureNotice.isHidden = true
+    }
+
     func addPromptTitle() {
         let title = "무엇이 궁금한가요?"
         let attributed = NSMutableAttributedString(string: title, attributes: [
@@ -84,14 +137,19 @@ extension ChatHomeViewController {
 
     func updateRecommendationTitle() {
         let hasPersonalizedContext = selectedDepartment != nil && selectedMajor != nil
-        if let selectedDepartment, let selectedMajor, hasPersonalizedContext {
-            recommendationTitleLabel?.text = "\(selectedDepartment) · \(selectedMajor) 추천 질문"
+        if hasPersonalizedContext, let selectedDepartment, let selectedMajor {
+            switch recommendationState {
+            case .ready:
+                recommendationTitleLabel?.text = "\(selectedDepartment) · \(selectedMajor) 추천 질문"
+            case .loading:
+                recommendationTitleLabel?.text = "\(selectedDepartment) · \(selectedMajor) 추천 질문 불러오는 중…"
+            case .failed:
+                recommendationTitleLabel?.text = "기본 추천 질문"
+            }
         } else {
+            recommendationState = .ready
             recommendationTitleLabel?.text = "기본 추천 질문"
         }
-        infoBanner.isHidden = hasPersonalizedContext
-        promptTitleView?.isHidden = !hasPersonalizedContext
-        refreshSlot?.isHidden = !hasPersonalizedContext
         renderQuestions()
     }
 

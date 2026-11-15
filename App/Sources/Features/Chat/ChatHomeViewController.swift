@@ -1,5 +1,11 @@
 import UIKit
 
+enum ChatHomeRecommendationState {
+    case ready
+    case loading
+    case failed
+}
+
 @MainActor
 final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
     let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
@@ -13,6 +19,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
     let majorChip = UIButton(type: .system)
     let questionList = UIStackView()
     let infoBanner = UIView()
+    let recommendationFailureNotice = UIView()
     var promptTitleView: UIView?
     var refreshSlot: UIView?
     weak var recommendationTitleLabel: UILabel?
@@ -20,6 +27,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
     let messageField = UITextField()
     var selectedDepartment: String?
     var selectedMajor: String?
+    var recommendationState: ChatHomeRecommendationState = .ready
     private var questionSetIndex = 0
 
     private let questionSets: [[(String, String)]] = [
@@ -55,6 +63,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         addInfoBanner()
         addPromptTitle()
         addRecommendationHeader()
+        configureRecommendationFailureNotice()
         configureQuestionList()
         configureComposer()
         if let bottomConstraint = view.constraints.first(where: {
@@ -185,8 +194,33 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
             $0.removeFromSuperview()
         }
         guard selectedDepartment != nil, selectedMajor != nil else {
+            recommendationState = .ready
+            recommendationFailureNotice.isHidden = true
+            recommendationTitleLabel?.text = "기본 추천 질문"
+            infoBanner.isHidden = false
+            promptTitleView?.isHidden = true
+            refreshSlot?.isHidden = true
             questionList.addArrangedSubview(makeBasicQuestionList())
             return
+        }
+        infoBanner.isHidden = true
+        promptTitleView?.isHidden = recommendationState == .loading
+        refreshSlot?.isHidden = recommendationState != .ready
+        recommendationFailureNotice.isHidden = recommendationState != .failed
+
+        switch recommendationState {
+        case .loading:
+            recommendationTitleLabel?.text = "\(selectedDepartment ?? "") · \(selectedMajor ?? "") 추천 질문 불러오는 중…"
+            questionList.addArrangedSubview(makeRecommendationSkeleton())
+            return
+        case .failed:
+            recommendationTitleLabel?.text = "기본 추천 질문"
+            for (iconName, question) in questionSets[0].prefix(3) {
+                questionList.addArrangedSubview(makeQuestionCard(iconName: iconName, question: question))
+            }
+            return
+        case .ready:
+            break
         }
         for (iconName, question) in questionSets[questionSetIndex] {
             questionList.addArrangedSubview(makeQuestionCard(iconName: iconName, question: question))
@@ -194,8 +228,24 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
     }
 
     @objc private func refreshQuestions() {
+        guard recommendationState != .loading else { return }
+        if recommendationState == .failed {
+            retryRecommendations()
+            return
+        }
         questionSetIndex = (questionSetIndex + 1) % questionSets.count
         renderQuestions()
+    }
+
+    @objc func retryRecommendations() {
+        recommendationState = .ready
+        questionSetIndex = 0
+        updateRecommendationTitle()
+    }
+
+    func showRecommendationState(_ state: ChatHomeRecommendationState) {
+        recommendationState = state
+        updateRecommendationTitle()
     }
 
     @objc private func startNewConversation() {
