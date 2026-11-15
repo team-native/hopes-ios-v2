@@ -71,7 +71,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     func configureMessages() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         messagesStack.axis = .vertical
-        messagesStack.spacing = 14
+        messagesStack.spacing = 12
         messagesStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
         scrollView.addSubview(messagesStack)
@@ -79,7 +79,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            messagesStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 18),
+            messagesStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 8),
             messagesStack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 18),
             messagesStack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -18),
             messagesStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -18)
@@ -161,8 +161,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     private func makeAttachmentButton() -> UIButton {
         let attach = UIButton(type: .system)
-        attach.setImage(UIImage(named: "map-composer-plus"), for: .normal)
-        attach.tintColor = LocationMapStyle.ink
+        attach.setImage(UIImage(named: "chat-plus-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        attach.imageView?.contentMode = .scaleAspectFit
         attach.backgroundColor = .white
         attach.layer.cornerRadius = 20
         attach.layer.borderWidth = 1
@@ -188,8 +188,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     private func makeSendButton() -> UIButton {
         let send = UIButton(type: .system)
-        send.setImage(UIImage(named: "map-composer-up"), for: .normal)
-        send.tintColor = .white
+        send.setImage(UIImage(named: "chat-send-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        send.imageView?.contentMode = .scaleAspectFit
         send.backgroundColor = LocationMapStyle.brand
         send.layer.cornerRadius = 20
         send.addAction(UIAction { [weak self] _ in self?.sendMessage() }, for: .touchUpInside)
@@ -200,8 +200,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     private func makeVoiceButton() -> UIButton {
         let mic = UIButton(type: .system)
-        mic.setImage(UIImage(named: "map-composer-mic"), for: .normal)
-        mic.tintColor = LocationMapStyle.secondary
+        mic.setImage(UIImage(named: "chat-mic-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        mic.imageView?.contentMode = .scaleAspectFit
         mic.widthAnchor.constraint(equalToConstant: 40).isActive = true
         mic.heightAnchor.constraint(equalToConstant: 40).isActive = true
         mic.addAction(UIAction { [weak self] _ in self?.presentMessage("음성 입력은 추후 지원할 예정이에요") }, for: .touchUpInside)
