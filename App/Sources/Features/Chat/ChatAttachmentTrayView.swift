@@ -1,10 +1,17 @@
 import UIKit
+import UniformTypeIdentifiers
 
 struct ChatAttachmentItem: Identifiable {
     let id = UUID()
     let fileName: String
     let image: UIImage?
     let url: URL?
+
+    var isSupported: Bool {
+        if image != nil { return true }
+        guard let url else { return false }
+        return UTType(filenameExtension: url.pathExtension)?.conforms(to: .pdf) == true
+    }
 
     init(fileName: String, image: UIImage?, url: URL? = nil) {
         self.fileName = fileName
@@ -17,6 +24,7 @@ struct ChatAttachmentItem: Identifiable {
 final class ChatAttachmentTrayView: UIView {
     var onRemove: ((UUID) -> Void)?
     var onSend: ((String) -> Void)?
+    var onPreferredHeightChange: ((CGFloat) -> Void)?
     var attachments: [ChatAttachmentItem] = [] {
         didSet { updateAttachments() }
     }
@@ -24,6 +32,8 @@ final class ChatAttachmentTrayView: UIView {
     private let countLabel = AppStyle.label("첨부 0개", size: 14, weight: .medium, color: AppStyle.muted)
     private let attachmentsStack = UIStackView()
     private let inputField = UITextField()
+    private let sendButton = UIButton(type: .system)
+    private let unsupportedFormatBanner = UIStackView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -36,9 +46,12 @@ final class ChatAttachmentTrayView: UIView {
         configureAppearance()
         let attachmentsScroll = makeAttachmentsScrollView()
         let inputRow = makeQuestionInputRow()
+        configureUnsupportedFormatBanner()
         let homeIndicatorSpacer = UIView()
         homeIndicatorSpacer.heightAnchor.constraint(equalToConstant: 21).isActive = true
-        let content = UIStackView(arrangedSubviews: [countLabel, attachmentsScroll, inputRow, homeIndicatorSpacer])
+        let content = UIStackView(arrangedSubviews: [
+            unsupportedFormatBanner, countLabel, attachmentsScroll, inputRow, homeIndicatorSpacer
+        ])
         content.axis = .vertical
         content.spacing = 12
         content.isLayoutMarginsRelativeArrangement = true
@@ -123,7 +136,7 @@ final class ChatAttachmentTrayView: UIView {
     }
 
     private func makeSendButton() -> UIButton {
-        let send = UIButton(type: .system)
+        let send = sendButton
         send.backgroundColor = AppStyle.blue
         send.layer.cornerRadius = 24
         send.setImage(UIImage(named: "chat-send-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
@@ -138,6 +151,11 @@ final class ChatAttachmentTrayView: UIView {
 
     private func updateAttachments() {
         countLabel.text = "첨부 \(attachments.count)개"
+        let hasUnsupportedAttachment = attachments.contains { !$0.isSupported }
+        unsupportedFormatBanner.isHidden = !hasUnsupportedAttachment
+        sendButton.isEnabled = !hasUnsupportedAttachment
+        sendButton.backgroundColor = hasUnsupportedAttachment ? AppStyle.blue.withAlphaComponent(0.4) : AppStyle.blue
+        onPreferredHeightChange?(hasUnsupportedAttachment ? 277 : 225)
         attachmentsStack.arrangedSubviews.forEach { view in
             attachmentsStack.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -151,10 +169,14 @@ final class ChatAttachmentTrayView: UIView {
         if let image = attachment.image {
             return makeImageCard(image, id: attachment.id)
         }
-        return makePDFCard(attachment)
+        return makeDocumentCard(attachment)
     }
 
-    private func makeImageCard(_ image: UIImage, id: UUID) -> UIView {
+}
+
+@MainActor
+private extension ChatAttachmentTrayView {
+    func makeImageCard(_ image: UIImage, id: UUID) -> UIView {
         let card = UIView()
         card.backgroundColor = AppStyle.paleBlue
         card.layer.cornerRadius = 16
@@ -179,7 +201,29 @@ final class ChatAttachmentTrayView: UIView {
         return card
     }
 
-    private func makePDFCard(_ attachment: ChatAttachmentItem) -> UIView {
+    func configureUnsupportedFormatBanner() {
+        unsupportedFormatBanner.axis = .horizontal
+        unsupportedFormatBanner.alignment = .center
+        unsupportedFormatBanner.spacing = 8
+        unsupportedFormatBanner.isLayoutMarginsRelativeArrangement = true
+        unsupportedFormatBanner.directionalLayoutMargins = NSDirectionalEdgeInsets(
+            top: 12, leading: 16, bottom: 12, trailing: 16
+        )
+        unsupportedFormatBanner.backgroundColor = UIColor(red: 1, green: 0.945, blue: 0.949, alpha: 1)
+        unsupportedFormatBanner.layer.cornerRadius = 14
+
+        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle.fill"))
+        icon.tintColor = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
+        icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        let danger = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
+        let message = AppStyle.label("이미지와 PDF만 첨부할 수 있어요.", size: 12, color: danger)
+        unsupportedFormatBanner.addArrangedSubview(icon)
+        unsupportedFormatBanner.addArrangedSubview(message)
+        unsupportedFormatBanner.isHidden = true
+    }
+
+    func makeDocumentCard(_ attachment: ChatAttachmentItem) -> UIView {
         let card = UIView()
         card.backgroundColor = .white
         card.layer.cornerRadius = 16
@@ -189,8 +233,25 @@ final class ChatAttachmentTrayView: UIView {
         card.widthAnchor.constraint(equalToConstant: 192).isActive = true
         card.heightAnchor.constraint(equalToConstant: 72).isActive = true
 
+        let iconChip = makeDocumentIconChip(isSupported: attachment.isSupported)
+        let name = AppStyle.label(attachment.fileName, size: 14, weight: .medium, color: AppStyle.ink)
+        name.lineBreakMode = .byTruncatingMiddle
+        let type = makeDocumentTypeLabel(isSupported: attachment.isSupported)
+        let content = makeDocumentCardContent(iconChip: iconChip, name: name, type: type)
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
+        ])
+        addPDFRemoveButton(to: card, id: attachment.id)
+        return card
+    }
+
+    func makeDocumentIconChip(isSupported: Bool) -> UIView {
         let iconChip = UIView()
-        iconChip.backgroundColor = AppStyle.paleBlue
+        iconChip.backgroundColor = isSupported ? AppStyle.paleBlue : .white
         iconChip.layer.cornerRadius = 12
         let icon = UIImageView(image: UIImage(systemName: "doc.text"))
         icon.tintColor = AppStyle.blue
@@ -206,9 +267,20 @@ final class ChatAttachmentTrayView: UIView {
             icon.widthAnchor.constraint(equalToConstant: 16),
             icon.heightAnchor.constraint(equalToConstant: 16)
         ])
-        let name = AppStyle.label(attachment.fileName, size: 14, weight: .medium, color: AppStyle.ink)
-        name.lineBreakMode = .byTruncatingMiddle
-        let type = AppStyle.label("PDF 문서", size: 12, color: AppStyle.muted)
+        return iconChip
+    }
+
+    func makeDocumentTypeLabel(isSupported: Bool) -> UILabel {
+        let danger = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
+        let type = AppStyle.label(
+            isSupported ? "PDF 문서" : "지원하지 않는 형식",
+            size: 12,
+            color: isSupported ? AppStyle.muted : danger
+        )
+        return type
+    }
+
+    func makeDocumentCardContent(iconChip: UIView, name: UILabel, type: UILabel) -> UIStackView {
         let labels = UIStackView(arrangedSubviews: [name, type])
         labels.axis = .vertical
         labels.spacing = 2
@@ -219,18 +291,10 @@ final class ChatAttachmentTrayView: UIView {
         content.isLayoutMarginsRelativeArrangement = true
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 13, bottom: 8, trailing: 13)
         content.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
-        ])
-        addPDFRemoveButton(to: card, id: attachment.id)
-        return card
+        return content
     }
 
-    private func addRemoveButton(to card: UIView, id: UUID) {
+    func addRemoveButton(to card: UIView, id: UUID) {
         let hitArea = UIView()
         hitArea.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(hitArea)
@@ -255,7 +319,7 @@ final class ChatAttachmentTrayView: UIView {
         ])
     }
 
-    private func addPDFRemoveButton(to card: UIView, id: UUID) {
+    func addPDFRemoveButton(to card: UIView, id: UUID) {
         let hitArea = UIView()
         hitArea.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(hitArea)
@@ -283,6 +347,7 @@ final class ChatAttachmentTrayView: UIView {
 @MainActor
 private extension ChatAttachmentTrayView {
     func sendQuestion() {
+        guard !attachments.contains(where: { !$0.isSupported }) else { return }
         let question = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !question.isEmpty else { return }
         onSend?(question)

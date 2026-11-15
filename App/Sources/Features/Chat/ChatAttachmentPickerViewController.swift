@@ -57,7 +57,7 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
     }
 
     @objc private func openFiles() {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.pdf], asCopy: true)
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
         picker.allowsMultipleSelection = true
         picker.delegate = self
         present(picker, animated: true)
