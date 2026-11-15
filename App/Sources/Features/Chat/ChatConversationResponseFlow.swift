@@ -17,6 +17,8 @@ extension ChatConversationViewController {
             showOfflineBanner()
             inputField.placeholder = "오프라인 상태예요"
             inputField.isEnabled = false
+            messageSendButton?.isEnabled = false
+            messageSendButton?.backgroundColor = LocationMapStyle.brand.withAlphaComponent(0.55)
             if generationTimer != nil {
                 generationTimer?.cancel()
                 generationTimer = nil
@@ -41,6 +43,8 @@ extension ChatConversationViewController {
             pendingStatusRow = nil
             inputField.placeholder = "추가 질문 입력…"
             inputField.isEnabled = true
+            messageSendButton?.isEnabled = true
+            messageSendButton?.backgroundColor = LocationMapStyle.brand
             if retryWhenOnline {
                 retryWhenOnline = false
                 beginAnswerGeneration()
@@ -84,6 +88,15 @@ extension ChatConversationViewController {
         row.addArrangedSubview(AppStyle.label("연결되면 전송돼요", size: 12, color: AppStyle.muted))
         messagesStack.addArrangedSubview(row)
         pendingStatusRow = row
+    }
+
+    func sendMessage() {
+        guard !isOffline,
+              let text = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty else { return }
+        inputField.text = nil
+        addMessage(text, outgoing: true)
+        beginAnswerGeneration()
     }
 
     func beginAnswerGeneration() {

@@ -28,6 +28,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     var hasPendingLocationRequest = false
     private var selectedAttachments: [ChatAttachmentItem] = []
     private var composerView: UIStackView?
+    var messageSendButton: UIButton?
     private var attachmentTrayView: ChatAttachmentTrayView?
     private var composerScrollConstraint: NSLayoutConstraint?
     private var attachmentTrayScrollConstraint: NSLayoutConstraint?
@@ -116,6 +117,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         composerView = composer
         let attach = makeAttachmentButton()
         let send = makeSendButton()
+        messageSendButton = send
         let mic = makeVoiceButton()
         composer.addArrangedSubview(attach)
         composer.addArrangedSubview(inputField)
@@ -214,6 +216,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         send.imageView?.contentMode = .scaleAspectFit
         send.backgroundColor = LocationMapStyle.brand
         send.layer.cornerRadius = 20
+        send.accessibilityLabel = "메시지 보내기"
+        send.accessibilityIdentifier = "chat-send-message"
         send.addAction(UIAction { [weak self] _ in self?.sendMessage() }, for: .touchUpInside)
         send.widthAnchor.constraint(equalToConstant: 40).isActive = true
         send.heightAnchor.constraint(equalToConstant: 40).isActive = true
@@ -268,13 +272,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
-    }
-
-    func sendMessage() {
-        guard let text = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return }
-        inputField.text = nil
-        addMessage(text, outgoing: true)
-        beginAnswerGeneration()
     }
 
 }
