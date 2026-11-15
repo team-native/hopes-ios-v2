@@ -287,7 +287,7 @@ extension ChatConversationViewController {
             return
         }
         hasPendingLocationRequest = false
-        let result = ChatLocationResultCardView(accuracy: location.horizontalAccuracy) { [weak self] in
+        let result = ChatLocationResultMessageView(accuracy: location.horizontalAccuracy) { [weak self] in
             self?.openSchoolMap()
         }
         replaceLocationCard(with: result)
