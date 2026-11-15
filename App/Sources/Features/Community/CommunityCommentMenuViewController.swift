@@ -27,7 +27,7 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        sheetBottomConstraint?.constant = 0
+        sheetBottomConstraint?.constant = -6
         UIView.animate(withDuration: 0.28, delay: 0, options: [.curveEaseOut]) {
             self.dimView.alpha = 1
             self.view.layoutIfNeeded()
@@ -110,7 +110,7 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
         content.axis = .vertical
         content.spacing = 16
         content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 8, trailing: 20)
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 0, trailing: 20)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             handle.widthAnchor.constraint(equalToConstant: 44),
@@ -132,6 +132,7 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
         iconView.translatesAutoresizingMaskIntoConstraints = false
         let label = AppStyle.label(title, size: 15, color: color)
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.heightAnchor.constraint(equalToConstant: 24).isActive = true
         button.addSubview(iconView)
         button.addSubview(label)
         NSLayoutConstraint.activate([
@@ -201,12 +202,12 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
         let translation = gesture.translation(in: view).y
         switch gesture.state {
         case .changed:
-            sheetBottomConstraint?.constant = max(0, translation)
+            sheetBottomConstraint?.constant = -6 + max(0, translation)
         case .ended, .cancelled:
             if translation > 80 {
                 dismissSheet()
             } else {
-                sheetBottomConstraint?.constant = 0
+                sheetBottomConstraint?.constant = -6
                 UIView.animate(withDuration: 0.25, delay: 0, usingSpringWithDamping: 0.88, initialSpringVelocity: 0.2) {
                     self.view.layoutIfNeeded()
                 }
