@@ -1,16 +1,31 @@
 import UIKit
 
 @MainActor
-final class CommunityCommentMenuViewController: UIViewController, UIGestureRecognizerDelegate {
-    private let onEdit: () -> Void
-    private let onDelete: () -> Void
+struct CommunityActionSheetAction {
+    let title: String
+    let iconName: String
+    let titleColor: UIColor
+    let accessibilityIdentifier: String
+    let handler: () -> Void
+}
+
+@MainActor
+final class CommunityActionSheetViewController: UIViewController, UIGestureRecognizerDelegate {
+    private let actions: [CommunityActionSheetAction]
+    private let accessibilityIdentifier: String
+    private let closeAccessibilityIdentifier: String
     private let dimView = UIView()
     private let sheetView = UIView()
     private var sheetBottomConstraint: NSLayoutConstraint?
 
-    init(onEdit: @escaping () -> Void, onDelete: @escaping () -> Void) {
-        self.onEdit = onEdit
-        self.onDelete = onDelete
+    init(
+        actions: [CommunityActionSheetAction],
+        accessibilityIdentifier: String,
+        closeAccessibilityIdentifier: String = "community-action-sheet-close"
+    ) {
+        self.actions = actions
+        self.accessibilityIdentifier = accessibilityIdentifier
+        self.closeAccessibilityIdentifier = closeAccessibilityIdentifier
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
     }
@@ -20,7 +35,7 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .clear
-        view.accessibilityIdentifier = "community-comment-actions-sheet"
+        view.accessibilityIdentifier = accessibilityIdentifier
         configureDimView()
         configureSheet()
     }
@@ -80,28 +95,22 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
         handle.layer.cornerRadius = 2.5
         handle.translatesAutoresizingMaskIntoConstraints = false
 
-        let rows = UIStackView(arrangedSubviews: [
-            makeActionRow(title: "댓글 수정", icon: .edit, color: AppStyle.ink) { [weak self] in
-                guard let self else { return }
-                self.dismissSheet(completion: self.onEdit)
-            },
-            makeDivider(),
-            makeActionRow(title: "댓글 삭제", icon: .delete,
-                color: UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)) { [weak self] in
-                    guard let self else { return }
-                    self.dismissSheet(completion: self.onDelete)
-                }
-        ])
+        let rows = UIStackView()
         rows.axis = .vertical
+        for (index, action) in actions.enumerated() {
+            rows.addArrangedSubview(makeActionRow(action))
+            if index < actions.count - 1 { rows.addArrangedSubview(makeDivider()) }
+        }
+
         let close = UIButton(type: .system)
         close.setTitle("닫기", for: .normal)
-        close.setTitleColor(AppStyle.ink, for: .normal)
+        close.setTitleColor(primaryTextColor, for: .normal)
         close.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
         close.backgroundColor = .white
         close.layer.cornerRadius = 12
         close.layer.borderWidth = 1
         close.layer.borderColor = subtleBorderColor.cgColor
-        close.accessibilityIdentifier = "community-comment-actions-close"
+        close.accessibilityIdentifier = closeAccessibilityIdentifier
         close.addAction(UIAction { [weak self] _ in self?.dismissSheet() }, for: .touchUpInside)
         close.heightAnchor.constraint(equalToConstant: 52).isActive = true
 
@@ -120,36 +129,33 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
         return content
     }
 
-    private func makeActionRow(
-        title: String,
-        icon: CommunityCommentActionIconView.Kind,
-        color: UIColor,
-        action: @escaping () -> Void
-    ) -> UIButton {
+    private func makeActionRow(_ action: CommunityActionSheetAction) -> UIButton {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        let iconView = CommunityCommentActionIconView(kind: icon)
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-        let label = AppStyle.label(title, size: 15, color: color)
+        let icon = UIImageView(image: UIImage(named: action.iconName)?.withRenderingMode(.alwaysOriginal))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        let label = AppStyle.label(action.title, size: 15, color: action.titleColor)
         label.translatesAutoresizingMaskIntoConstraints = false
         label.heightAnchor.constraint(equalToConstant: 24).isActive = true
-        button.addSubview(iconView)
+        button.addSubview(icon)
         button.addSubview(label)
         NSLayoutConstraint.activate([
             button.heightAnchor.constraint(equalToConstant: 52),
-            iconView.leadingAnchor.constraint(equalTo: button.leadingAnchor),
-            iconView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
-            iconView.widthAnchor.constraint(equalToConstant: 22),
-            iconView.heightAnchor.constraint(equalToConstant: 22),
-            label.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 12),
+            icon.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            icon.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 22),
+            icon.heightAnchor.constraint(equalToConstant: 22),
+            label.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 12),
             label.centerYAnchor.constraint(equalTo: button.centerYAnchor),
             label.trailingAnchor.constraint(lessThanOrEqualTo: button.trailingAnchor)
         ])
-        button.accessibilityLabel = title
-        button.accessibilityIdentifier = title == "댓글 수정"
-            ? "community-comment-actions-edit"
-            : "community-comment-actions-delete"
-        button.addAction(UIAction { _ in action() }, for: .touchUpInside)
+        button.accessibilityLabel = action.title
+        button.accessibilityIdentifier = action.accessibilityIdentifier
+        button.addAction(UIAction { [weak self] _ in
+            guard let self else { return }
+            self.dismissSheet(completion: action.handler)
+        }, for: .touchUpInside)
         return button
     }
 
@@ -160,6 +166,10 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
         return divider
     }
 
+    private var primaryTextColor: UIColor {
+        UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    }
+
     private var subtleBorderColor: UIColor {
         UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     }
@@ -167,7 +177,7 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
     private func makeHomeIndicator() -> UIView {
         let container = UIView()
         let indicator = UIView()
-        indicator.backgroundColor = AppStyle.ink
+        indicator.backgroundColor = primaryTextColor
         indicator.layer.cornerRadius = 2.5
         indicator.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(indicator)
@@ -181,7 +191,7 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        return touch.view?.isDescendant(of: sheetView) != true
+        touch.view?.isDescendant(of: sheetView) != true
     }
 
     private func dismissSheet(completion: (() -> Void)? = nil) {
@@ -215,77 +225,5 @@ final class CommunityCommentMenuViewController: UIViewController, UIGestureRecog
         default:
             break
         }
-    }
-}
-
-@MainActor
-private final class CommunityCommentActionIconView: UIView {
-    enum Kind: Equatable {
-        case edit
-        case delete
-    }
-
-    private let kind: Kind
-
-    init(kind: Kind) {
-        self.kind = kind
-        super.init(frame: .zero)
-        isAccessibilityElement = false
-        backgroundColor = .clear
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    override func draw(_ rect: CGRect) {
-        let path = kind == .edit ? makeEditPath() : makeDeletePath()
-        let color = kind == .edit
-            ? UIColor(red: 57 / 255, green: 68 / 255, blue: 90 / 255, alpha: 1)
-            : UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
-        color.setStroke()
-        path.lineWidth = 1.65
-        path.lineCapStyle = .round
-        path.lineJoinStyle = .round
-        path.stroke()
-    }
-
-    private func makeEditPath() -> UIBezierPath {
-        let path = UIBezierPath()
-        path.move(to: CGPoint(x: 11, y: 18.3333))
-        path.addLine(to: CGPoint(x: 19.25, y: 18.3333))
-        path.move(to: CGPoint(x: 15.125, y: 3.20833))
-        path.addCurve(to: CGPoint(x: 16.5, y: 2.63879), controlPoint1: CGPoint(x: 15.4897, y: 2.84366),
-            controlPoint2: CGPoint(x: 15.9843, y: 2.63879))
-        path.addCurve(to: CGPoint(x: 17.2441, y: 2.78681), controlPoint1: CGPoint(x: 16.7554, y: 2.63879),
-            controlPoint2: CGPoint(x: 17.0082, y: 2.68909))
-        path.addCurve(to: CGPoint(x: 17.875, y: 3.20833), controlPoint1: CGPoint(x: 17.4801, y: 2.88453),
-            controlPoint2: CGPoint(x: 17.6944, y: 3.02777))
-        path.addCurve(to: CGPoint(x: 18.2965, y: 3.83919), controlPoint1: CGPoint(x: 18.0556, y: 3.3889),
-            controlPoint2: CGPoint(x: 18.1988, y: 3.60327))
-        path.addCurve(to: CGPoint(x: 18.4445, y: 4.58333), controlPoint1: CGPoint(x: 18.3942, y: 4.07511),
-            controlPoint2: CGPoint(x: 18.4445, y: 4.32797))
-        path.addCurve(to: CGPoint(x: 18.2965, y: 5.32748), controlPoint1: CGPoint(x: 18.4445, y: 4.83869),
-            controlPoint2: CGPoint(x: 18.3942, y: 5.09156))
-        path.addCurve(to: CGPoint(x: 17.875, y: 5.95833), controlPoint1: CGPoint(x: 18.1988, y: 5.5634),
-            controlPoint2: CGPoint(x: 18.0556, y: 5.77777))
-        path.addLine(to: CGPoint(x: 6.41667, y: 17.4167))
-        path.addLine(to: CGPoint(x: 2.75, y: 18.3333))
-        path.addLine(to: CGPoint(x: 3.66667, y: 14.6667))
-        path.close()
-        return path
-    }
-
-    private func makeDeletePath() -> UIBezierPath {
-        let path = UIBezierPath()
-        path.move(to: CGPoint(x: 2.75, y: 5.5))
-        path.addLine(to: CGPoint(x: 19.25, y: 5.5))
-        path.move(to: CGPoint(x: 7.33333, y: 5.5))
-        path.addLine(to: CGPoint(x: 7.33333, y: 3.66667))
-        path.addLine(to: CGPoint(x: 14.6667, y: 3.66667))
-        path.addLine(to: CGPoint(x: 14.6667, y: 5.5))
-        path.move(to: CGPoint(x: 17.4167, y: 5.5))
-        path.addLine(to: CGPoint(x: 16.5, y: 18.3333))
-        path.addLine(to: CGPoint(x: 5.5, y: 18.3333))
-        path.addLine(to: CGPoint(x: 4.58333, y: 5.5))
-        return path
     }
 }
