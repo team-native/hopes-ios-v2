@@ -11,6 +11,20 @@ extension SignupViewController {
         updateActionButton()
     }
 
+    @objc func codeChanged() {
+        let digits = String((codeField.text ?? "").filter(\.isNumber).prefix(6))
+        if codeField.text != digits { codeField.text = digits }
+        let labels = codeDigits.arrangedSubviews.compactMap { $0.subviews.first as? UILabel }
+        for index in labels.indices { labels[index].text = character(at: index) }
+        updateVerificationDigitAppearance()
+        if codeError != nil {
+            codeError = nil
+            render()
+            DispatchQueue.main.async { [weak self] in self?.codeField.becomeFirstResponder() }
+        }
+        updateActionButton()
+    }
+
     func textField(
         _ textField: UITextField,
         shouldChangeCharactersIn range: NSRange,
@@ -31,6 +45,10 @@ extension SignupViewController {
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
+        if textField === codeField {
+            updateVerificationDigitAppearance()
+            return
+        }
         let hasError = (textField === emailField && emailError != nil)
             || (textField === passwordField && passwordError != nil)
             || (textField === confirmField && confirmError != nil)
@@ -39,6 +57,10 @@ extension SignupViewController {
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
+        if textField === codeField {
+            updateVerificationDigitAppearance()
+            return
+        }
         let hasError = (textField === emailField && emailError != nil)
             || (textField === passwordField && passwordError != nil)
             || (textField === confirmField && confirmError != nil)

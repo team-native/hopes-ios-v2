@@ -3,11 +3,17 @@ import UIKit
 @MainActor
 extension SignupViewController {
     func render(focusField: Bool = true) {
+        actionTopSpacerHeightConstraint?.isActive = false
         emailErrorRow = nil
+        actionTopSpacer = nil
+        actionTopSpacerHeightConstraint = nil
         contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         renderCurrentStep()
         let actionTopSpacer = UIView()
-        actionTopSpacer.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        let spacerHeightConstraint = actionTopSpacer.heightAnchor.constraint(equalToConstant: 14)
+        spacerHeightConstraint.isActive = true
+        self.actionTopSpacer = actionTopSpacer
+        actionTopSpacerHeightConstraint = spacerHeightConstraint
         contentStack.addArrangedSubview(actionTopSpacer)
         let actionContainer = UIStackView(arrangedSubviews: [actionButton])
         actionContainer.axis = .vertical
@@ -20,6 +26,14 @@ extension SignupViewController {
         updateActionButton()
         backButton.isHidden = step == .complete
         scrollView.setContentOffset(.zero, animated: false)
+        let willFocusInput: Bool
+        switch step {
+        case .email, .verification, .password:
+            willFocusInput = focusField
+        case .verified, .passwordReady, .profile, .complete:
+            willFocusInput = false
+        }
+        updateActionSpacer(keyboardVisible: willFocusInput)
         if focusField {
             focusFieldForCurrentStep()
         }
@@ -77,30 +91,32 @@ extension SignupViewController {
         emailSection.spacing = 6
         emailSection.isLayoutMarginsRelativeArrangement = true
         emailSection.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        emailSection.addArrangedSubview(makeLabel("학교 이메일", size: 12, weight: .medium, color: Palette.muted))
+        emailSection.addArrangedSubview(makeLabel("학교 이메일", size: 14, weight: .medium, color: Palette.muted))
         let emailRow = UIStackView()
         emailRow.axis = .horizontal
         emailRow.alignment = .center
         emailRow.spacing = 8
-        emailRow.backgroundColor = Palette.paleBlue
-        emailRow.layer.cornerRadius = 10
+        emailRow.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
+        emailRow.layer.cornerRadius = 16
+        emailRow.layer.borderWidth = 1
+        emailRow.layer.borderColor = Palette.line.cgColor
         emailRow.isLayoutMarginsRelativeArrangement = true
-        emailRow.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12)
-        let address = makeLabel(email, size: 14, color: Palette.muted)
+        emailRow.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+        let address = makeLabel(email, size: 15, color: Palette.ink)
         emailRow.addArrangedSubview(address)
         emailRow.addArrangedSubview(UIView())
         let changeButton = UIButton(type: .system)
         changeButton.setTitle("변경", for: .normal)
         changeButton.setTitleColor(Palette.blue, for: .normal)
-        changeButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
+        changeButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         changeButton.addTarget(self, action: #selector(changeEmail), for: .touchUpInside)
         emailRow.addArrangedSubview(changeButton)
         emailSection.addArrangedSubview(emailRow)
-        emailRow.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        emailRow.heightAnchor.constraint(equalToConstant: 54).isActive = true
         contentStack.addArrangedSubview(emailSection)
         emailSection.translatesAutoresizingMaskIntoConstraints = false
         emailRow.translatesAutoresizingMaskIntoConstraints = false
-        addSpacer(16)
+        addSpacer(14)
     }
 
     private func addVerificationCodeDigits() {
@@ -108,7 +124,7 @@ extension SignupViewController {
         for index in 0..<6 {
             let digitBox = UIView()
             digitBox.backgroundColor = .white
-            digitBox.layer.cornerRadius = 10
+            digitBox.layer.cornerRadius = 16
             digitBox.layer.borderWidth = 1
             digitBox.layer.borderColor = codeError == nil ? Palette.line.cgColor : Palette.error.cgColor
             let digit = makeLabel(character(at: index), size: 20, weight: .semibold, color: Palette.ink)
@@ -122,33 +138,73 @@ extension SignupViewController {
             codeDigits.addArrangedSubview(digitBox)
         }
         codeDigits.translatesAutoresizingMaskIntoConstraints = false
-        contentStack.addArrangedSubview(codeDigits)
         codeDigits.heightAnchor.constraint(equalToConstant: 56).isActive = true
+        let codeSection = UIStackView(arrangedSubviews: [
+            makeLabel("인증번호 6자리", size: 14, weight: .medium, color: Palette.muted),
+            codeDigits
+        ])
+        codeSection.axis = .vertical
+        codeSection.spacing = 8
+        contentStack.addArrangedSubview(codeSection)
         codeField.isAccessibilityElement = true
         codeField.accessibilityLabel = "인증번호 6자리 입력"
+        updateVerificationDigitAppearance()
+    }
+
+    func updateVerificationDigitAppearance() {
+        let activeIndex = min((codeField.text ?? "").count, 5)
+        for (index, digitBox) in codeDigits.arrangedSubviews.enumerated() {
+            if codeError != nil {
+                digitBox.layer.borderColor = Palette.error.cgColor
+                digitBox.layer.borderWidth = 1
+            } else if codeField.isFirstResponder && index == activeIndex && (codeField.text ?? "").count < 6 {
+                digitBox.layer.borderColor = Palette.focus.cgColor
+                digitBox.layer.borderWidth = 1.5
+            } else {
+                digitBox.layer.borderColor = Palette.line.cgColor
+                digitBox.layer.borderWidth = 1
+            }
+        }
     }
 
     private func addVerificationTimerRow() {
-        if let codeError { addInlineError(codeError) } else { addSpacer(12) }
+        if let codeError {
+            addSpacer(8)
+            addInlineError(codeError)
+            addSpacer(14)
+        } else {
+            addSpacer(14)
+        }
         let timerRow = UIStackView()
         timerRow.axis = .horizontal
         timerRow.alignment = .center
         timerRow.spacing = 8
-        timerLabel.text = "인증번호 유효 시간  \(formattedCountdown)"
-        timerRow.addArrangedSubview(timerLabel)
+        timerLabel.text = formattedCountdown
+        timerLabel.accessibilityLabel = "인증번호 유효 시간 \(formattedCountdown)"
+        let clockIcon = UIImageView(image: UIImage(systemName: "clock"))
+        clockIcon.tintColor = Palette.blue
+        clockIcon.contentMode = .scaleAspectFit
+        clockIcon.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        clockIcon.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        let timer = UIStackView(arrangedSubviews: [clockIcon, timerLabel])
+        timer.axis = .horizontal
+        timer.alignment = .center
+        timer.spacing = 6
+        timerRow.addArrangedSubview(timer)
         timerRow.addArrangedSubview(UIView())
         let resend = UIButton(type: .system)
         resend.setTitle("인증번호 다시 받기", for: .normal)
         resend.setTitleColor(Palette.blue, for: .normal)
-        resend.titleLabel?.font = .systemFont(ofSize: 12, weight: .medium)
+        resend.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         resend.addTarget(self, action: #selector(resendCode), for: .touchUpInside)
         timerRow.addArrangedSubview(resend)
         contentStack.addArrangedSubview(timerRow)
         timerRow.translatesAutoresizingMaskIntoConstraints = false
         timerRow.heightAnchor.constraint(equalToConstant: 20).isActive = true
-        addSpacer(10)
-        contentStack.addArrangedSubview(makeLabel("메일이 안 왔다면 스팸함을 확인해 주세요.", size: 12, color: Palette.muted))
-        addSpacer(28)
+        if codeError == nil {
+            addSpacer(14)
+            contentStack.addArrangedSubview(makeLabel("메일이 안 왔다면 스팸함을 확인해 주세요.", size: 12, color: Palette.muted))
+        }
     }
 
 }

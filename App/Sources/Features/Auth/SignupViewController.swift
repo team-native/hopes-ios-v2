@@ -19,7 +19,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         static let muted = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
         static let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
         static let placeholder = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
-        static let error = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1)
+        static let error = UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
         static let paleBlue = UIColor(red: 232 / 255, green: 243 / 255, blue: 255 / 255, alpha: 1)
     }
 
@@ -55,6 +55,8 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     var sheetView: UIView?
     var keyboardObservers: [NSObjectProtocol] = []
     var emailErrorRow: UIStackView?
+    var actionTopSpacer: UIView?
+    var actionTopSpacerHeightConstraint: NSLayoutConstraint?
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
@@ -193,8 +195,8 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
             codeField.bottomAnchor.constraint(equalTo: codeDigits.bottomAnchor)
         ])
 
-        timerLabel.font = .systemFont(ofSize: 12)
-        timerLabel.textColor = Palette.muted
+        timerLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        timerLabel.textColor = Palette.blue
 
         departmentButton.addTarget(self, action: #selector(showDepartmentPicker), for: .touchUpInside)
         generationButton.addTarget(self, action: #selector(showGenerationPicker), for: .touchUpInside)

@@ -10,8 +10,8 @@ extension SignupViewController {
             title = "인증번호 받기"
             enabled = emailError == nil
         case .verification:
-            title = "인증하기"
-            enabled = (codeField.text?.count ?? 0) == 6 && countdown > 0
+            title = countdown == 0 ? "인증번호 다시 받기" : "확인"
+            enabled = true
         case .verified:
             title = "다음"
             enabled = true
@@ -52,18 +52,23 @@ extension SignupViewController {
             let overlap = max(0, self.view.bounds.maxY - local.minY)
             self.scrollView.contentInset.bottom = overlap + 64
             self.scrollView.verticalScrollIndicatorInsets.bottom = overlap
+            self.updateActionSpacer(keyboardVisible: overlap > 1)
         })
         keyboardObservers.append(center.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil,
             queue: .main) { [weak self] _ in
             self?.scrollView.contentInset.bottom = 0
             self?.scrollView.verticalScrollIndicatorInsets.bottom = 0
             self?.actionButton.transform = .identity
+            self?.updateActionSpacer(keyboardVisible: false)
         })
     }
 
     func startCountdown() {
         countdownTimer?.invalidate()
         countdown = 300
+        timerLabel.text = formattedCountdown
+        timerLabel.accessibilityLabel = "인증번호 유효 시간 \(formattedCountdown)"
+        updateActionButton()
         countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
             MainActor.assumeIsolated {
                 guard let self else { timer.invalidate(); return }
@@ -71,9 +76,10 @@ extension SignupViewController {
                 if self.countdown == 0 {
                     timer.invalidate()
                     self.codeError = "인증 시간이 지났어요. 인증번호를 다시 받아 주세요."
-                    self.render()
+                    self.render(focusField: false)
                 } else {
-                    self.timerLabel.text = "인증번호 유효 시간  \(self.formattedCountdown)"
+                    self.timerLabel.text = self.formattedCountdown
+                    self.timerLabel.accessibilityLabel = "인증번호 유효 시간 \(self.formattedCountdown)"
                 }
             }
         }
@@ -236,7 +242,11 @@ extension SignupViewController {
         case .email:
             submitEmail()
         case .verification:
-            verifyCode()
+            if countdown == 0 {
+                resendCode()
+            } else {
+                verifyCode()
+            }
         case .verified:
             step = .password
             render()
@@ -276,7 +286,7 @@ extension SignupViewController {
             codeError = countdown == 0
                 ? "인증 시간이 지났어요. 인증번호를 다시 받아 주세요."
                 : "인증번호 6자리를 입력해 주세요."
-            render()
+            render(focusField: false)
             return
         }
         step = .verified
@@ -288,12 +298,12 @@ extension SignupViewController {
     private func validatePassword() {
         guard passwordRequirementsMet else {
             passwordError = "비밀번호 조건을 모두 맞춰 주세요."
-            render()
+            render(focusField: false)
             return
         }
         guard passwordField.text == confirmField.text else {
             confirmError = "비밀번호가 일치하지 않아요."
-            render()
+            render(focusField: false)
             return
         }
         passwordError = nil
@@ -320,19 +330,6 @@ extension SignupViewController {
         step = .complete
         countdownTimer?.invalidate()
         render()
-    }
-
-    @objc func codeChanged() {
-        let digits = String((codeField.text ?? "").filter(\.isNumber).prefix(6))
-        if codeField.text != digits { codeField.text = digits }
-        let labels = codeDigits.arrangedSubviews.compactMap { $0.subviews.first as? UILabel }
-        for index in labels.indices { labels[index].text = character(at: index) }
-        if codeError != nil {
-            codeError = nil
-            render()
-            DispatchQueue.main.async { [weak self] in self?.codeField.becomeFirstResponder() }
-        }
-        updateActionButton()
     }
 
     @objc func passwordChanged() {
