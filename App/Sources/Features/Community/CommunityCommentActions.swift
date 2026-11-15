@@ -106,16 +106,32 @@ extension CommunityPostDetailViewController {
 
     func showOwnCommentActions(text: String, label: UILabel) {
         guard presentedViewController == nil else { return }
-        let sheet = CommunityCommentMenuViewController(
-            onEdit: { [weak self, weak label] in
-                guard let self, let label else { return }
-                self.beginCommentEdit(text: text, label: label)
-            },
-            onDelete: { [weak self, weak label] in
-                guard let self, let label else { return }
-                self.confirmCommentDeletion(text: text, label: label)
-            }
-        )
+        let primaryText = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+        let danger = UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
+        let sheet = CommunityActionSheetViewController(actions: [
+            CommunityActionSheetAction(
+                title: "댓글 수정",
+                iconName: "CommunityActionEdit",
+                titleColor: primaryText,
+                accessibilityIdentifier: "community-comment-actions-edit",
+                handler: { [weak self, weak label] in
+                    guard let self, let label else { return }
+                    self.beginCommentEdit(text: text, label: label)
+                }
+            ),
+            CommunityActionSheetAction(
+                title: "댓글 삭제",
+                iconName: "CommunityActionDelete",
+                titleColor: danger,
+                accessibilityIdentifier: "community-comment-actions-delete",
+                handler: { [weak self, weak label] in
+                    guard let self, let label else { return }
+                    self.confirmCommentDeletion(text: text, label: label)
+                }
+            )
+        ],
+            accessibilityIdentifier: "community-comment-actions-sheet",
+            closeAccessibilityIdentifier: "community-comment-actions-close")
         present(sheet, animated: false)
     }
 
@@ -215,21 +231,43 @@ extension CommunityPostDetailViewController {
     }
 
     @objc func showPostActions() {
-        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        guard presentedViewController == nil else { return }
+        let danger = UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
+        let primaryText = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+        let actions: [CommunityActionSheetAction]
         if isMine {
-            sheet.addAction(UIAlertAction(title: "수정하기", style: .default) { [weak self] _ in self?.editPost() })
-            sheet.addAction(UIAlertAction(title: "삭제하기",
-                style: .destructive) { [weak self] _ in self?.confirmPostDeletion() })
+            actions = [
+                CommunityActionSheetAction(
+                    title: "수정하기",
+                    iconName: "CommunityActionEdit",
+                    titleColor: primaryText,
+                    accessibilityIdentifier: "community-post-actions-edit",
+                    handler: { [weak self] in self?.editPost() }
+                ),
+                CommunityActionSheetAction(
+                    title: "삭제하기",
+                    iconName: "CommunityActionDelete",
+                    titleColor: danger,
+                    accessibilityIdentifier: "community-post-actions-delete",
+                    handler: { [weak self] in self?.confirmPostDeletion() }
+                )
+            ]
         } else {
-            sheet.addAction(UIAlertAction(title: "게시글 신고",
-                style: .destructive) { [weak self] _ in self?.showReportReasons() })
+            actions = [
+                CommunityActionSheetAction(
+                    title: "신고하기",
+                    iconName: "CommunityActionReport",
+                    titleColor: danger,
+                    accessibilityIdentifier: "community-post-actions-report",
+                    handler: { [weak self] in self?.showReportReasons() }
+                )
+            ]
         }
-        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = postMoreButton
-            popover.sourceRect = postMoreButton?.bounds ?? .zero
-        }
-        present(sheet, animated: true)
+        let sheet = CommunityActionSheetViewController(
+            actions: actions,
+            accessibilityIdentifier: "community-post-actions-sheet"
+        )
+        present(sheet, animated: false)
     }
 
     func confirmPostDeletion() {
