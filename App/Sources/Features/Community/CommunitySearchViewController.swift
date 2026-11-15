@@ -66,7 +66,7 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
 
         searchFieldIcon.contentMode = .scaleAspectFit
         searchFieldIcon.frame = CGRect(x: 0, y: 0, width: 18, height: 18)
-        let left = UIView(frame: CGRect(x: 0, y: 0, width: 44, height: 32))
+        let left = UIView(frame: CGRect(x: 0, y: 0, width: 42, height: 32))
         searchFieldIcon.center = CGPoint(x: 26, y: 16)
         left.addSubview(searchFieldIcon)
         searchField.leftView = left
@@ -76,7 +76,7 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
             for: .normal)
         clearButton.accessibilityLabel = "검색어 지우기"
         clearButton.accessibilityIdentifier = "community-search-clear"
-        clearButton.frame = CGRect(x: 0, y: 0, width: 34, height: 34)
+        clearButton.frame = CGRect(x: 0, y: 0, width: 50, height: 34)
         clearButton.isHidden = true
         clearButton.addAction(UIAction { [weak self] _ in self?.clearSearch() }, for: .touchUpInside)
         searchField.rightView = clearButton
@@ -87,8 +87,9 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
     private func makeSearchBar() -> UIStackView {
         let cancel = UIButton(type: .system)
         cancel.setTitle("취소", for: .normal)
-        cancel.setTitleColor(AppStyle.blue, for: .normal)
+        cancel.setTitleColor(brandBlue, for: .normal)
         cancel.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        cancel.widthAnchor.constraint(equalToConstant: 26).isActive = true
         cancel.accessibilityIdentifier = "community-search-cancel"
         cancel.addAction(UIAction { [weak self] _ in
             self?.navigationController?.popViewController(animated: true)
@@ -96,7 +97,7 @@ final class CommunitySearchViewController: AppPageViewController, UITextFieldDel
         let row = UIStackView(arrangedSubviews: [searchField, cancel])
         row.axis = .horizontal
         row.alignment = .center
-        row.spacing = 10
+        row.spacing = 12
         cancel.setContentHuggingPriority(.required, for: .horizontal)
         return row
     }
@@ -176,13 +177,14 @@ extension CommunitySearchViewController {
         let posts = CommunityPostStore.shared.posts.filter { post in
             post.title.lowercased().contains(normalizedQuery) || post.body.lowercased().contains(normalizedQuery)
         }
+        let heading = AppStyle.label("검색 결과 \(posts.count)개", size: 14, weight: .medium, color: secondary)
+        heading.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        resultsStack.addArrangedSubview(heading)
+        resultsStack.setCustomSpacing(16, after: heading)
         guard !posts.isEmpty else {
-            resultsStack.addArrangedSubview(AppStyle.label("검색 결과 0개", size: 14, color: secondary))
             resultsStack.addArrangedSubview(makeEmptyState())
             return
         }
-        resultsStack.addArrangedSubview(AppStyle.label("검색 결과 \(posts.count)개", size: 14, weight: .medium,
-            color: secondary))
         posts.forEach { post in resultsStack.addArrangedSubview(makeResultCard(post)) }
     }
 
