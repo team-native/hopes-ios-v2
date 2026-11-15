@@ -135,10 +135,10 @@ final class HomeViewController: AppPageViewController {
         heroClipView.addSubview(subtitle)
         heroClipView.addSubview(button)
         NSLayoutConstraint.activate([
-            heroCloud.widthAnchor.constraint(equalToConstant: 540),
-            heroCloud.heightAnchor.constraint(equalToConstant: 186),
-            heroCloud.leadingAnchor.constraint(equalTo: heroClipView.leadingAnchor, constant: 162),
-            heroCloud.topAnchor.constraint(equalTo: heroClipView.topAnchor, constant: 70),
+            heroCloud.widthAnchor.constraint(equalToConstant: 240),
+            heroCloud.heightAnchor.constraint(equalToConstant: 126),
+            heroCloud.leadingAnchor.constraint(equalTo: heroClipView.leadingAnchor, constant: 176),
+            heroCloud.topAnchor.constraint(equalTo: heroClipView.topAnchor, constant: 60),
             title.leadingAnchor.constraint(equalTo: heroClipView.leadingAnchor, constant: 21),
             title.topAnchor.constraint(equalTo: heroClipView.topAnchor, constant: 23),
             subtitle.leadingAnchor.constraint(equalTo: title.leadingAnchor),
@@ -152,13 +152,12 @@ final class HomeViewController: AppPageViewController {
     private func addTipsSection() {
         let header = HomePreviewStateViews.label(
             "질문 잘하는 방법",
-            size: 18,
+            size: 14,
             weight: .medium,
-            color: AppStyle.ink,
-            lineHeight: 26,
-            kern: -0.2
+            color: AppStyle.muted,
+            lineHeight: 20
         )
-        contentStack.addArrangedSubview(HomePreviewStateViews.sectionHeaderContainer(header))
+        contentStack.addArrangedSubview(header)
 
         let tips = UIStackView(arrangedSubviews: [
             HomeTipRowFactory.make(
@@ -184,11 +183,10 @@ final class HomeViewController: AppPageViewController {
     private func addPopularSection(isLoading: Bool, hasError: Bool) {
         let title = HomePreviewStateViews.label(
             "커뮤니티 인기글",
-            size: isLoading || hasError ? 14 : 18,
+            size: 14,
             weight: .medium,
-            color: isLoading || hasError ? AppStyle.muted : AppStyle.ink,
-            lineHeight: isLoading || hasError ? 20 : 26,
-            kern: isLoading || hasError ? 0 : -0.2
+            color: AppStyle.muted,
+            lineHeight: 20
         )
         let more = UIButton(type: .system)
         popularMoreButton = more
@@ -201,7 +199,7 @@ final class HomeViewController: AppPageViewController {
         let header = UIStackView(arrangedSubviews: [title, UIView(), more])
         header.axis = .horizontal
         header.alignment = .center
-        contentStack.addArrangedSubview(HomePreviewStateViews.sectionHeaderContainer(header))
+        contentStack.addArrangedSubview(header)
 
         let content = UIStackView()
         content.axis = .vertical
