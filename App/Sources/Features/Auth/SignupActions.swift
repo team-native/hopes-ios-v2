@@ -52,7 +52,6 @@ extension SignupViewController {
             let overlap = max(0, self.view.bounds.maxY - local.minY)
             self.scrollView.contentInset.bottom = overlap + 64
             self.scrollView.verticalScrollIndicatorInsets.bottom = overlap
-            self.actionButton.transform = overlap > 0 ? CGAffineTransform(translationX: 0, y: -overlap) : .identity
         })
         keyboardObservers.append(center.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil,
             queue: .main) { [weak self] _ in

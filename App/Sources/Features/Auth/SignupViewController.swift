@@ -14,9 +14,10 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
 
     enum Palette {
         static let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        static let focus = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)
         static let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
-        static let muted = UIColor(red: 111 / 255, green: 127 / 255, blue: 153 / 255, alpha: 1)
-        static let line = UIColor(red: 226 / 255, green: 234 / 255, blue: 246 / 255, alpha: 1)
+        static let muted = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+        static let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
         static let placeholder = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
         static let error = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1)
         static let paleBlue = UIColor(red: 232 / 255, green: 243 / 255, blue: 255 / 255, alpha: 1)
@@ -86,11 +87,12 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         topBar.addSubview(backButton)
 
         titleLabel.text = "회원가입"
-        titleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        titleLabel.font = .systemFont(ofSize: 18, weight: .medium)
         titleLabel.textColor = Palette.ink
-        titleLabel.textAlignment = .center
+        titleLabel.textAlignment = .left
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         topBar.addSubview(titleLabel)
+        titleLabel.heightAnchor.constraint(equalToConstant: 26).isActive = true
 
         NSLayoutConstraint.activate([
             topBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -101,7 +103,8 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
             backButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 44),
             backButton.heightAnchor.constraint(equalToConstant: 44),
-            titleLabel.centerXAnchor.constraint(equalTo: topBar.centerXAnchor),
+            titleLabel.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(equalTo: topBar.trailingAnchor, constant: -20),
             titleLabel.centerYAnchor.constraint(equalTo: topBar.centerYAnchor)
         ])
     }
@@ -132,18 +135,11 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     }
 
     func configureActionButton() {
-        actionButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        actionButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
         actionButton.layer.cornerRadius = 12
         actionButton.addTarget(self, action: #selector(performPrimaryAction), for: .touchUpInside)
         actionButton.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(actionButton)
-
-        NSLayoutConstraint.activate([
-            actionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            actionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            actionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            actionButton.heightAnchor.constraint(equalToConstant: 44)
-        ])
+        actionButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
     }
 
     func configureFields() {
@@ -207,12 +203,12 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         _ field: UITextField,
         placeholder: String,
         contentType: UITextContentType?,
-        height: CGFloat = 44
+        height: CGFloat = 55
     ) {
         field.font = .systemFont(ofSize: 15)
         field.textColor = Palette.ink
         field.backgroundColor = .white
-        field.layer.cornerRadius = 12
+        field.layer.cornerRadius = 16
         field.layer.borderWidth = 1
         field.layer.borderColor = Palette.line.cgColor
         field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 14, height: 1))

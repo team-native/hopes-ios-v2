@@ -5,35 +5,48 @@ extension SignupViewController {
     func addStepper(current: Int) {
         let wrapper = UIStackView()
         wrapper.axis = .vertical
-        wrapper.spacing = 9
-        wrapper.isLayoutMarginsRelativeArrangement = true
-        wrapper.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 20, bottom: 0, trailing: 20)
+        wrapper.spacing = 8
 
         let bars = UIStackView()
         bars.axis = .horizontal
-        bars.spacing = 4
+        bars.spacing = 6
         for index in 0..<3 {
             let bar = UIView()
             bar.backgroundColor = index <= current ? Palette.blue : Palette.line
             bar.layer.cornerRadius = 2
-            bar.heightAnchor.constraint(equalToConstant: 3).isActive = true
+            bar.heightAnchor.constraint(equalToConstant: 4).isActive = true
             bars.addArrangedSubview(bar)
         }
         wrapper.addArrangedSubview(bars)
         let text = ["1 / 3 · 이메일 인증", "2 / 3 · 비밀번호 설정", "3 / 3 · 프로필"][current]
-        wrapper.addArrangedSubview(makeLabel(text, size: 11, color: Palette.blue))
+        wrapper.addArrangedSubview(makeLabel(text, size: 12, color: Palette.blue))
+        addSpacer(8)
         contentStack.addArrangedSubview(wrapper)
         wrapper.translatesAutoresizingMaskIntoConstraints = false
-        wrapper.heightAnchor.constraint(equalToConstant: 36).isActive = true
-        addSpacer(16)
+        wrapper.heightAnchor.constraint(equalToConstant: 28).isActive = true
+        addSpacer(14)
     }
 
-    func addHeading(lines: [String], subtitle: String? = nil) {
+    func addHeading(lines: [String], subtitle: String? = nil, accentPrefix: String? = nil) {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 6
-        let title = makeLabel(lines.joined(separator: "\n"), size: 21, weight: .bold, color: Palette.ink)
+        let title = makeLabel(lines.joined(separator: "\n"), size: 22, weight: .bold, color: Palette.ink)
         title.numberOfLines = 0
+        let titleParagraph = NSMutableParagraphStyle()
+        titleParagraph.minimumLineHeight = 30
+        titleParagraph.maximumLineHeight = 30
+        let headingText = lines.joined(separator: "\n")
+        let heading = NSMutableAttributedString(string: headingText, attributes: [
+            .font: UIFont.systemFont(ofSize: 22, weight: .bold),
+            .foregroundColor: Palette.ink,
+            .paragraphStyle: titleParagraph,
+            .kern: -0.3
+        ])
+        if let accentPrefix, let range = headingText.range(of: accentPrefix) {
+            heading.addAttribute(.foregroundColor, value: Palette.blue, range: NSRange(range, in: headingText))
+        }
+        title.attributedText = heading
         stack.addArrangedSubview(title)
         if let subtitle {
             let description = makeLabel(subtitle, size: 12, color: Palette.muted)
@@ -44,7 +57,7 @@ extension SignupViewController {
         stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         contentStack.addArrangedSubview(stack)
         stack.translatesAutoresizingMaskIntoConstraints = false
-        addSpacer(16)
+        addSpacer(14)
     }
 
     func addField(label: String, field: UITextField, error: String? = nil, showsVisibility: Bool = false) {
@@ -53,7 +66,9 @@ extension SignupViewController {
         group.spacing = 6
         group.isLayoutMarginsRelativeArrangement = true
         group.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        group.addArrangedSubview(makeLabel(label, size: 12, weight: .medium, color: Palette.muted))
+        let fieldLabel = makeLabel(label, size: 14, weight: .medium, color: Palette.muted)
+        fieldLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        group.addArrangedSubview(fieldLabel)
 
         field.layer.borderColor = (error == nil ? Palette.line : Palette.error).cgColor
         if showsVisibility {

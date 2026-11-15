@@ -7,7 +7,6 @@ final class WelcomeViewController: UIViewController {
     private let logoMask = UIView()
     private let heading = UILabel()
     private let descriptionLabel = UILabel()
-    private let chatPreview = WelcomeChatPreviewView()
     private let startButton = UIButton(type: .system)
     private let loginButton = UIButton(type: .system)
     private var didOpenLogin = false
@@ -31,7 +30,8 @@ final class WelcomeViewController: UIViewController {
         if arguments.contains("--login-preview")
             || arguments.contains("--login-error-preview")
             || arguments.contains("--login-offline-preview")
-            || arguments.contains("--login-loading-preview") {
+            || arguments.contains("--login-loading-preview")
+            || arguments.contains("--login-keyboard-preview") {
             openLogin()
         }
     }
@@ -43,66 +43,59 @@ final class WelcomeViewController: UIViewController {
         cloud.translatesAutoresizingMaskIntoConstraints = false
         view.insertSubview(cloud, at: 0)
         NSLayoutConstraint.activate([
-            cloud.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            cloud.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -28),
-            cloud.widthAnchor.constraint(equalToConstant: 357),
-            cloud.heightAnchor.constraint(equalToConstant: 187)
+            cloud.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
+            cloud.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -94),
+            cloud.widthAnchor.constraint(equalToConstant: 420),
+            cloud.heightAnchor.constraint(equalToConstant: 220)
         ])
     }
 
     private func configureContent() {
         contentStack.axis = .vertical
         contentStack.alignment = .leading
-        contentStack.spacing = 0
+        contentStack.spacing = 16
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(contentStack)
 
         let topSpacer = UIView()
-        topSpacer.heightAnchor.constraint(equalToConstant: 74).isActive = true
         topSpacer.setContentHuggingPriority(.defaultLow, for: .vertical)
+        topSpacer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         contentStack.addArrangedSubview(topSpacer)
 
         logoTile.translatesAutoresizingMaskIntoConstraints = false
         logoTile.widthAnchor.constraint(equalToConstant: 64).isActive = true
         logoTile.heightAnchor.constraint(equalToConstant: 64).isActive = true
         contentStack.addArrangedSubview(logoTile)
-        contentStack.setCustomSpacing(18, after: logoTile)
 
         heading.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(heading)
         heading.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
-        contentStack.setCustomSpacing(18, after: heading)
 
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(descriptionLabel)
         descriptionLabel.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
-        contentStack.setCustomSpacing(24, after: descriptionLabel)
-
-        chatPreview.translatesAutoresizingMaskIntoConstraints = false
-        chatPreview.heightAnchor.constraint(equalToConstant: 190).isActive = true
-        contentStack.addArrangedSubview(chatPreview)
-        chatPreview.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
 
         let bottomSpacer = UIView()
         bottomSpacer.setContentHuggingPriority(.defaultLow, for: .vertical)
+        bottomSpacer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         contentStack.addArrangedSubview(bottomSpacer)
+        topSpacer.heightAnchor.constraint(equalTo: bottomSpacer.heightAnchor).isActive = true
 
         startButton.translatesAutoresizingMaskIntoConstraints = false
         startButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         contentStack.addArrangedSubview(startButton)
         startButton.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
-        contentStack.setCustomSpacing(0, after: startButton)
 
         loginButton.translatesAutoresizingMaskIntoConstraints = false
-        loginButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        loginButton.heightAnchor.constraint(equalToConstant: 20).isActive = true
         contentStack.addArrangedSubview(loginButton)
         loginButton.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
 
         NSLayoutConstraint.activate([
-            contentStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            contentStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
             contentStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
             contentStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
-            contentStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 4)
+            contentStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
     }
 
@@ -208,11 +201,9 @@ final class WelcomeViewController: UIViewController {
         guard !didOpenLogin else { return }
         didOpenLogin = true
         let navigation = UINavigationController(rootViewController: LoginViewController())
-        navigation.modalPresentationStyle = .overFullScreen
+        navigation.modalPresentationStyle = .fullScreen
         navigation.modalTransitionStyle = .coverVertical
         navigation.modalPresentationCapturesStatusBarAppearance = true
-        navigation.view.backgroundColor = .clear
-        navigation.view.isOpaque = false
         navigation.setNavigationBarHidden(true, animated: false)
         present(navigation, animated: true)
     }
