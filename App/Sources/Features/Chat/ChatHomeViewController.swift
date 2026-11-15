@@ -235,16 +235,11 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
 
     @objc func openAttachmentPicker() {
         let picker = ChatAttachmentPickerViewController()
-        picker.onAttachmentSelected = { [weak self] fileName, image in
-            guard let self else { return }
-            let preview = ChatAttachmentPreviewViewController(fileName: fileName, image: image)
-            preview.onSend = { [weak self] in
-                self?.navigationController?.pushViewController(
-                    ChatConversationViewController(question: "첨부파일: \(fileName)"),
-                    animated: true
-                )
-            }
-            self.present(preview, animated: true)
+        picker.onAttachmentsSelected = { [weak self] attachments in
+            self?.navigationController?.pushViewController(
+                ChatConversationViewController(question: nil, attachments: attachments),
+                animated: true
+            )
         }
         present(picker, animated: true)
     }
