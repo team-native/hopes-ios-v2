@@ -8,7 +8,7 @@ extension CommunityViewController {
         container.addSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.72),
+            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -138),
             content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             content.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
@@ -18,54 +18,102 @@ extension CommunityViewController {
     }
 
     private func makeLoadErrorContent() -> UIStackView {
+        let content = UIStackView(arrangedSubviews: [
+            makeLoadErrorIllustration(),
+            makeLoadErrorTitle(),
+            makeLoadErrorSubtitle(),
+            makeRetryButton()
+        ])
+        content.axis = .vertical
+        content.alignment = .center
+        content.spacing = 12
+        return content
+    }
+
+    private func makeLoadErrorIllustration() -> UIView {
         let illustration = UIView()
         illustration.backgroundColor = .white
         illustration.layer.cornerRadius = 44
         illustration.layer.borderWidth = 1
-        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        illustration.layer.borderColor = line.cgColor
         illustration.layer.shadowColor = UIColor(red: 0.10, green: 0.25, blue: 0.50, alpha: 1).cgColor
         illustration.layer.shadowOpacity = 0.09
         illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
-        illustration.layer.shadowRadius = 14
+        illustration.layer.shadowRadius = 28
         illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
         illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
 
-        let assetPath = Bundle.main.path(forResource: "community-load-alert", ofType: "png")
-        let icon = UIImageView(image: assetPath.flatMap(UIImage.init(contentsOfFile:)))
+        let icon = UIImageView(image: UIImage(named: "CommunityLoadAlert")?.withRenderingMode(.alwaysOriginal))
         icon.contentMode = .scaleAspectFit
         icon.translatesAutoresizingMaskIntoConstraints = false
         illustration.addSubview(icon)
         NSLayoutConstraint.activate([
             icon.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
             icon.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 28),
-            icon.heightAnchor.constraint(equalToConstant: 28)
+            icon.widthAnchor.constraint(equalToConstant: 36),
+            icon.heightAnchor.constraint(equalToConstant: 36)
         ])
+        return illustration
+    }
 
+    private func makeLoadErrorTitle() -> UILabel {
         let title = AppStyle.label("게시글을 불러오지 못했어요", size: 18, weight: .medium)
         title.textAlignment = .center
-        let subtitle = AppStyle.label("네트워크 상태를 확인한 뒤 다시 시도해 주세요.", size: 14, color: AppStyle.muted)
+        title.attributedText = NSAttributedString(string: "게시글을 불러오지 못했어요", attributes: [
+            .font: UIFont.systemFont(ofSize: 18, weight: .medium),
+            .foregroundColor: ink,
+            .kern: -0.2,
+            .paragraphStyle: makeLineStyle(height: 26)
+        ])
+        return title
+    }
+
+    private func makeLoadErrorSubtitle() -> UILabel {
+        let subtitle = AppStyle.label(
+            "네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
+            size: 14,
+            weight: .medium,
+            color: secondary
+        )
         subtitle.textAlignment = .center
+        subtitle.attributedText = NSAttributedString(string: "네트워크 상태를 확인한 뒤 다시 시도해 주세요.", attributes: [
+            .font: UIFont.systemFont(ofSize: 14, weight: .medium),
+            .foregroundColor: secondary,
+            .paragraphStyle: makeLineStyle(height: 20)
+        ])
+        return subtitle
+    }
+
+    private func makeRetryButton() -> UIButton {
         let retryButton = UIButton(type: .system)
         var configuration = UIButton.Configuration.filled()
         configuration.title = "다시 시도"
-        configuration.baseBackgroundColor = AppStyle.blue
+        configuration.baseBackgroundColor = brandBlue
         configuration.baseForegroundColor = .white
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 14, weight: .medium)
+            return outgoing
+        }
         retryButton.configuration = configuration
         retryButton.layer.cornerRadius = 10
         retryButton.clipsToBounds = true
+        retryButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        retryButton.accessibilityIdentifier = "community-load-error-retry"
         retryButton.addAction(UIAction { [weak self] _ in
             guard let self else { return }
             self.showingLoadError = false
             self.renderPosts()
         }, for: .touchUpInside)
+        return retryButton
+    }
 
-        let content = UIStackView(arrangedSubviews: [illustration, title, subtitle, retryButton])
-        content.axis = .vertical
-        content.alignment = .center
-        content.spacing = 12
-        return content
+    private func makeLineStyle(height: CGFloat) -> NSMutableParagraphStyle {
+        let style = NSMutableParagraphStyle()
+        style.minimumLineHeight = height
+        style.maximumLineHeight = height
+        return style
     }
 
     func selectFilterAppearance() {
