@@ -191,12 +191,18 @@ extension ChatConversationViewController {
     }
 
     func makeLowAccuracyCard(accuracy: CLLocationAccuracy) -> UIView {
-        let card = AppStyle.card()
-        card.layer.cornerRadius = 24
-        card.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.08).cgColor
+        let card = ChatConversationBubbleView(
+            fillColor: .white,
+            topLeftRadius: 6,
+            topRightRadius: 24,
+            bottomRightRadius: 24,
+            bottomLeftRadius: 24,
+            borderColor: LocationMapStyle.subtleBorder
+        )
+        card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.05).cgColor
         card.layer.shadowOpacity = 1
-        card.layer.shadowRadius = 14
-        card.layer.shadowOffset = CGSize(width: 0, height: 6)
+        card.layer.shadowRadius = 8
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
         let content = makeLowAccuracyContent(accuracy: accuracy)
         content.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(content)
@@ -210,14 +216,18 @@ extension ChatConversationViewController {
     }
 
     private func makeLowAccuracyContent(accuracy: CLLocationAccuracy) -> UIStackView {
-        let title = AppStyle.label("학교 근처로 보이지만 위치 정확도가 낮아요.", size: 15)
+        let title = AppStyle.label(
+            "학교 근처로 보이지만 위치 정확도가 낮아요.",
+            size: 15,
+            color: LocationMapStyle.ink
+        )
         let warning = makeAccuracyWarning(accuracy: accuracy)
         let buttons = makeAccuracyActions()
         let content = UIStackView(arrangedSubviews: [title, warning, buttons])
         content.axis = .vertical
-        content.spacing = 8
+        content.spacing = 10
         content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 14, bottom: 14, trailing: 14)
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
         return content
     }
 
@@ -227,8 +237,8 @@ extension ChatConversationViewController {
         warning.alignment = .center
         warning.spacing = 8
         warning.isLayoutMarginsRelativeArrangement = true
-        warning.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
-        warning.backgroundColor = UIColor(red: 1, green: 0.94, blue: 0.95, alpha: 1)
+        warning.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
+        warning.backgroundColor = UIColor(red: 1, green: 241 / 255.0, blue: 242 / 255.0, alpha: 1)
         warning.layer.cornerRadius = 16
         let alertPath = Bundle.main.path(forResource: "location-low-accuracy-alert", ofType: "png")
         let alertIcon = UIImageView(image: alertPath.flatMap(UIImage.init(contentsOfFile:)))
@@ -238,9 +248,10 @@ extension ChatConversationViewController {
         let accuracyLabel = AppStyle.label(
             "정확도 약 ±\(Int(accuracy.rounded()))m · 실내에서는 오차가 커질 수 있어요.",
             size: 12,
-            color: AppStyle.muted
+            color: LocationMapStyle.secondary
         )
-        accuracyLabel.numberOfLines = 1
+        accuracyLabel.numberOfLines = 0
+        accuracyLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         warning.addArrangedSubview(alertIcon)
         warning.addArrangedSubview(accuracyLabel)
         return warning
@@ -248,15 +259,23 @@ extension ChatConversationViewController {
 
     private func makeAccuracyActions() -> UIStackView {
         let retryButton = UIButton(type: .system)
-        var retryConfiguration = UIButton.Configuration.plain()
+        var retryConfiguration = UIButton.Configuration.filled()
         retryConfiguration.title = "다시 측정"
-        retryConfiguration.baseForegroundColor = AppStyle.blue
+        retryConfiguration.baseBackgroundColor = .white
+        retryConfiguration.baseForegroundColor = LocationMapStyle.brand
         retryConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        retryConfiguration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 14, weight: .medium)
+            return outgoing
+        }
         retryButton.configuration = retryConfiguration
         retryButton.backgroundColor = .white
         retryButton.layer.cornerRadius = 10
+        retryButton.clipsToBounds = true
         retryButton.layer.borderWidth = 1
-        retryButton.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        retryButton.layer.borderColor = LocationMapStyle.subtleBorder.cgColor
+        retryButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
         retryButton.addAction(UIAction { [weak self] _ in
             self?.beginLocationMeasurement(isRetry: true)
         }, for: .touchUpInside)
@@ -264,12 +283,18 @@ extension ChatConversationViewController {
         let mapButton = UIButton(type: .system)
         var mapConfiguration = UIButton.Configuration.filled()
         mapConfiguration.title = "지도 보기"
-        mapConfiguration.baseBackgroundColor = AppStyle.paleBlue
-        mapConfiguration.baseForegroundColor = AppStyle.blue
+        mapConfiguration.baseBackgroundColor = LocationMapStyle.brandSoft
+        mapConfiguration.baseForegroundColor = LocationMapStyle.brand
         mapConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        mapConfiguration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 14, weight: .medium)
+            return outgoing
+        }
         mapButton.configuration = mapConfiguration
         mapButton.layer.cornerRadius = 10
         mapButton.clipsToBounds = true
+        mapButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
         mapButton.addAction(UIAction { [weak self] _ in self?.openSchoolMap() }, for: .touchUpInside)
         let buttons = UIStackView(arrangedSubviews: [retryButton, mapButton])
         buttons.axis = .horizontal
