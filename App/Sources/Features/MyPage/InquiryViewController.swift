@@ -16,6 +16,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
     var submitButtonBottomConstraint: NSLayoutConstraint?
     var emailErrorRow: UIView!
     var messageErrorRow: UIView!
+    var mailInfoRow: UIView!
     var hasEmailError = false
     var hasMessageError = false
     var keyboardObserver: NSObjectProtocol?
@@ -38,9 +39,15 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         let header = makeHeader()
         contentStack.addArrangedSubview(header)
         contentStack.addArrangedSubview(makeContactCard())
-        contentStack.addArrangedSubview(makeMailInfo())
+        mailInfoRow = makeMailInfo()
+        contentStack.addArrangedSubview(mailInfoRow)
         pinSubmitButtonToBottom()
+        observeKeyboardFrameChanges()
 
+        configurePreviewState()
+    }
+
+    private func observeKeyboardFrameChanges() {
         keyboardObserver = NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillChangeFrameNotification,
             object: nil,
@@ -55,13 +62,16 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
                 let keyboardFrame = self.view.convert(frame, from: nil)
                 let safeAreaBottom = self.view.bounds.maxY - self.view.safeAreaInsets.bottom
                 let overlap = max(0, safeAreaBottom - keyboardFrame.minY)
+                self.mailInfoRow.isHidden = overlap > 0
                 self.submitButtonBottomConstraint?.constant = -(16 + overlap)
                 UIView.animate(withDuration: duration, delay: 0, options: .beginFromCurrentState) {
                     self.view.layoutIfNeeded()
                 }
             }
         }
+    }
 
+    private func configurePreviewState() {
         if showsErrorPreview {
             emailField.text = "preview"
             messageView.text = messageErrorPlaceholder
@@ -69,6 +79,8 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             messageHeightConstraint.constant = 150
             displayValidationErrors(emailInvalid: true, messageEmpty: true)
         } else if showsInputPreview {
+            emailField.text = "student@example.invalid"
+            mailInfoRow.isHidden = true
             DispatchQueue.main.async { [weak self] in
                 self?.messageView.becomeFirstResponder()
             }

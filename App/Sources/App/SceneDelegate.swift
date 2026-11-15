@@ -13,7 +13,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let window = UIWindow(windowScene: windowScene)
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("--inquiry-error-preview") {
+        if arguments.contains("--inquiry-input-preview") {
+            window.rootViewController = UINavigationController(rootViewController: InquiryViewController())
+        } else if arguments.contains("--inquiry-error-preview") {
             window.rootViewController = UINavigationController(rootViewController: InquiryViewController())
         } else if arguments.contains("--inquiry-done-preview") {
             window.rootViewController = UINavigationController(

@@ -40,7 +40,8 @@ extension InquiryViewController {
         configureEmailField()
         configureMessageView()
 
-        let emailLabel = AppStyle.label("이메일", size: 14, weight: .medium, color: secondaryTextColor)
+        let emailLabelText = showsInputPreview || emailField.text?.isEmpty == false ? "답변 받을 이메일" : "이메일"
+        let emailLabel = AppStyle.label(emailLabelText, size: 14, weight: .medium, color: secondaryTextColor)
         emailErrorRow = makeErrorRow("이메일 형식이 올바르지 않아요.")
         let emailGroup = makeFieldGroup(label: emailLabel, field: emailField, errorRow: emailErrorRow)
         let messageLabel = AppStyle.label("문의 내용", size: 14, weight: .medium, color: secondaryTextColor)
@@ -160,7 +161,7 @@ extension InquiryViewController {
     }
 
     func configureEmailField() {
-        emailField.text = nil
+        emailField.text = UserProfileStore.shared.savedEmail
         emailField.attributedPlaceholder = NSAttributedString(string: "이메일", attributes: [
             .font: UIFont.systemFont(ofSize: 15),
             .foregroundColor: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
