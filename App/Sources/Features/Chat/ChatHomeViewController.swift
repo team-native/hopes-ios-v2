@@ -9,13 +9,17 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
     let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
     let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
 
-    private let departmentChip = UIButton(type: .system)
-    private let majorChip = UIButton(type: .system)
-    private let questionList = UIStackView()
+    let departmentChip = UIButton(type: .system)
+    let majorChip = UIButton(type: .system)
+    let questionList = UIStackView()
+    let infoBanner = UIView()
+    var promptTitleView: UIView?
+    var refreshSlot: UIView?
+    weak var recommendationTitleLabel: UILabel?
     let composerBar = UIView()
     let messageField = UITextField()
-    var selectedDepartment = UserDefaults.standard.string(forKey: "chat.selectedDepartment") ?? "소프트웨어개발과"
-    var selectedMajor = UserDefaults.standard.string(forKey: "chat.selectedMajor") ?? "Frontend"
+    var selectedDepartment: String?
+    var selectedMajor: String?
     private var questionSetIndex = 0
 
     private let questionSets: [[(String, String)]] = [
@@ -35,6 +39,8 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        selectedDepartment = Self.loadContextValue(key: "chat.selectedDepartment", defaultValue: "소프트웨어개발과")
+        selectedMajor = Self.loadContextValue(key: "chat.selectedMajor", defaultValue: "Frontend")
         title = nil
         view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
         navigationController?.setNavigationBarHidden(true, animated: false)
@@ -46,6 +52,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         }
 
         addContextHeader()
+        addInfoBanner()
         addPromptTitle()
         addRecommendationHeader()
         configureQuestionList()
@@ -107,7 +114,6 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         header.alignment = .center
         header.spacing = 8
         contentStack.addArrangedSubview(header)
-        updateContextChipTitles()
     }
 
     private func configureChip(_ button: UIButton, identifier: String, action: Selector) {
@@ -128,42 +134,6 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         button.accessibilityIdentifier = identifier
         button.addTarget(self, action: action, for: .touchUpInside)
         button.setContentCompressionResistancePriority(.required, for: .horizontal)
-    }
-
-    func updateContextChipTitles() {
-        var departmentConfiguration = departmentChip.configuration
-        departmentConfiguration?.title = "학과 · \(selectedDepartment)"
-        departmentChip.configuration = departmentConfiguration
-        var majorConfiguration = majorChip.configuration
-        majorConfiguration?.title = "전공 · \(selectedMajor)"
-        majorChip.configuration = majorConfiguration
-    }
-
-    private func addPromptTitle() {
-        let title = "무엇이 궁금한가요?"
-        let attributed = NSMutableAttributedString(string: title, attributes: [
-            .font: UIFont.systemFont(ofSize: 22, weight: .bold),
-            .foregroundColor: ink,
-            .kern: -0.3
-        ])
-        if let range = title.range(of: "궁금한") {
-            attributed.addAttribute(.foregroundColor, value: brandBlue, range: NSRange(range, in: title))
-        }
-        let label = UILabel()
-        label.attributedText = attributed
-        label.textAlignment = .center
-        label.numberOfLines = 1
-
-        let wrapper = UIView()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        wrapper.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: wrapper.topAnchor, constant: 8),
-            label.leadingAnchor.constraint(equalTo: wrapper.leadingAnchor),
-            label.trailingAnchor.constraint(equalTo: wrapper.trailingAnchor),
-            label.bottomAnchor.constraint(equalTo: wrapper.bottomAnchor, constant: -6)
-        ])
-        contentStack.addArrangedSubview(wrapper)
     }
 
     private func addRecommendationHeader() {
@@ -199,13 +169,8 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         header.spacing = 4
         contentStack.addArrangedSubview(header)
         recommendationTitleLabel = title
+        self.refreshSlot = refreshSlot
         updateRecommendationTitle()
-    }
-
-    private weak var recommendationTitleLabel: UILabel?
-
-    func updateRecommendationTitle() {
-        recommendationTitleLabel?.text = "\(selectedDepartment) · \(selectedMajor) 추천 질문"
     }
 
     private func configureQuestionList() {
@@ -214,10 +179,14 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         contentStack.addArrangedSubview(questionList)
     }
 
-    private func renderQuestions() {
+    func renderQuestions() {
         questionList.arrangedSubviews.forEach {
             questionList.removeArrangedSubview($0)
             $0.removeFromSuperview()
+        }
+        guard selectedDepartment != nil, selectedMajor != nil else {
+            questionList.addArrangedSubview(makeBasicQuestionList())
+            return
         }
         for (iconName, question) in questionSets[questionSetIndex] {
             questionList.addArrangedSubview(makeQuestionCard(iconName: iconName, question: question))
