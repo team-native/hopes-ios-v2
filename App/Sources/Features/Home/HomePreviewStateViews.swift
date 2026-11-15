@@ -40,8 +40,10 @@ enum HomePreviewStateViews {
             headerLabel.topAnchor.constraint(equalTo: header.topAnchor, constant: 16),
             headerLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor),
             headerLabel.trailingAnchor.constraint(equalTo: header.trailingAnchor),
+            headerLabel.heightAnchor.constraint(equalToConstant: 26),
             headerLabel.bottomAnchor.constraint(equalTo: header.bottomAnchor)
         ])
+        header.heightAnchor.constraint(equalToConstant: 42).isActive = true
 
         let card = UIStackView(arrangedSubviews: [skeletonRow(), skeletonRow()])
         card.axis = .vertical

@@ -157,7 +157,7 @@ final class HomeViewController: AppPageViewController {
             color: AppStyle.muted,
             lineHeight: 20
         )
-        contentStack.addArrangedSubview(header)
+        contentStack.addArrangedSubview(sectionHeader(title: header))
 
         let tips = UIStackView(arrangedSubviews: [
             HomeTipRowFactory.make(
@@ -196,10 +196,7 @@ final class HomeViewController: AppPageViewController {
         more.addTarget(self, action: #selector(openCommunity), for: .touchUpInside)
         more.isHidden = hasError || isLoading
 
-        let header = UIStackView(arrangedSubviews: [title, UIView(), more])
-        header.axis = .horizontal
-        header.alignment = .center
-        contentStack.addArrangedSubview(header)
+        contentStack.addArrangedSubview(sectionHeader(title: title, moreButton: more))
 
         let content = UIStackView()
         content.axis = .vertical
@@ -234,6 +231,36 @@ final class HomeViewController: AppPageViewController {
             }
             container.addArrangedSubview(row)
         }
+    }
+
+    private func sectionHeader(title: UILabel, moreButton: UIButton? = nil) -> UIView {
+        let header = UIView()
+        title.translatesAutoresizingMaskIntoConstraints = false
+        header.addSubview(title)
+        header.heightAnchor.constraint(equalToConstant: 42).isActive = true
+
+        if let moreButton {
+            moreButton.translatesAutoresizingMaskIntoConstraints = false
+            header.addSubview(moreButton)
+            NSLayoutConstraint.activate([
+                title.topAnchor.constraint(equalTo: header.topAnchor, constant: 16),
+                title.leadingAnchor.constraint(equalTo: header.leadingAnchor),
+                title.trailingAnchor.constraint(equalTo: moreButton.leadingAnchor),
+                title.heightAnchor.constraint(equalToConstant: 26),
+                moreButton.topAnchor.constraint(equalTo: header.topAnchor, constant: 19),
+                moreButton.trailingAnchor.constraint(equalTo: header.trailingAnchor),
+                moreButton.widthAnchor.constraint(equalToConstant: 39),
+                moreButton.heightAnchor.constraint(equalToConstant: 20)
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                title.topAnchor.constraint(equalTo: header.topAnchor, constant: 16),
+                title.leadingAnchor.constraint(equalTo: header.leadingAnchor),
+                title.trailingAnchor.constraint(equalTo: header.trailingAnchor),
+                title.heightAnchor.constraint(equalToConstant: 26)
+            ])
+        }
+        return header
     }
 
 }
