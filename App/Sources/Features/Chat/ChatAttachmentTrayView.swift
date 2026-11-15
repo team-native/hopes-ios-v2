@@ -12,6 +12,7 @@ struct ChatAttachmentItem: Identifiable {
     let image: UIImage?
     let url: URL?
     let validationState: ChatAttachmentValidationState
+    let pageCount: Int?
 
     var isSupported: Bool {
         image != nil || (url != nil && validationState == .supported)
@@ -21,12 +22,14 @@ struct ChatAttachmentItem: Identifiable {
         fileName: String,
         image: UIImage?,
         url: URL? = nil,
-        validationState: ChatAttachmentValidationState = .supported
+        validationState: ChatAttachmentValidationState = .supported,
+        pageCount: Int? = nil
     ) {
         self.fileName = fileName
         self.image = image
         self.url = url
         self.validationState = validationState
+        self.pageCount = pageCount
     }
 }
 

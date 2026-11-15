@@ -8,18 +8,23 @@ private struct ValidatedChatDocument: Sendable {
     let fileName: String
     let url: URL
     let state: ChatAttachmentValidationState
+    let pageCount: Int?
 }
 
 private func validateChatDocument(at url: URL) -> ValidatedChatDocument {
     let state: ChatAttachmentValidationState
+    let pageCount: Int?
     if UTType(filenameExtension: url.pathExtension)?.conforms(to: .pdf) != true {
         state = .unsupportedFormat
+        pageCount = nil
     } else if let document = PDFDocument(url: url), !document.isLocked, document.pageCount > 0 {
         state = .supported
+        pageCount = document.pageCount
     } else {
         state = .unreadablePDF
+        pageCount = nil
     }
-    return ValidatedChatDocument(fileName: url.lastPathComponent, url: url, state: state)
+    return ValidatedChatDocument(fileName: url.lastPathComponent, url: url, state: state, pageCount: pageCount)
 }
 
 @MainActor
@@ -167,7 +172,8 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
                         fileName: $0.fileName,
                         image: nil,
                         url: $0.url,
-                        validationState: $0.state
+                        validationState: $0.state,
+                        pageCount: $0.pageCount
                     )
                 }
                 self.onAttachmentsSelected?(attachments)

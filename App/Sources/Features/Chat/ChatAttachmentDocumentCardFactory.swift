@@ -50,7 +50,7 @@ enum ChatAttachmentDocumentCardFactory {
 
         let name = AppStyle.label(attachment.fileName, size: 14, weight: .medium, color: AppStyle.ink)
         name.lineBreakMode = .byTruncatingMiddle
-        let detail = makeDetailLabel(for: attachment.validationState)
+        let detail = makeDetailLabel(for: attachment)
         let labels = UIStackView(arrangedSubviews: [name, detail])
         labels.axis = .vertical
         labels.spacing = 2
@@ -64,12 +64,12 @@ enum ChatAttachmentDocumentCardFactory {
         return content
     }
 
-    private static func makeDetailLabel(for state: ChatAttachmentValidationState) -> UILabel {
+    private static func makeDetailLabel(for attachment: ChatAttachmentItem) -> UILabel {
         let text: String
         let color: UIColor
-        switch state {
+        switch attachment.validationState {
         case .supported:
-            text = "PDF 문서"
+            text = attachment.pageCount.map { "PDF · \($0)쪽" } ?? "PDF 문서"
             color = AppStyle.muted
         case .unsupportedFormat:
             text = "지원하지 않는 형식"
