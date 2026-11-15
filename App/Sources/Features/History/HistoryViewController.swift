@@ -11,7 +11,6 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
 
     var conversations: [Conversation] = ProcessInfo.processInfo.arguments.contains("--empty-history") ? [] : [
         Conversation(title: "기숙사 하루 일과가 어떻게 돼?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
-        Conversation(title: "기숙사 방 배정은 어떻게 돼?", time: "3일 전", department: "소프트웨어개발과", olderThanWeek: false),
         Conversation(title: "전공 선택은 어떻게 하는 게 좋아?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
         Conversation(title: "동아리는 언제 정해?", time: "지난주", department: "소프트웨어개발과", olderThanWeek: false),
         Conversation(title: "입학하려면 뭘 준비해야 해?", time: "10월 28일", department: "소프트웨어개발과", olderThanWeek: true),
@@ -62,8 +61,10 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         buttonConfiguration.title = "새 대화 시작"
         buttonConfiguration.baseBackgroundColor = AppStyle.blue
         buttonConfiguration.baseForegroundColor = .white
-        buttonConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20)
+        buttonConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 13, leading: 20, bottom: 13, trailing: 20)
         newConversation.configuration = buttonConfiguration
+        newConversation.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
+        newConversation.heightAnchor.constraint(equalToConstant: 50).isActive = true
         newConversation.layer.cornerRadius = 12
         newConversation.clipsToBounds = true
         newConversationButton = newConversation
@@ -180,7 +181,7 @@ extension HistoryViewController {
         container.layer.shadowOffset = CGSize(width: 0, height: 3)
         container.addSubview(fieldRow)
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalToConstant: 44),
+            container.heightAnchor.constraint(equalToConstant: 48),
             fieldRow.topAnchor.constraint(equalTo: container.topAnchor),
             fieldRow.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             fieldRow.trailingAnchor.constraint(equalTo: container.trailingAnchor),
@@ -298,10 +299,10 @@ extension HistoryViewController {
         rows.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(rows)
         NSLayoutConstraint.activate([
-            rows.topAnchor.constraint(equalTo: card.topAnchor, constant: 2),
+            rows.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
             rows.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 17),
             rows.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -17),
-            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -2)
+            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
         ])
 
         for (index, conversation) in conversations.enumerated() {
@@ -321,8 +322,6 @@ extension HistoryViewController {
         let title = UILabel()
         title.attributedText = highlightedTitle(conversation.title, query: query)
         title.numberOfLines = 1
-        title.font = .systemFont(ofSize: 15)
-        title.textColor = AppStyle.ink
         title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let chevron = UIImageView(image: image(named: "history-chevron"))
         chevron.contentMode = .scaleAspectFit
@@ -369,9 +368,16 @@ extension HistoryViewController {
     }
 
     func highlightedTitle(_ title: String, query: String) -> NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.minimumLineHeight = 20
+        paragraph.maximumLineHeight = 20
         let result = NSMutableAttributedString(
             string: title,
-            attributes: [.font: UIFont.systemFont(ofSize: 15), .foregroundColor: AppStyle.ink]
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 15),
+                .foregroundColor: AppStyle.ink,
+                .paragraphStyle: paragraph
+            ]
         )
         guard !query.isEmpty, let range = title.range(of: query, options: [.caseInsensitive,
             .diacriticInsensitive]) else { return result }
