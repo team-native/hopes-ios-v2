@@ -173,6 +173,7 @@ extension CommunityViewController {
         card.layer.shadowOpacity = 1
         card.layer.shadowRadius = 8
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
+        card.heightAnchor.constraint(greaterThanOrEqualToConstant: 162).isActive = true
         card.addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: card.topAnchor),
