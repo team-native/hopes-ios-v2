@@ -100,7 +100,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         newChat.configuration = configuration
         newChat.addTarget(self, action: #selector(startNewConversation), for: .touchUpInside)
         newChat.accessibilityIdentifier = "chat-new-conversation"
-        NSLayoutConstraint.activate([newChat.heightAnchor.constraint(equalToConstant: 36)])
+        NSLayoutConstraint.activate([newChat.heightAnchor.constraint(equalToConstant: 38)])
 
         let header = UIStackView(arrangedSubviews: [chips, UIView(), newChat])
         header.axis = .horizontal
@@ -180,12 +180,20 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         refresh.accessibilityIdentifier = "chat-refresh-questions"
         refresh.addTarget(self, action: #selector(refreshQuestions), for: .touchUpInside)
         refresh.imageView?.contentMode = .scaleAspectFit
+        let refreshSlot = UIView()
+        refreshSlot.translatesAutoresizingMaskIntoConstraints = false
+        refresh.translatesAutoresizingMaskIntoConstraints = false
+        refreshSlot.addSubview(refresh)
         NSLayoutConstraint.activate([
-            refresh.widthAnchor.constraint(equalToConstant: 32),
-            refresh.heightAnchor.constraint(equalToConstant: 32)
+            refreshSlot.widthAnchor.constraint(equalToConstant: 18),
+            refreshSlot.heightAnchor.constraint(equalToConstant: 20),
+            refresh.centerXAnchor.constraint(equalTo: refreshSlot.centerXAnchor),
+            refresh.centerYAnchor.constraint(equalTo: refreshSlot.centerYAnchor),
+            refresh.widthAnchor.constraint(equalToConstant: 44),
+            refresh.heightAnchor.constraint(equalToConstant: 44)
         ])
 
-        let header = UIStackView(arrangedSubviews: [title, UIView(), refresh])
+        let header = UIStackView(arrangedSubviews: [title, UIView(), refreshSlot])
         header.axis = .horizontal
         header.alignment = .center
         header.spacing = 4
