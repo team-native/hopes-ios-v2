@@ -10,6 +10,11 @@ final class UserProfileStore {
     var name: String { defaults.string(forKey: "profile.name") ?? "Hopes 사용자" }
     var department: String { defaults.string(forKey: "profile.department") ?? "인공지능소프트웨어과" }
     var email: String { defaults.string(forKey: "profile.email") ?? "user@example.invalid" }
+    var savedEmail: String? {
+        guard let email = defaults.string(forKey: "profile.email"),
+              !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return email
+    }
     var generation: String { defaults.string(forKey: "profile.generation") ?? "10기" }
     var introduction: String { defaults.string(forKey: "profile.introduction") ?? "" }
 
