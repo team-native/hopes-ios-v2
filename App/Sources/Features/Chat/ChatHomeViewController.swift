@@ -80,7 +80,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         chips.axis = .horizontal
         chips.alignment = .center
         chips.spacing = 6
-        chips.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        chips.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let newChat = UIButton(type: .system)
         newChat.translatesAutoresizingMaskIntoConstraints = false
@@ -127,7 +127,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         button.configuration = configuration
         button.accessibilityIdentifier = identifier
         button.addTarget(self, action: action, for: .touchUpInside)
-        button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required, for: .horizontal)
     }
 
     func updateContextChipTitles() {
@@ -174,7 +174,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let refresh = UIButton(type: .system)
-        refresh.setImage(UIImage(named: "chat-refresh-icon"), for: .normal)
+        refresh.setImage(UIImage(named: "chat-refresh-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
         refresh.imageView?.contentMode = .scaleAspectFit
         refresh.accessibilityLabel = "추천 질문 새로고침"
         refresh.accessibilityIdentifier = "chat-refresh-questions"

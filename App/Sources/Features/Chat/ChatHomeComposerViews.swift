@@ -130,8 +130,7 @@ extension ChatHomeViewController {
 
     private func makeAttachmentButton() -> UIButton {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "chat-plus-icon")?.withRenderingMode(.alwaysTemplate), for: .normal)
-        button.tintColor = secondary
+        button.setImage(UIImage(named: "chat-plus-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
         button.imageView?.contentMode = .scaleAspectFit
         button.layer.cornerRadius = 20
         button.layer.borderWidth = 1
@@ -146,8 +145,7 @@ extension ChatHomeViewController {
 
     private func makeVoiceInputButton() -> UIButton {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "chat-mic-icon")?.withRenderingMode(.alwaysTemplate), for: .normal)
-        button.tintColor = secondary
+        button.setImage(UIImage(named: "chat-mic-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
         button.imageView?.contentMode = .scaleAspectFit
         button.accessibilityLabel = "음성 입력"
         button.addTarget(self, action: #selector(showVoiceInputNotice), for: .touchUpInside)
@@ -161,8 +159,7 @@ extension ChatHomeViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.backgroundColor = brandBlue
         button.layer.cornerRadius = 20
-        button.setImage(UIImage(named: "chat-send-icon")?.withRenderingMode(.alwaysTemplate), for: .normal)
-        button.tintColor = .white
+        button.setImage(UIImage(named: "chat-send-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
         button.imageView?.contentMode = .scaleAspectFit
         button.accessibilityLabel = "메시지 보내기"
         button.accessibilityIdentifier = "chat-send-message"
