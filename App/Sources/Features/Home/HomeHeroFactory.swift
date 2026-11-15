@@ -96,6 +96,7 @@ enum HomeTipRowFactory {
         row.layer.shadowOpacity = 1
         row.layer.shadowRadius = 8
         row.layer.shadowOffset = CGSize(width: 0, height: 4)
+        row.heightAnchor.constraint(equalToConstant: 72).isActive = true
         return row
     }
 }
