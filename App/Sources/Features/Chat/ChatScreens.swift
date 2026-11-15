@@ -310,7 +310,8 @@ private extension ChatConversationViewController {
     }
 
     func sendAttachmentQuestion(_ question: String) {
-        guard !selectedAttachments.isEmpty else { return }
+        guard !selectedAttachments.isEmpty,
+              selectedAttachments.allSatisfy(\.isSupported) else { return }
         let attachments = selectedAttachments
         attachmentResponseState.lastSentAttachments = attachments
         addSentAttachments(attachments)

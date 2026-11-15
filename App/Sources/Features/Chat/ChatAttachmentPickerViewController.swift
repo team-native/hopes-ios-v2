@@ -1,6 +1,25 @@
 import PhotosUI
+import PDFKit
 import UIKit
 import UniformTypeIdentifiers
+
+private struct ValidatedChatDocument: Sendable {
+    let fileName: String
+    let url: URL
+    let state: ChatAttachmentValidationState
+}
+
+private func validateChatDocument(at url: URL) -> ValidatedChatDocument {
+    let state: ChatAttachmentValidationState
+    if UTType(filenameExtension: url.pathExtension)?.conforms(to: .pdf) != true {
+        state = .unsupportedFormat
+    } else if let document = PDFDocument(url: url), !document.isLocked, document.pageCount > 0 {
+        state = .supported
+    } else {
+        state = .unreadablePDF
+    }
+    return ValidatedChatDocument(fileName: url.lastPathComponent, url: url, state: state)
+}
 
 @MainActor
 final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewControllerDelegate,
@@ -74,11 +93,12 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         for (index, result) in results.enumerated() {
             let provider = result.itemProvider
             guard provider.canLoadObject(ofClass: UIImage.self) else { continue }
+            let fileName = provider.suggestedName ?? "사진 \(index + 1)"
             group.enter()
             provider.loadObject(ofClass: UIImage.self) { object, _ in
                 lock.lock()
                 attachments[index] = ChatAttachmentItem(
-                    fileName: provider.suggestedName ?? "사진 \(index + 1)",
+                    fileName: fileName,
                     image: object as? UIImage
                 )
                 lock.unlock()
@@ -99,7 +119,23 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
 
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard !urls.isEmpty else { return }
-        finishSelection(urls.map { ChatAttachmentItem(fileName: $0.lastPathComponent, image: nil, url: $0) })
+        controller.dismiss(animated: true) { [weak self] in
+            Task { [weak self] in
+                let documents = await Task.detached(priority: .userInitiated) {
+                    urls.map(validateChatDocument(at:))
+                }.value
+                guard let self else { return }
+                let attachments = documents.map {
+                    ChatAttachmentItem(
+                        fileName: $0.fileName,
+                        image: nil,
+                        url: $0.url,
+                        validationState: $0.state
+                    )
+                }
+                self.onAttachmentsSelected?(attachments)
+            }
+        }
     }
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
