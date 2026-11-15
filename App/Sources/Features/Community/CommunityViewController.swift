@@ -9,6 +9,7 @@ struct CommunityPost {
     let comments: Int
     let likes: Int
     let category: String
+    let authorCohort: String
 
     init(
         grade: String,
@@ -18,7 +19,8 @@ struct CommunityPost {
         comments: Int,
         likes: Int,
         category: String,
-        detailBody: String? = nil
+        detailBody: String? = nil,
+        authorCohort: String? = nil
     ) {
         self.grade = grade
         self.title = title
@@ -28,6 +30,7 @@ struct CommunityPost {
         self.comments = comments
         self.likes = likes
         self.category = category
+        self.authorCohort = authorCohort ?? grade
     }
 }
 

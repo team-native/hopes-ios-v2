@@ -43,7 +43,7 @@ extension CommunityPostDetailViewController {
 
         let title = AppStyle.label(post.title, size: 16, weight: .medium)
         titleLabel = title
-        let meta = AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: UIColor(red: 152 / 255,
+        let meta = AppStyle.label("\(post.authorCohort) · \(post.time)", size: 12, color: UIColor(red: 152 / 255,
             green: 163 / 255, blue: 184 / 255, alpha: 1))
         let body = AppStyle.label(post.detailBody ?? post.body, size: 15, color: AppStyle.ink)
         body.textColor = AppStyle.ink

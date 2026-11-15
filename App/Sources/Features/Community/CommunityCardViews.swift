@@ -116,7 +116,7 @@ extension CommunityViewController {
         body.numberOfLines = 2
         let footer = UIStackView(arrangedSubviews: [
             makeCommunityLabel(
-                "\(post.grade) · \(post.time)",
+                "\(post.authorCohort) · \(post.time)",
                 size: 12,
                 weight: .regular,
                 color: tertiary,
