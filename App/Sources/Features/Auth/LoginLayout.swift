@@ -56,7 +56,7 @@ extension LoginViewController {
         titleLabel.textColor = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
         titleLabel.heightAnchor.constraint(equalToConstant: 30).isActive = true
         subtitleLabel.text = "학교 이메일로 로그인하고 바로 질문을 시작하세요."
-        subtitleLabel.font = .systemFont(ofSize: 14)
+        subtitleLabel.font = .systemFont(ofSize: 14, weight: .medium)
         subtitleLabel.textColor = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
         subtitleLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
         let titleTopSpacer = UIView()
@@ -167,14 +167,14 @@ extension LoginViewController {
 
         let keepLabel = UILabel()
         keepLabel.text = "로그인 유지"
-        keepLabel.font = .systemFont(ofSize: 12)
+        keepLabel.font = .systemFont(ofSize: 14, weight: .medium)
         keepLabel.textColor = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
         keepRow.addArrangedSubview(keepLabel)
         keepRow.addArrangedSubview(UIView())
 
         forgotButton.setTitle("비밀번호 찾기", for: .normal)
         forgotButton.setTitleColor(UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1), for: .normal)
-        forgotButton.titleLabel?.font = .systemFont(ofSize: 12)
+        forgotButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         forgotButton.addTarget(self, action: #selector(openPasswordReset), for: .touchUpInside)
         keepRow.addArrangedSubview(forgotButton)
         keepRow.translatesAutoresizingMaskIntoConstraints = false
@@ -202,7 +202,7 @@ extension LoginViewController {
     func configureActions() {
         loginButton.setTitle("로그인", for: .normal)
         loginButton.setTitleColor(.white, for: .normal)
-        loginButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        loginButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
         loginButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
         loginButton.layer.cornerRadius = 12
         loginButton.addTarget(self, action: #selector(login), for: .touchUpInside)
@@ -213,20 +213,12 @@ extension LoginViewController {
 
         let prompt = UILabel()
         prompt.text = "계정이 없으신가요?"
-        prompt.font = .systemFont(ofSize: 12)
+        prompt.font = .systemFont(ofSize: 14, weight: .medium)
         prompt.textColor = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
         let signupButton = UIButton(type: .system)
         signupButton.setTitle("회원가입", for: .normal)
         signupButton.setTitleColor(UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1), for: .normal)
-        signupButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
-        signupButton.setAttributedTitle(NSAttributedString(
-            string: "회원가입",
-            attributes: [
-                .font: UIFont.systemFont(ofSize: 13, weight: .medium),
-                .foregroundColor: UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1),
-                .underlineStyle: NSUnderlineStyle.single.rawValue
-            ]
-        ), for: .normal)
+        signupButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         signupButton.addTarget(self, action: #selector(openSignUp), for: .touchUpInside)
         signupRow.axis = .horizontal
         signupRow.alignment = .center
