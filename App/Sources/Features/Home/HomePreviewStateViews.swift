@@ -20,19 +20,6 @@ enum HomePreviewStateViews {
         return button
     }
 
-    static func sectionHeaderContainer(_ content: UIView) -> UIView {
-        let container = UIView()
-        content.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-            content.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: container.bottomAnchor)
-        ])
-        return container
-    }
-
     static func skeletonCard(height: CGFloat) -> UIView {
         let stack = skeletonStack()
         stack.heightAnchor.constraint(equalToConstant: height).isActive = true
