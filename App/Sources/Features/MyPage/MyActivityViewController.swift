@@ -18,13 +18,13 @@ final class MyActivityViewController: AppPageViewController {
         view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
         previousNavigationBarHidden = navigationController?.isNavigationBarHidden ?? false
         navigationController?.setNavigationBarHidden(true, animated: false)
-        contentStack.spacing = 16
+        contentStack.spacing = 14
 
         addHeader()
         addTabs()
 
         itemsStack.axis = .vertical
-        itemsStack.spacing = 10
+        itemsStack.spacing = 12
         contentStack.addArrangedSubview(itemsStack)
         renderItems()
     }
@@ -44,7 +44,7 @@ final class MyActivityViewController: AppPageViewController {
             contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 8),
             contentStack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 20),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -20),
-            contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -28)
+            contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -16)
         ])
     }
 
@@ -61,7 +61,7 @@ final class MyActivityViewController: AppPageViewController {
 
     private func addHeader() {
         let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(named: "my-activity-back-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        backButton.setImage(UIImage(named: "MyActivityBack")?.withRenderingMode(.alwaysOriginal), for: .normal)
         backButton.accessibilityLabel = "뒤로"
         backButton.accessibilityIdentifier = "my-activity-back"
         backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
@@ -72,9 +72,20 @@ final class MyActivityViewController: AppPageViewController {
 
         let titleLabel = AppStyle.label("내 활동", size: 18, weight: .medium, color: ink)
         let subtitleLabel = AppStyle.label("내가 쓴 글과 댓글은 나만 볼 수 있어요", size: 12, color: secondary)
+        titleLabel.attributedText = NSAttributedString(string: "내 활동", attributes: [
+            .font: UIFont.systemFont(ofSize: 18, weight: .medium),
+            .foregroundColor: ink,
+            .kern: -0.2,
+            .paragraphStyle: lineStyle(height: 26)
+        ])
+        subtitleLabel.attributedText = NSAttributedString(string: "내가 쓴 글과 댓글은 나만 볼 수 있어요", attributes: [
+            .font: UIFont.systemFont(ofSize: 12),
+            .foregroundColor: secondary,
+            .paragraphStyle: lineStyle(height: 16)
+        ])
         let titles = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         titles.axis = .vertical
-        titles.spacing = 1
+        titles.spacing = 0
 
         let header = UIStackView(arrangedSubviews: [backButton, titles])
         header.axis = .horizontal
@@ -96,6 +107,7 @@ final class MyActivityViewController: AppPageViewController {
         let button = UIButton(type: .system)
         button.tag = index
         button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        button.heightAnchor.constraint(equalToConstant: 38).isActive = true
         var configuration = UIButton.Configuration.plain()
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
         button.configuration = configuration
@@ -294,7 +306,7 @@ extension MyActivityViewController {
         container.addSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.72),
+            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -121),
             content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             content.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
@@ -308,16 +320,15 @@ extension MyActivityViewController {
         illustration.backgroundColor = .white
         illustration.layer.cornerRadius = 44
         illustration.layer.borderWidth = 1
-        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        illustration.layer.borderColor = subtleLine.cgColor
         illustration.layer.shadowColor = UIColor(red: 0.10, green: 0.25, blue: 0.50, alpha: 1).cgColor
         illustration.layer.shadowOpacity = 0.09
         illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
-        illustration.layer.shadowRadius = 14
+        illustration.layer.shadowRadius = 28
         illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
         illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
 
-        let assetPath = Bundle.main.path(forResource: "empty-state-pen", ofType: "png")
-        let pen = UIImageView(image: assetPath.flatMap(UIImage.init(contentsOfFile:)))
+        let pen = UIImageView(image: UIImage(named: "MyActivityEmptyPen")?.withRenderingMode(.alwaysOriginal))
         pen.contentMode = .scaleAspectFit
         pen.translatesAutoresizingMaskIntoConstraints = false
         illustration.addSubview(pen)
@@ -328,28 +339,59 @@ extension MyActivityViewController {
             pen.heightAnchor.constraint(equalToConstant: 36)
         ])
 
-        let title = AppStyle.label("아직 작성한 글이 없어요", size: 18, weight: .medium)
-        title.textAlignment = .center
-        let subtitle = AppStyle.label("궁금한 걸 커뮤니티에 물어보세요.", size: 14, weight: .medium, color: AppStyle.muted)
-        subtitle.textAlignment = .center
-        let writeButton = UIButton(type: .system)
-        var configuration = UIButton.Configuration.filled()
-        configuration.title = "글쓰기"
-        configuration.baseBackgroundColor = AppStyle.blue
-        configuration.baseForegroundColor = .white
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
-        writeButton.configuration = configuration
-        writeButton.layer.cornerRadius = 10
-        writeButton.clipsToBounds = true
-        writeButton.addAction(UIAction { [weak self] _ in
-            self?.push(CommunityWriteViewController())
-        }, for: .touchUpInside)
-
+        let title = makePostsEmptyTitle()
+        let subtitle = makePostsEmptySubtitle()
+        let writeButton = makePostsEmptyWriteButton()
         let messageStack = UIStackView(arrangedSubviews: [illustration, title, subtitle, writeButton])
         messageStack.axis = .vertical
         messageStack.alignment = .center
         messageStack.spacing = 12
 
         return messageStack
+    }
+
+    private func makePostsEmptyTitle() -> UILabel {
+        let title = AppStyle.label("아직 작성한 글이 없어요", size: 18, weight: .medium)
+        title.textAlignment = .center
+        title.attributedText = NSAttributedString(string: "아직 작성한 글이 없어요", attributes: [
+            .font: UIFont.systemFont(ofSize: 18, weight: .medium),
+            .foregroundColor: ink,
+            .kern: -0.2,
+            .paragraphStyle: lineStyle(height: 26)
+        ])
+        return title
+    }
+
+    private func makePostsEmptySubtitle() -> UILabel {
+        let subtitle = AppStyle.label("궁금한 걸 커뮤니티에 물어보세요.", size: 14, weight: .medium, color: secondary)
+        subtitle.textAlignment = .center
+        subtitle.attributedText = NSAttributedString(string: "궁금한 걸 커뮤니티에 물어보세요.", attributes: [
+            .font: UIFont.systemFont(ofSize: 14, weight: .medium),
+            .foregroundColor: secondary,
+            .paragraphStyle: lineStyle(height: 20)
+        ])
+        return subtitle
+    }
+
+    private func makePostsEmptyWriteButton() -> UIButton {
+        let writeButton = UIButton(type: .system)
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = "글쓰기"
+        configuration.baseBackgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        configuration.baseForegroundColor = .white
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 14, weight: .medium)
+            return outgoing
+        }
+        writeButton.configuration = configuration
+        writeButton.layer.cornerRadius = 10
+        writeButton.clipsToBounds = true
+        writeButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        writeButton.addAction(UIAction { [weak self] _ in
+            self?.push(CommunityWriteViewController())
+        }, for: .touchUpInside)
+        return writeButton
     }
 }
