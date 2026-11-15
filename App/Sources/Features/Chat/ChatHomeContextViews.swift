@@ -1,0 +1,102 @@
+import UIKit
+
+@MainActor
+extension ChatHomeViewController {
+    func updateContextChipTitles() {
+        var departmentConfiguration = departmentChip.configuration
+        departmentConfiguration?.title = selectedDepartment.map { "학과 · \($0)" } ?? "학과 선택"
+        departmentConfiguration?.baseForegroundColor = selectedDepartment == nil ? secondary : brandBlue
+        departmentConfiguration?.background.backgroundColor = selectedDepartment == nil ? .white : softBlue
+        departmentConfiguration?.background.strokeColor = selectedDepartment == nil ? line :
+            UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)
+        departmentChip.configuration = departmentConfiguration
+
+        var majorConfiguration = majorChip.configuration
+        majorConfiguration?.title = selectedMajor.map { "전공 · \($0)" } ?? "전공 선택"
+        majorConfiguration?.baseForegroundColor = selectedMajor == nil ? secondary : brandBlue
+        majorConfiguration?.background.backgroundColor = selectedMajor == nil ? .white : softBlue
+        majorConfiguration?.background.strokeColor = selectedMajor == nil ? line :
+            UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)
+        majorChip.configuration = majorConfiguration
+        updateRecommendationTitle()
+    }
+
+    func addInfoBanner() {
+        infoBanner.translatesAutoresizingMaskIntoConstraints = false
+        infoBanner.backgroundColor = softBlue
+        infoBanner.layer.cornerRadius = 14
+        let icon = UIImageView(image: UIImage(named: "home-alert-icon"))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        let message = UILabel()
+        message.text = "학과와 전공을 고르면 나에게 맞는 질문을 추천해 드려요."
+        message.font = .systemFont(ofSize: 12)
+        message.textColor = brandBlue
+        message.numberOfLines = 0
+        let row = UIStackView(arrangedSubviews: [icon, message])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 8
+        row.isLayoutMarginsRelativeArrangement = true
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        infoBanner.addSubview(row)
+        NSLayoutConstraint.activate([
+            icon.widthAnchor.constraint(equalToConstant: 18),
+            icon.heightAnchor.constraint(equalToConstant: 18),
+            row.topAnchor.constraint(equalTo: infoBanner.topAnchor),
+            row.leadingAnchor.constraint(equalTo: infoBanner.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: infoBanner.trailingAnchor),
+            row.bottomAnchor.constraint(equalTo: infoBanner.bottomAnchor),
+            infoBanner.heightAnchor.constraint(equalToConstant: 42)
+        ])
+        contentStack.addArrangedSubview(infoBanner)
+        infoBanner.isHidden = true
+    }
+
+    func addPromptTitle() {
+        let title = "무엇이 궁금한가요?"
+        let attributed = NSMutableAttributedString(string: title, attributes: [
+            .font: UIFont.systemFont(ofSize: 22, weight: .bold),
+            .foregroundColor: ink,
+            .kern: -0.3
+        ])
+        if let range = title.range(of: "궁금한") {
+            attributed.addAttribute(.foregroundColor, value: brandBlue, range: NSRange(range, in: title))
+        }
+        let label = UILabel()
+        label.attributedText = attributed
+        label.textAlignment = .center
+        label.numberOfLines = 1
+
+        let wrapper = UIView()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        wrapper.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: wrapper.topAnchor, constant: 8),
+            label.leadingAnchor.constraint(equalTo: wrapper.leadingAnchor),
+            label.trailingAnchor.constraint(equalTo: wrapper.trailingAnchor),
+            label.bottomAnchor.constraint(equalTo: wrapper.bottomAnchor, constant: -6)
+        ])
+        promptTitleView = wrapper
+        contentStack.addArrangedSubview(wrapper)
+    }
+
+    func updateRecommendationTitle() {
+        let hasPersonalizedContext = selectedDepartment != nil && selectedMajor != nil
+        if let selectedDepartment, let selectedMajor, hasPersonalizedContext {
+            recommendationTitleLabel?.text = "\(selectedDepartment) · \(selectedMajor) 추천 질문"
+        } else {
+            recommendationTitleLabel?.text = "기본 추천 질문"
+        }
+        infoBanner.isHidden = hasPersonalizedContext
+        promptTitleView?.isHidden = !hasPersonalizedContext
+        refreshSlot?.isHidden = !hasPersonalizedContext
+        renderQuestions()
+    }
+
+    static func loadContextValue(key: String, defaultValue: String) -> String? {
+        guard let storedValue = UserDefaults.standard.string(forKey: key) else { return defaultValue }
+        return storedValue.isEmpty ? nil : storedValue
+    }
+}

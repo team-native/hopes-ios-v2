@@ -2,6 +2,82 @@ import UIKit
 
 @MainActor
 extension ChatHomeViewController {
+    func makeBasicQuestionList() -> UIView {
+        let card = UIView()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = line.cgColor
+        card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.05).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 8
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
+
+        let rows = UIStackView()
+        rows.axis = .vertical
+        rows.spacing = 0
+        rows.isLayoutMarginsRelativeArrangement = true
+        rows.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 5, leading: 17, bottom: 5, trailing: 17)
+        rows.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(rows)
+        NSLayoutConstraint.activate([
+            rows.topAnchor.constraint(equalTo: card.topAnchor),
+            rows.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            rows.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor),
+            card.heightAnchor.constraint(equalToConstant: 192)
+        ])
+
+        let questions = [
+            ("chat-question-bed-icon", "기숙사 하루 일과가 어떻게 돼?"),
+            ("chat-question-file-icon", "입학하려면 뭘 준비해야 해?"),
+            ("chat-question-heart-icon", "후배한테 해주고 싶은 조언 있어?")
+        ]
+        for (index, item) in questions.enumerated() {
+            rows.addArrangedSubview(makeBasicQuestionRow(iconName: item.0, question: item.1))
+            if index < questions.count - 1 {
+                let divider = UIView()
+                divider.backgroundColor = line
+                divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+                rows.addArrangedSubview(divider)
+            }
+        }
+        return card
+    }
+
+    private func makeBasicQuestionRow(iconName: String, question: String) -> UIControl {
+        let iconChip = makeQuestionIcon(iconName)
+        let title = UILabel()
+        title.text = question
+        title.font = .systemFont(ofSize: 15)
+        title.textColor = ink
+        title.numberOfLines = 1
+        title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let content = UIStackView(arrangedSubviews: [iconChip, title, makeQuestionChevron()])
+        content.axis = .horizontal
+        content.alignment = .center
+        content.spacing = 12
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
+
+        let row = UIControl()
+        row.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: row.topAnchor),
+            content.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: row.bottomAnchor),
+            row.heightAnchor.constraint(equalToConstant: 60)
+        ])
+        row.accessibilityLabel = question
+        row.addAction(UIAction { [weak self] _ in
+            self?.navigationController?.pushViewController(ChatConversationViewController(question: question),
+                animated: true)
+        }, for: .touchUpInside)
+        return row
+    }
+
     func makeQuestionCard(iconName: String, question: String) -> UIView {
         let iconChip = makeQuestionIcon(iconName)
 

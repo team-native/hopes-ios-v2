@@ -55,8 +55,10 @@ extension ChatConversationViewController {
         back.addAction(UIAction { [weak self] _ in self?.navigationController?.popViewController(animated: true) },
             for: .touchUpInside)
 
-        let department = UserDefaults.standard.string(forKey: "chat.selectedDepartment") ?? "소프트웨어개발과"
-        let major = UserDefaults.standard.string(forKey: "chat.selectedMajor") ?? "Frontend"
+        let department = UserDefaults.standard.string(forKey: "chat.selectedDepartment")
+            .flatMap { $0.isEmpty ? nil : $0 } ?? "소프트웨어개발과"
+        let major = UserDefaults.standard.string(forKey: "chat.selectedMajor")
+            .flatMap { $0.isEmpty ? nil : $0 } ?? "Frontend"
         let context = AppStyle.label("\(department) · \(major)", size: 12, color: AppStyle.muted)
         let title = AppStyle.label("전공 공부", size: 18, weight: .medium, color: ChatDetailPalette.ink)
         applyLineHeight(title, lineHeight: 26, height: 26)
@@ -384,8 +386,7 @@ extension ChatConversationViewController {
         }, for: .touchUpInside)
         return button
     }
-
-    private func applyLineHeight(_ label: UILabel, lineHeight: CGFloat, height: CGFloat) {
+    func applyLineHeight(_ label: UILabel, lineHeight: CGFloat, height: CGFloat) {
         let paragraph = NSMutableParagraphStyle()
         paragraph.minimumLineHeight = lineHeight
         paragraph.maximumLineHeight = lineHeight
@@ -396,5 +397,4 @@ extension ChatConversationViewController {
         ])
         label.heightAnchor.constraint(equalToConstant: height).isActive = true
     }
-
 }
