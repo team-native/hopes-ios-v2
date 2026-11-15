@@ -21,7 +21,7 @@ extension CommunityPostDetailViewController {
         more.addAction(UIAction { [weak self, weak textLabel, weak more] _ in
             guard let self, let textLabel, let more else { return }
             if isOwnComment {
-                self.showOwnCommentActions(text: textLabel.text ?? "", label: textLabel, source: more)
+                self.showOwnCommentActions(text: textLabel.text ?? "", label: textLabel)
             } else {
                 self.showCommentReportActions(source: more)
             }
@@ -104,21 +104,19 @@ extension CommunityPostDetailViewController {
         commentEditState.isHidden = true
     }
 
-    func showOwnCommentActions(text: String, label: UILabel, source: UIButton) {
-        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        sheet.addAction(UIAlertAction(title: "댓글 수정", style: .default) { [weak self] _ in
-            self?.beginCommentEdit(text: text, label: label)
-        })
-        sheet.addAction(UIAlertAction(title: "댓글 삭제", style: .destructive) { [weak self, weak label] _ in
-            guard let self, let label else { return }
-            self.confirmCommentDeletion(text: text, label: label)
-        })
-        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = source
-            popover.sourceRect = source.bounds
-        }
-        present(sheet, animated: true)
+    func showOwnCommentActions(text: String, label: UILabel) {
+        guard presentedViewController == nil else { return }
+        let sheet = CommunityCommentMenuViewController(
+            onEdit: { [weak self, weak label] in
+                guard let self, let label else { return }
+                self.beginCommentEdit(text: text, label: label)
+            },
+            onDelete: { [weak self, weak label] in
+                guard let self, let label else { return }
+                self.confirmCommentDeletion(text: text, label: label)
+            }
+        )
+        present(sheet, animated: false)
     }
 
     func showCommentReportActions(source: UIButton) {
