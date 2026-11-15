@@ -25,7 +25,7 @@ extension SignupViewController {
             title = "가입 완료"
             enabled = generation != nil && termsAccepted && hasProfileName
         case .complete:
-            title = "채팅 시작하기"
+            title = "시작하기"
             enabled = true
         }
         actionButton.setTitle(title, for: .normal)
