@@ -284,7 +284,7 @@ extension SignupViewController {
 
     func renderProfileStep() {
         addStepper(current: 2)
-        addHeading(lines: ["선배에게 보여줄", "기본 정보를 알려주세요"], subtitle: "커뮤니티에는 이름 대신 기수만 표시돼요.")
+        addHeading(lines: ["선배에게 보여줄", "기본 정보를 알려주세요"], subtitle: "커뮤니티에는 이름 대신 기수만 표시돼요.", accentPrefix: "선배")
         addField(label: "이름", field: nameField)
 
         departmentButton.configuration = dropdownConfiguration(title: selectedDepartment, error: false)
@@ -296,7 +296,7 @@ extension SignupViewController {
         termsButton.configuration = checkboxConfiguration()
         contentStack.addArrangedSubview(termsButton)
         termsButton.translatesAutoresizingMaskIntoConstraints = false
-        termsButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        termsButton.heightAnchor.constraint(equalToConstant: 20).isActive = true
         addSpacer(20)
     }
 

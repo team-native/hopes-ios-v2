@@ -30,7 +30,7 @@ extension SignupViewController {
     func addHeading(lines: [String], subtitle: String? = nil, accentPrefix: String? = nil) {
         let stack = UIStackView()
         stack.axis = .vertical
-        stack.spacing = 6
+        stack.spacing = subtitle == nil ? 6 : 14
         let title = makeLabel(lines.joined(separator: "\n"), size: 22, weight: .bold, color: Palette.ink)
         title.numberOfLines = 0
         let titleParagraph = NSMutableParagraphStyle()
@@ -49,8 +49,9 @@ extension SignupViewController {
         title.attributedText = heading
         stack.addArrangedSubview(title)
         if let subtitle {
-            let description = makeLabel(subtitle, size: 12, color: Palette.muted)
+            let description = makeLabel(subtitle, size: 14, weight: .medium, color: Palette.muted)
             description.numberOfLines = 0
+            description.heightAnchor.constraint(equalToConstant: 20).isActive = true
             stack.addArrangedSubview(description)
         }
         stack.isLayoutMarginsRelativeArrangement = true
@@ -103,7 +104,7 @@ extension SignupViewController {
         group.spacing = 6
         group.isLayoutMarginsRelativeArrangement = true
         group.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        group.addArrangedSubview(makeLabel(label, size: 12, weight: .medium, color: Palette.muted))
+        group.addArrangedSubview(makeLabel(label, size: 14, weight: .medium, color: Palette.muted))
         group.addArrangedSubview(control)
         if let error { group.addArrangedSubview(makeInlineError(error)) }
         contentStack.addArrangedSubview(group)
@@ -118,10 +119,10 @@ extension SignupViewController {
         row.spacing = 4
         let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
         icon.tintColor = Palette.error
-        icon.widthAnchor.constraint(equalToConstant: 12).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 12).isActive = true
+        icon.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 14).isActive = true
         row.addArrangedSubview(icon)
-        row.addArrangedSubview(makeLabel(text, size: 11, color: Palette.error))
+        row.addArrangedSubview(makeLabel(text, size: 12, color: Palette.error))
         row.heightAnchor.constraint(equalToConstant: 16).isActive = true
         return row
     }
@@ -162,11 +163,11 @@ extension SignupViewController {
         config.imagePlacement = .trailing
         config.imagePadding = 8
         config.baseForegroundColor = title == "기수 선택" ? Palette.placeholder : Palette.ink
-        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12)
+        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
         config.background.backgroundColor = .white
         config.background.strokeColor = error ? Palette.error : Palette.line
-        config.background.strokeWidth = 1
-        config.background.cornerRadius = 12
+        config.background.strokeWidth = error ? 1.5 : 1
+        config.background.cornerRadius = 16
         return config
     }
 
@@ -179,7 +180,7 @@ extension SignupViewController {
         config.baseForegroundColor = Palette.muted
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 11)
+            outgoing.font = .systemFont(ofSize: 12, weight: .medium)
             return outgoing
         }
         return config
