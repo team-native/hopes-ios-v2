@@ -18,12 +18,12 @@ extension CommunityPostDetailViewController {
         more.imageView?.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         more.widthAnchor.constraint(equalToConstant: 24).isActive = true
         more.heightAnchor.constraint(equalToConstant: 24).isActive = true
-        more.addAction(UIAction { [weak self, weak textLabel, weak more] _ in
-            guard let self, let textLabel, let more else { return }
+        more.addAction(UIAction { [weak self, weak textLabel] _ in
+            guard let self, let textLabel else { return }
             if isOwnComment {
                 self.showOwnCommentActions(text: textLabel.text ?? "", label: textLabel)
             } else {
-                self.showCommentReportActions(source: more)
+                self.showCommentReportActions()
             }
         }, for: .touchUpInside)
         header.addArrangedSubview(more)
@@ -135,17 +135,8 @@ extension CommunityPostDetailViewController {
         present(sheet, animated: false)
     }
 
-    func showCommentReportActions(source: UIButton) {
-        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        sheet.addAction(UIAlertAction(title: "댓글 신고", style: .destructive) { [weak self] _ in
-            self?.showMessage("신고 내용을 접수했어요")
-        })
-        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = source
-            popover.sourceRect = source.bounds
-        }
-        present(sheet, animated: true)
+    func showCommentReportActions() {
+        presentReportFlow()
     }
 
     func confirmCommentDeletion(text: String, label: UILabel) {
@@ -303,16 +294,11 @@ extension CommunityPostDetailViewController {
     }
 
     func showReportReasons() {
-        let sheet = UIAlertController(title: "신고 사유 선택", message: nil, preferredStyle: .actionSheet)
-        ["부적절한 내용", "욕설 또는 혐오 표현", "광고·도배", "기타"].forEach { reason in
-            sheet.addAction(UIAlertAction(title: reason, style: .default) { [weak self] _ in
-                self?.showMessage("신고 내용을 접수했어요")
-            })
-        }
-        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = postMoreButton
-            popover.sourceRect = postMoreButton?.bounds ?? .zero
-        }
-        present(sheet, animated: true)
-    }}
+        presentReportFlow()
+    }
+
+    private func presentReportFlow() {
+        guard presentedViewController == nil else { return }
+        present(CommunityReportFlowViewController(), animated: false)
+    }
+}
