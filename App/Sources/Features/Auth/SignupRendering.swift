@@ -252,6 +252,7 @@ extension SignupViewController {
         let isReady = step == .passwordReady
         passwordField.isUserInteractionEnabled = !isReady
         confirmField.isUserInteractionEnabled = !isReady
+        confirmFieldHeightConstraint?.constant = confirmError == nil ? 54 : 55
         addStepper(current: 1)
         addHeading(lines: ["로그인에 쓸", "비밀번호를 만들어 주세요"])
         addField(label: "비밀번호", field: passwordField, error: passwordError, showsVisibility: true)
