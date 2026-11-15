@@ -50,7 +50,7 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
         ])
 
         let titleStack = UIStackView(arrangedSubviews: [
-            AppStyle.label("학교 지도", size: 18, weight: .medium, color: LocationMapStyle.ink),
+            AppStyle.label("지도", size: 18, weight: .medium, color: LocationMapStyle.ink),
             AppStyle.label("현재 위치", size: 12, color: LocationMapStyle.secondary)
         ])
         titleStack.axis = .vertical
