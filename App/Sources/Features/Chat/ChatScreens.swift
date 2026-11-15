@@ -25,9 +25,15 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     var measuredLocation: CLLocationCoordinate2D?
     var measuredLocationAccuracy: CLLocationAccuracy = 15
     var hasPendingLocationRequest = false
+    private var selectedAttachments: [ChatAttachmentItem] = []
+    private var composerView: UIStackView?
+    private var attachmentTrayView: ChatAttachmentTrayView?
+    private var composerScrollConstraint: NSLayoutConstraint?
+    private var attachmentTrayScrollConstraint: NSLayoutConstraint?
 
-    init(question: String?) {
+    init(question: String?, attachments: [ChatAttachmentItem] = []) {
         initialQuestion = question
+        selectedAttachments = attachments
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -49,6 +55,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             addConversationHeader()
             addMessage("학교생활에 대해 궁금한 점을 편하게 물어보세요", outgoing: false)
         }
+        refreshAttachmentTray()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -102,6 +109,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     func configureComposer() {
         let composer = makeComposerContainer()
+        composerView = composer
         let attach = makeAttachmentButton()
         let send = makeSendButton()
         let mic = makeVoiceButton()
@@ -111,12 +119,33 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         composer.addArrangedSubview(send)
         view.addSubview(composer)
 
+        let tray = ChatAttachmentTrayView()
+        attachmentTrayView = tray
+        tray.isHidden = true
+        tray.onRemove = { [weak self] identifier in
+            guard let self else { return }
+            self.selectedAttachments.removeAll { $0.id == identifier }
+            self.refreshAttachmentTray()
+        }
+        tray.onSend = { [weak self] question in self?.sendAttachmentQuestion(question) }
+        tray.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tray)
+
+        let showComposerConstraint = scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor)
+        let showTrayConstraint = scrollView.bottomAnchor.constraint(equalTo: tray.topAnchor)
+        showComposerConstraint.isActive = true
+        composerScrollConstraint = showComposerConstraint
+        attachmentTrayScrollConstraint = showTrayConstraint
+
         NSLayoutConstraint.activate([
             composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             composer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
             composer.heightAnchor.constraint(equalToConstant: 52),
-            scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor),
+            tray.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tray.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tray.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tray.heightAnchor.constraint(equalToConstant: 225),
             inputField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
         ])
     }
@@ -167,12 +196,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         attach.addAction(UIAction { [weak self] _ in
             guard let self else { return }
             let picker = ChatAttachmentPickerViewController()
-            picker.onAttachmentSelected = { [weak self] fileName, image in
-                guard let self else { return }
-                let preview = ChatAttachmentPreviewViewController(fileName: fileName, image: image)
-                preview.onSend = { [weak self] in self?.addMessage("첨부했어요: \(fileName)", outgoing: true) }
-                self.present(preview, animated: true)
-            }
+            picker.onAttachmentsSelected = { [weak self] attachments in self?.addAttachments(attachments) }
             self.present(picker, animated: true)
         }, for: .touchUpInside)
         return attach
@@ -253,8 +277,39 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         beginAnswerGeneration()
     }
 
+}
+
+@MainActor
+extension ChatConversationViewController {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         sendMessage()
         return true
+    }
+}
+
+@MainActor
+private extension ChatConversationViewController {
+    func addAttachments(_ attachments: [ChatAttachmentItem]) {
+        selectedAttachments.append(contentsOf: attachments)
+        refreshAttachmentTray()
+    }
+
+    func refreshAttachmentTray() {
+        guard let attachmentTrayView, let composerView else { return }
+        let hasAttachments = !selectedAttachments.isEmpty
+        attachmentTrayView.attachments = selectedAttachments
+        attachmentTrayView.isHidden = !hasAttachments
+        composerView.isHidden = hasAttachments
+        composerScrollConstraint?.isActive = !hasAttachments
+        attachmentTrayScrollConstraint?.isActive = hasAttachments
+    }
+
+    func sendAttachmentQuestion(_ question: String) {
+        guard !selectedAttachments.isEmpty else { return }
+        let filenames = selectedAttachments.map(\.fileName).joined(separator: " · ")
+        addMessage("\(question)\n\(filenames)", outgoing: true)
+        selectedAttachments.removeAll()
+        refreshAttachmentTray()
+        beginAnswerGeneration()
     }
 }

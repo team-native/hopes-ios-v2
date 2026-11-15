@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 @MainActor
 final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewControllerDelegate,
     UIDocumentPickerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    var onAttachmentSelected: ((String, UIImage?) -> Void)?
+    var onAttachmentsSelected: (([ChatAttachmentItem]) -> Void)?
 
     private let dimView = UIView()
     private let sheetView = UIView()
@@ -36,7 +36,103 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         }
     }
 
-    private func configureDimView() {
+    @objc private func openCamera() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            showMessage("이 기기에서는 카메라를 사용할 수 없어요")
+            return
+        }
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    @objc private func openPhotoLibrary() {
+        var configuration = PHPickerConfiguration()
+        configuration.filter = .images
+        configuration.selectionLimit = 0
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    @objc private func openFiles() {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.pdf], asCopy: true)
+        picker.allowsMultipleSelection = true
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        guard !results.isEmpty else {
+            picker.dismiss(animated: true)
+            return
+        }
+        let group = DispatchGroup()
+        let lock = NSLock()
+        var attachments = [ChatAttachmentItem?](repeating: nil, count: results.count)
+        for (index, result) in results.enumerated() {
+            let provider = result.itemProvider
+            guard provider.canLoadObject(ofClass: UIImage.self) else { continue }
+            group.enter()
+            provider.loadObject(ofClass: UIImage.self) { object, _ in
+                lock.lock()
+                attachments[index] = ChatAttachmentItem(
+                    fileName: provider.suggestedName ?? "사진 \(index + 1)",
+                    image: object as? UIImage
+                )
+                lock.unlock()
+                group.leave()
+            }
+        }
+        group.notify(queue: .main) { [weak self] in
+            let loadedAttachments = attachments.compactMap { $0 }
+            guard loadedAttachments.count == results.count else {
+                picker.dismiss(animated: true) {
+                    self?.showMessage("선택한 사진을 불러오지 못했어요. 다시 선택해 주세요.")
+                }
+                return
+            }
+            self?.finishSelection(loadedAttachments)
+        }
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        finishSelection(urls.map { ChatAttachmentItem(fileName: $0.lastPathComponent, image: nil, url: $0) })
+    }
+
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        controller.dismiss(animated: true)
+    }
+
+    func imagePickerController(
+        _ picker: UIImagePickerController,
+        didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+    ) {
+        finishSelection([ChatAttachmentItem(fileName: "촬영한 사진", image: info[.originalImage] as? UIImage)])
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+    }
+
+    private func finishSelection(_ attachments: [ChatAttachmentItem]) {
+        dismiss(animated: true) { [weak self] in
+            self?.onAttachmentsSelected?(attachments)
+        }
+    }
+
+    private func showMessage(_ message: String) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+}
+
+@MainActor
+private extension ChatAttachmentPickerViewController {
+    func configureDimView() {
         dimView.backgroundColor = UIColor(red: 20 / 255.0, green: 28 / 255.0, blue: 43 / 255.0, alpha: 0.32)
         dimView.alpha = 0
         dimView.translatesAutoresizingMaskIntoConstraints = false
@@ -51,7 +147,7 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         dimView.addGestureRecognizer(dismissTap)
     }
 
-    private func configureSheet() {
+    func configureSheet() {
         sheetView.backgroundColor = .white
         sheetView.layer.cornerRadius = 28
         sheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
@@ -62,7 +158,6 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         let handle = makeSheetHandle()
         let content = makeSheetContent(handle: handle)
         sheetView.addSubview(content)
-
         let bottomConstraint = sheetView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 440)
         sheetBottomConstraint = bottomConstraint
         NSLayoutConstraint.activate([
@@ -80,7 +175,7 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         sheetView.addGestureRecognizer(pan)
     }
 
-    private func makeSheetHandle() -> UIView {
+    func makeSheetHandle() -> UIView {
         let handle = UIView()
         handle.backgroundColor = UIColor(red: 220 / 255.0, green: 230 / 255.0, blue: 244 / 255.0, alpha: 1)
         handle.layer.cornerRadius = 2.5
@@ -88,7 +183,7 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         return handle
     }
 
-    private func makeSheetContent(handle: UIView) -> UIStackView {
+    func makeSheetContent(handle: UIView) -> UIStackView {
         let title = AppStyle.label("자료 첨부", size: 22, weight: .bold, color: AppStyle.ink)
         let footer = AppStyle.label("이미지와 PDF를 첨부해서 질문할 수 있어요.", size: 12, color: AppStyle.muted)
         let content = UIStackView(arrangedSubviews: [handle, title, makeOptionRows(), footer])
@@ -100,9 +195,9 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         return content
     }
 
-    private func makeOptionRows() -> UIStackView {
+    func makeOptionRows() -> UIStackView {
         let rows = UIStackView(arrangedSubviews: [
-            makeOptionRow(title: "사진 보관함", subtitle: "이미지를 선택할 수 있어요", symbol: "photo",
+            makeOptionRow(title: "사진 보관함", subtitle: "이미지를 여러 장 선택할 수 있어요", symbol: "photo",
                 action: #selector(openPhotoLibrary)),
             makeDivider(),
             makeOptionRow(title: "카메라 촬영", subtitle: "지금 찍어서 바로 질문해요", symbol: "camera",
@@ -116,30 +211,12 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         return rows
     }
 
-    private func makeOptionRow(title: String, subtitle: String, symbol: String, action: Selector) -> UIView {
+    func makeOptionRow(title: String, subtitle: String, symbol: String, action: Selector) -> UIView {
         let button = UIButton(type: .system)
         button.addTarget(self, action: action, for: .touchUpInside)
         button.accessibilityLabel = "\(title), \(subtitle)"
         button.heightAnchor.constraint(equalToConstant: 68).isActive = true
-
-        let chip = UIView()
-        chip.backgroundColor = UIColor(red: 230 / 255.0, green: 241 / 255.0, blue: 254 / 255.0, alpha: 1)
-        chip.layer.cornerRadius = 12
-        chip.translatesAutoresizingMaskIntoConstraints = false
-        let icon = UIImageView(image: UIImage(systemName: symbol))
-        icon.tintColor = AppStyle.blue
-        icon.contentMode = .scaleAspectFit
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        chip.addSubview(icon)
-        NSLayoutConstraint.activate([
-            chip.widthAnchor.constraint(equalToConstant: 44),
-            chip.heightAnchor.constraint(equalToConstant: 44),
-            icon.centerXAnchor.constraint(equalTo: chip.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 22),
-            icon.heightAnchor.constraint(equalToConstant: 22)
-        ])
-
+        let chip = makeOptionIconChip(symbol: symbol)
         let heading = AppStyle.label(title, size: 15, weight: .medium, color: AppStyle.ink)
         let detail = AppStyle.label(subtitle, size: 12, color: AppStyle.muted)
         let labels = UIStackView(arrangedSubviews: [heading, detail])
@@ -167,14 +244,35 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         return button
     }
 
-    private func makeDivider() -> UIView {
+    func makeOptionIconChip(symbol: String) -> UIView {
+        let chip = UIView()
+        chip.backgroundColor = UIColor(red: 230 / 255.0, green: 241 / 255.0, blue: 254 / 255.0, alpha: 1)
+        chip.layer.cornerRadius = 12
+        chip.translatesAutoresizingMaskIntoConstraints = false
+        let icon = UIImageView(image: UIImage(systemName: symbol))
+        icon.tintColor = AppStyle.blue
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        chip.addSubview(icon)
+        NSLayoutConstraint.activate([
+            chip.widthAnchor.constraint(equalToConstant: 44),
+            chip.heightAnchor.constraint(equalToConstant: 44),
+            icon.centerXAnchor.constraint(equalTo: chip.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 22),
+            icon.heightAnchor.constraint(equalToConstant: 22)
+        ])
+        return chip
+    }
+
+    func makeDivider() -> UIView {
         let divider = UIView()
         divider.backgroundColor = UIColor(red: 235 / 255.0, green: 241 / 255.0, blue: 250 / 255.0, alpha: 1)
         divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
         return divider
     }
 
-    @objc private func dismissSheet() {
+    @objc func dismissSheet() {
         sheetBottomConstraint?.constant = 440
         UIView.animate(withDuration: 0.24, animations: {
             self.dimView.alpha = 0
@@ -182,7 +280,7 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         }, completion: { _ in self.dismiss(animated: false) })
     }
 
-    @objc private func handleSheetPan(_ gesture: UIPanGestureRecognizer) {
+    @objc func handleSheetPan(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: view)
         switch gesture.state {
         case .changed where translation.y > 0:
@@ -201,80 +299,5 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         default:
             break
         }
-    }
-
-    @objc private func openCamera() {
-        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-            showMessage("이 기기에서는 카메라를 사용할 수 없어요")
-            return
-        }
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = self
-        present(picker, animated: true)
-    }
-
-    @objc private func openPhotoLibrary() {
-        var configuration = PHPickerConfiguration()
-        configuration.filter = .images
-        configuration.selectionLimit = 1
-        let picker = PHPickerViewController(configuration: configuration)
-        picker.delegate = self
-        present(picker, animated: true)
-    }
-
-    @objc private func openFiles() {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.pdf], asCopy: true)
-        picker.delegate = self
-        present(picker, animated: true)
-    }
-
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        guard let result = results.first else {
-            picker.dismiss(animated: true)
-            return
-        }
-        let provider = result.itemProvider
-        guard provider.canLoadObject(ofClass: UIImage.self) else {
-            picker.dismiss(animated: true)
-            return
-        }
-        provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
-            DispatchQueue.main.async {
-                self?.finishSelection("사진", image: object as? UIImage)
-            }
-        }
-    }
-
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        guard let url = urls.first else { return }
-        finishSelection(url.lastPathComponent, image: nil)
-    }
-
-    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        controller.dismiss(animated: true)
-    }
-
-    func imagePickerController(
-        _ picker: UIImagePickerController,
-        didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
-    ) {
-        finishSelection("촬영한 사진", image: info[.originalImage] as? UIImage)
-    }
-
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        picker.dismiss(animated: true)
-    }
-
-    private func finishSelection(_ name: String, image: UIImage?) {
-        dismiss(animated: true) { [weak self] in
-            self?.onAttachmentSelected?(name, image)
-        }
-    }
-
-    private func showMessage(_ message: String) {
-        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
     }
 }
