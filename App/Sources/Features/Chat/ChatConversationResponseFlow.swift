@@ -27,8 +27,12 @@ extension ChatConversationViewController {
                 }
                 removePendingAttachmentAnalysisCard()
                 stopAnswerButton.isHidden = true
-                retryWhenOnline = true
-                showPendingStatus()
+                if lastSentAttachments != nil {
+                    showAttachmentAnalysisFailure()
+                } else {
+                    retryWhenOnline = true
+                    showPendingStatus()
+                }
             }
         } else {
             offlineBanner?.removeFromSuperview()
@@ -127,8 +131,7 @@ extension ChatConversationViewController {
 
     func beginAttachmentAnalysis(attachments: [ChatAttachmentItem]) {
         guard !isOffline else {
-            retryWhenOnline = true
-            showPendingStatus()
+            showAttachmentAnalysisFailure()
             return
         }
 
@@ -208,9 +211,69 @@ extension ChatConversationViewController {
         self.pendingAttachmentAnalysisCard = nil
     }
 
+    func showAttachmentAnalysisFailure() {
+        guard attachmentAnalysisFailureCard == nil else { return }
+        let card = makeAttachmentAnalysisFailureCard()
+        messagesStack.addArrangedSubview(card)
+        attachmentAnalysisFailureCard = card
+    }
+
+    private func makeAttachmentAnalysisFailureCard() -> UIView {
+        let card = UIView()
+        let alertIcon = UIImageView(image: UIImage(systemName: "exclamationmark.circle.fill"))
+        alertIcon.tintColor = UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1)
+        alertIcon.contentMode = .scaleAspectFit
+        alertIcon.widthAnchor.constraint(equalToConstant: 20).isActive = true
+        alertIcon.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        let title = AppStyle.label("자료를 분석하지 못했어요", size: 15, weight: .medium,
+            color: UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1))
+        let heading = UIStackView(arrangedSubviews: [alertIcon, title])
+        heading.axis = .horizontal
+        heading.alignment = .center
+        heading.spacing = 8
+        let detail = AppStyle.label(
+            "네트워크 상태를 확인한 뒤 다시 시도해 주세요. 첨부한 자료는 그대로 남아 있어요.",
+            size: 14,
+            weight: .medium,
+            color: AppStyle.muted
+        )
+        detail.numberOfLines = 0
+        let retry = UIButton(type: .system)
+        retry.setTitle("다시 시도", for: .normal)
+        retry.setTitleColor(AppStyle.muted, for: .normal)
+        retry.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        retry.contentHorizontalAlignment = .leading
+        retry.addAction(UIAction { [weak self] _ in self?.retryAttachmentAnalysis() }, for: .touchUpInside)
+        let content = UIStackView(arrangedSubviews: [heading, detail, retry])
+        content.axis = .vertical
+        content.spacing = 6
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor),
+            retry.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+        ])
+        return card
+    }
+
+    private func retryAttachmentAnalysis() {
+        guard !isOffline, let lastSentAttachments else { return }
+        attachmentAnalysisFailureCard?.removeFromSuperview()
+        attachmentAnalysisFailureCard = nil
+        beginAttachmentAnalysis(attachments: lastSentAttachments)
+    }
+
     func finishAnswerGeneration() {
         generationTimer = nil
         removePendingAttachmentAnalysisCard()
+        attachmentAnalysisFailureCard?.removeFromSuperview()
+        attachmentAnalysisFailureCard = nil
+        lastSentAttachments = nil
         if let pendingAnswerCard {
             messagesStack.removeArrangedSubview(pendingAnswerCard)
             pendingAnswerCard.removeFromSuperview()
@@ -226,6 +289,9 @@ extension ChatConversationViewController {
         generationTimer?.cancel()
         generationTimer = nil
         removePendingAttachmentAnalysisCard()
+        attachmentAnalysisFailureCard?.removeFromSuperview()
+        attachmentAnalysisFailureCard = nil
+        lastSentAttachments = nil
         stopAnswerButton.isHidden = true
         inputField.isEnabled = true
         inputField.placeholder = "추가 질문 입력…"
