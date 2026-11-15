@@ -50,7 +50,7 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
         ])
 
         let titleStack = UIStackView(arrangedSubviews: [
-            AppStyle.label("지도", size: 18, weight: .medium, color: LocationMapStyle.ink),
+            AppStyle.label("학교 지도", size: 18, weight: .medium, color: LocationMapStyle.ink),
             AppStyle.label("현재 위치", size: 12, color: LocationMapStyle.secondary)
         ])
         titleStack.axis = .vertical
@@ -77,10 +77,10 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
             content.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             content.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             content.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            content.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+            content.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             header.heightAnchor.constraint(equalToConstant: 44),
             floorRow.heightAnchor.constraint(equalToConstant: 38),
-            locationCard.heightAnchor.constraint(equalToConstant: 76)
+            locationCard.heightAnchor.constraint(equalToConstant: 78)
         ])
         updateAccuracyLabel()
     }
@@ -90,7 +90,8 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
         floors.axis = .horizontal
         floors.alignment = .center
         floors.spacing = 8
-        ["1F", "2F", "3F"].forEach { floor in
+        let floorWidths: [CGFloat] = [45, 47, 48]
+        ["1F", "2F", "3F"].enumerated().forEach { index, floor in
             let chip = AppStyle.label(floor, size: 14, weight: .medium, color: LocationMapStyle.secondary)
             chip.textAlignment = .center
             chip.backgroundColor = .white
@@ -98,7 +99,7 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
             chip.layer.borderWidth = 1
             chip.layer.borderColor = LocationMapStyle.border.cgColor
             chip.clipsToBounds = true
-            chip.widthAnchor.constraint(equalToConstant: 45).isActive = true
+            chip.widthAnchor.constraint(equalToConstant: floorWidths[index]).isActive = true
             chip.heightAnchor.constraint(equalToConstant: 38).isActive = true
             floors.addArrangedSubview(chip)
         }
