@@ -43,7 +43,7 @@ extension ChatConversationViewController {
     }
 
     func requestLocationPermission() {
-        showLocationMeasurementCard()
+        removeLocationCard()
         locationManager.requestWhenInUseAuthorization()
     }
 
@@ -55,6 +55,10 @@ extension ChatConversationViewController {
     func cancelLocationRequest() {
         hasPendingLocationRequest = false
         setLocationConversationHeader(active: false)
+        removeLocationCard()
+    }
+
+    private func removeLocationCard() {
         guard let locationCard else { return }
         messagesStack.removeArrangedSubview(locationCard)
         locationCard.removeFromSuperview()
