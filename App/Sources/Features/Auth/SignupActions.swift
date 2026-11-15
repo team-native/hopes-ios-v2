@@ -8,7 +8,7 @@ extension SignupViewController {
         switch step {
         case .email:
             title = "인증번호 받기"
-            enabled = emailError == nil
+            enabled = emailError == nil && isValidSchoolEmail
         case .verification:
             title = countdown == 0 ? "인증번호 다시 받기" : "확인"
             enabled = true
@@ -264,7 +264,7 @@ extension SignupViewController {
 
     private func submitEmail() {
         email = (emailField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard email.lowercased().hasSuffix("@gsm.hs.kr") else {
+        guard isValidSchoolEmail else {
             emailError = "학교 이메일(@gsm.hs.kr)만 사용할 수 있어요."
             render(focusField: false)
             return

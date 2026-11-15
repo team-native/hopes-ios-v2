@@ -2,12 +2,22 @@ import UIKit
 
 @MainActor
 extension SignupViewController {
+    var isValidSchoolEmail: Bool {
+        let address = (emailField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = address.split(separator: "@", omittingEmptySubsequences: false)
+        return parts.count == 2
+            && !parts[0].isEmpty
+            && parts[1].caseInsensitiveCompare("gsm.hs.kr") == .orderedSame
+            && !address.contains(where: \.isWhitespace)
+    }
+
     @objc func emailDidChange() {
-        guard emailError != nil else { return }
-        emailError = nil
-        emailErrorRow?.isHidden = true
-        emailField.layer.borderColor = Palette.focus.cgColor
-        emailField.layer.borderWidth = 1.5
+        if emailError != nil {
+            emailError = nil
+            emailErrorRow?.isHidden = true
+            emailField.layer.borderColor = Palette.focus.cgColor
+            emailField.layer.borderWidth = 1.5
+        }
         updateActionButton()
     }
 
