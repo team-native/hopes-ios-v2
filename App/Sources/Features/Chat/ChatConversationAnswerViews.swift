@@ -65,6 +65,7 @@ extension ChatConversationViewController {
     func addFormattedAnswer() {
         let card = AppStyle.card()
         card.layer.cornerRadius = 24
+        card.heightAnchor.constraint(equalToConstant: 380).isActive = true
         card.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         card.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.08).cgColor
         card.layer.shadowOpacity = 1
