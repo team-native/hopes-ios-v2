@@ -17,6 +17,8 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
 
     let sheet = UIView()
     let sheetStack = UIStackView()
+    let bottomSpacer = UIView()
+    let heroTitleLabel = UILabel()
     let titleGroup = UIStackView()
     let titleLabel = UILabel()
     let subtitleLabel = UILabel()
@@ -38,10 +40,11 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     var keyboardBottomConstraint: NSLayoutConstraint!
     var sheetStackTopConstraint: NSLayoutConstraint!
     var passwordGroupHeightConstraint: NSLayoutConstraint!
+    var titleGroupHeightConstraint: NSLayoutConstraint!
+    var titleTopSpacerHeightConstraint: NSLayoutConstraint!
     var feedback: Feedback = .none
     var mode: LayoutMode = .sheet
     var keepSignedIn = UserDefaults.standard.object(forKey: "auth.keepSignedIn") as? Bool ?? true
-    var isPasswordVisible = false
     var keyboardObserver: NSObjectProtocol?
     var loginPreviewIsStatic = false
 
@@ -98,15 +101,16 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         keepRow.isHidden = newMode != .sheet
         signupRow.isHidden = newMode == .keyboard
         forgotButton.isHidden = newMode != .sheet
+        heroTitleLabel.isHidden = newMode != .sheet
+        bottomSpacer.isHidden = newMode != .full
         errorRow.isHidden = feedback != .invalidCredentials
         offlineBanner.isHidden = feedback != .offline
         sheet.layer.cornerRadius = newMode == .sheet ? 28 : 0
-        sheet.layer.shadowOpacity = newMode == .sheet ? 0.12 : 0
-        sheetStackTopConstraint.constant = switch newMode {
-        case .sheet: 68
-        case .keyboard: 8
-        case .full: 12
-        }
+        sheet.layer.shadowOpacity = newMode == .sheet ? 0.06 : 0
+        sheetStackTopConstraint.constant = newMode == .sheet ? 12 : (feedback == .offline ? 64 : 8)
+        titleTopSpacerHeightConstraint.constant = newMode == .sheet ? 0 : 8
+        titleGroupHeightConstraint.constant = newMode == .sheet ? 54 : 66
+        titleGroup.layoutIfNeeded()
         sheet.setNeedsLayout()
         sheet.layoutIfNeeded()
     }
@@ -116,45 +120,35 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         case .none:
             setLayoutMode(.sheet)
             loginButton.isEnabled = true
-            loginButton.backgroundColor = UIColor(red: 13 / 255, green: 138 / 255, blue: 229 / 255, alpha: 1)
+            loginButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
             loginButton.setTitle("로그인", for: .normal)
         case .invalidCredentials:
             setLayoutMode(.full)
             loginButton.isEnabled = true
-            loginButton.backgroundColor = UIColor(red: 13 / 255, green: 138 / 255, blue: 229 / 255, alpha: 1)
+            loginButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
             loginButton.setTitle("로그인", for: .normal)
             emailField.layer.borderColor = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1).cgColor
             passwordField.layer.borderColor = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1).cgColor
         case .offline:
             setLayoutMode(.full)
             loginButton.isEnabled = false
-            loginButton.backgroundColor = UIColor(red: 13 / 255, green: 138 / 255, blue: 229 / 255, alpha: 0.38)
+            loginButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 0.38)
             loginButton.setTitle("로그인", for: .normal)
         case .loading:
             setLayoutMode(.full)
             loginButton.isEnabled = false
-            loginButton.backgroundColor = UIColor(red: 13 / 255, green: 138 / 255, blue: 229 / 255, alpha: 0.68)
+            loginButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 0.68)
             loginButton.setTitle("로그인 중...", for: .normal)
         }
-        passwordGroupHeightConstraint.constant = feedback == .invalidCredentials ? 88 : 63
+        passwordGroupHeightConstraint.constant = feedback == .invalidCredentials ? 103 : 80
         errorRow.isHidden = feedback != .invalidCredentials
         offlineBanner.isHidden = feedback != .offline
-    }
-
-    @objc func togglePasswordVisibility() {
-        isPasswordVisible.toggle()
-        passwordField.isSecureTextEntry = !isPasswordVisible
-        passwordField.rightView?.accessibilityLabel = isPasswordVisible ? "비밀번호 숨기기" : "비밀번호 표시"
-        if let eye = passwordField.rightView as? UIButton {
-            let icon = isPasswordVisible ? UIImage(systemName: "eye") : UIImage(named: "password-eye")
-            eye.setImage(icon?.withRenderingMode(.alwaysOriginal), for: .normal)
-        }
     }
 
     @objc func toggleKeepSignedIn() {
         keepSignedIn.toggle()
         UserDefaults.standard.set(keepSignedIn, forKey: "auth.keepSignedIn")
-        keepCheckbox.setImage(UIImage(systemName: keepSignedIn ? "checkmark.square.fill" : "square"), for: .normal)
+        updateKeepCheckboxAppearance()
     }
 
     @objc func login() {
@@ -190,8 +184,10 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     func textFieldDidBeginEditing(_ textField: UITextField) {
         feedback = .none
         errorRow.isHidden = true
-        emailField.layer.borderColor = UIColor(red: 217 / 255, green: 217 / 255, blue: 217 / 255, alpha: 1).cgColor
-        passwordField.layer.borderColor = UIColor(red: 217 / 255, green: 217 / 255, blue: 217 / 255, alpha: 1).cgColor
+        let focused = UIColor(red: 142 / 255, green: 193 / 255, blue: 255 / 255, alpha: 1).cgColor
+        let normal = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+        emailField.layer.borderColor = textField === emailField ? focused : normal
+        passwordField.layer.borderColor = textField === passwordField ? focused : normal
         setLayoutMode(.keyboard)
     }
 
