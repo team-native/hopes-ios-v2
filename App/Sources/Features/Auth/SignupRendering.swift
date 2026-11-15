@@ -9,12 +9,14 @@ extension SignupViewController {
         actionTopSpacerHeightConstraint = nil
         contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         renderCurrentStep()
-        let actionTopSpacer = UIView()
-        let spacerHeightConstraint = actionTopSpacer.heightAnchor.constraint(equalToConstant: 14)
-        spacerHeightConstraint.isActive = true
-        self.actionTopSpacer = actionTopSpacer
-        actionTopSpacerHeightConstraint = spacerHeightConstraint
-        contentStack.addArrangedSubview(actionTopSpacer)
+        if step != .complete {
+            let actionTopSpacer = UIView()
+            let spacerHeightConstraint = actionTopSpacer.heightAnchor.constraint(equalToConstant: 14)
+            spacerHeightConstraint.isActive = true
+            self.actionTopSpacer = actionTopSpacer
+            actionTopSpacerHeightConstraint = spacerHeightConstraint
+            contentStack.addArrangedSubview(actionTopSpacer)
+        }
         let actionContainer = UIStackView(arrangedSubviews: [actionButton])
         actionContainer.axis = .vertical
         actionContainer.isLayoutMarginsRelativeArrangement = true
@@ -23,6 +25,12 @@ extension SignupViewController {
         let actionBottomSpacer = UIView()
         actionBottomSpacer.heightAnchor.constraint(equalToConstant: 16).isActive = true
         contentStack.addArrangedSubview(actionBottomSpacer)
+        if step == .complete {
+            let minimumHeight = contentStack.heightAnchor.constraint(
+                greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor
+            )
+            minimumHeight.isActive = true
+        }
         updateActionButton()
         backButton.isHidden = step == .complete
         scrollView.setContentOffset(.zero, animated: false)
@@ -301,30 +309,56 @@ extension SignupViewController {
     }
 
     func renderCompleteStep() {
-        let spacer = UIView()
-        contentStack.addArrangedSubview(spacer)
-        spacer.heightAnchor.constraint(equalToConstant: 150).isActive = true
+        addSpacer(16)
+        addFlexibleSpacer()
+        addSpacer(16)
 
         let content = UIStackView()
         content.axis = .vertical
         content.alignment = .center
         content.spacing = 12
-        let check = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
+        let checkContainer = UIView()
+        checkContainer.backgroundColor = .white
+        checkContainer.layer.borderColor = Palette.line.cgColor
+        checkContainer.layer.borderWidth = 1
+        checkContainer.layer.cornerRadius = 48
+        checkContainer.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
+        checkContainer.layer.shadowOpacity = 0.09
+        checkContainer.layer.shadowRadius = 14
+        checkContainer.layer.shadowOffset = CGSize(width: 0, height: 8)
+        checkContainer.widthAnchor.constraint(equalToConstant: 96).isActive = true
+        checkContainer.heightAnchor.constraint(equalToConstant: 96).isActive = true
+        let check = UIImageView(image: UIImage(systemName: "checkmark"))
         check.tintColor = Palette.blue
-        check.widthAnchor.constraint(equalToConstant: 72).isActive = true
-        check.heightAnchor.constraint(equalToConstant: 72).isActive = true
-        content.addArrangedSubview(check)
+        check.contentMode = .scaleAspectFit
+        check.translatesAutoresizingMaskIntoConstraints = false
+        checkContainer.addSubview(check)
+        NSLayoutConstraint.activate([
+            check.centerXAnchor.constraint(equalTo: checkContainer.centerXAnchor),
+            check.centerYAnchor.constraint(equalTo: checkContainer.centerYAnchor),
+            check.widthAnchor.constraint(equalToConstant: 44),
+            check.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        content.addArrangedSubview(checkContainer)
         let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? UserProfileStore.shared.name
         content.addArrangedSubview(makeLabel("\(name)님, 가입이 끝났어요", size: 22, weight: .bold, color: Palette.ink,
             alignment: .center))
         let department = UserProfileStore.shared.department
         content.addArrangedSubview(makeLabel("\(department) · \(generation ?? "10기")로 가입했어요.\n이제 선배에게 무엇이든 물어보세요.",
-            size: 14, color: Palette.muted, alignment: .center))
+            size: 14, weight: .medium, color: Palette.muted, alignment: .center))
         contentStack.addArrangedSubview(content)
 
-        let bottomSpace = UIView()
-        contentStack.addArrangedSubview(bottomSpace)
-        bottomSpace.heightAnchor.constraint(equalToConstant: 160).isActive = true
+        addSpacer(16)
+        addFlexibleSpacer()
+        addSpacer(16)
+    }
+
+    private func addFlexibleSpacer() {
+        let spacer = UIView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .vertical)
+        spacer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        spacer.heightAnchor.constraint(greaterThanOrEqualToConstant: 0).isActive = true
+        contentStack.addArrangedSubview(spacer)
     }
 
     func character(at index: Int) -> String {
