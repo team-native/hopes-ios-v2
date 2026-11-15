@@ -119,6 +119,8 @@ final class OnboardingViewController: UIViewController {
         ])
         copy.axis = .vertical
         copy.spacing = 2
+        copy.heightAnchor.constraint(equalToConstant: 42).isActive = true
+        (copy.arrangedSubviews.first as? UILabel)?.heightAnchor.constraint(equalToConstant: 16).isActive = true
         if let body = copy.arrangedSubviews.last as? UILabel {
             body.attributedText = styledText(text, style: TextStyle(
                 size: 15,
@@ -131,6 +133,7 @@ final class OnboardingViewController: UIViewController {
         }
         row.addArrangedSubview(badge)
         row.addArrangedSubview(copy)
+        row.heightAnchor.constraint(equalToConstant: 74).isActive = true
         return row
     }
 
