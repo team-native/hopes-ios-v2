@@ -142,6 +142,16 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
 
 @MainActor
 extension CommunityPostDetailViewController {
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        guard textField === commentField else { return }
+        textField.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
+    }
+
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        guard textField === commentField else { return }
+        textField.layer.borderColor = AppStyle.line.cgColor
+    }
+
     func configureComposer() {
         composerBar.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(composerBar)
