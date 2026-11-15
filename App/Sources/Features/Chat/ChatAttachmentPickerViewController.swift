@@ -6,36 +6,204 @@ import UniformTypeIdentifiers
 final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewControllerDelegate,
     UIDocumentPickerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     var onAttachmentSelected: ((String, UIImage?) -> Void)?
-    var onLocationRequested: (() -> Void)?
+
+    private let dimView = UIView()
+    private let sheetView = UIView()
+    private var sheetBottomConstraint: NSLayoutConstraint?
+
+    init() {
+        super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .overFullScreen
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
-
-        let stack = UIStackView()
-        stack.axis = .vertical
-        stack.spacing = 12
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(AppStyle.label("무엇을 첨부할까요?", size: 21, weight: .bold))
-        stack.addArrangedSubview(AppStyle.label("사진이나 파일을 질문에 추가할 수 있어요", size: 14, color: AppStyle.muted))
-        stack.addArrangedSubview(AppStyle.button("카메라로 촬영", action: { [weak self] in self?.openCamera() }))
-        stack.addArrangedSubview(AppStyle.button("사진 보관함", action: { [weak self] in self?.openPhotoLibrary() }))
-        stack.addArrangedSubview(AppStyle.button("파일 선택", action: { [weak self] in self?.openFiles() }))
-        stack.addArrangedSubview(AppStyle.button("현재 위치", action: { [weak self] in
-            guard let self else { return }
-            self.dismiss(animated: true) { [weak self] in self?.onLocationRequested?() }
-        }))
-
-        view.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 22),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
-        ])
+        view.backgroundColor = .clear
+        modalPresentationStyle = .overFullScreen
+        isModalInPresentation = true
+        configureDimView()
+        configureSheet()
     }
 
-    private func openCamera() {
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        sheetBottomConstraint?.constant = 0
+        UIView.animate(withDuration: 0.32, delay: 0, usingSpringWithDamping: 0.88, initialSpringVelocity: 0.2) {
+            self.dimView.alpha = 1
+            self.view.layoutIfNeeded()
+        }
+    }
+
+    private func configureDimView() {
+        dimView.backgroundColor = UIColor(red: 20 / 255.0, green: 28 / 255.0, blue: 43 / 255.0, alpha: 0.32)
+        dimView.alpha = 0
+        dimView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(dimView)
+        NSLayoutConstraint.activate([
+            dimView.topAnchor.constraint(equalTo: view.topAnchor),
+            dimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            dimView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            dimView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        let dismissTap = UITapGestureRecognizer(target: self, action: #selector(dismissSheet))
+        dimView.addGestureRecognizer(dismissTap)
+    }
+
+    private func configureSheet() {
+        sheetView.backgroundColor = .white
+        sheetView.layer.cornerRadius = 28
+        sheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        sheetView.clipsToBounds = true
+        sheetView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(sheetView)
+
+        let handle = makeSheetHandle()
+        let content = makeSheetContent(handle: handle)
+        sheetView.addSubview(content)
+
+        let bottomConstraint = sheetView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 440)
+        sheetBottomConstraint = bottomConstraint
+        NSLayoutConstraint.activate([
+            sheetView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            sheetView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomConstraint,
+            content.topAnchor.constraint(equalTo: sheetView.topAnchor),
+            content.leadingAnchor.constraint(equalTo: sheetView.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: sheetView.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: sheetView.bottomAnchor),
+            handle.widthAnchor.constraint(equalToConstant: 44),
+            handle.heightAnchor.constraint(equalToConstant: 5)
+        ])
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handleSheetPan(_:)))
+        sheetView.addGestureRecognizer(pan)
+    }
+
+    private func makeSheetHandle() -> UIView {
+        let handle = UIView()
+        handle.backgroundColor = UIColor(red: 220 / 255.0, green: 230 / 255.0, blue: 244 / 255.0, alpha: 1)
+        handle.layer.cornerRadius = 2.5
+        handle.translatesAutoresizingMaskIntoConstraints = false
+        return handle
+    }
+
+    private func makeSheetContent(handle: UIView) -> UIStackView {
+        let title = AppStyle.label("자료 첨부", size: 22, weight: .bold, color: AppStyle.ink)
+        let footer = AppStyle.label("이미지와 PDF를 첨부해서 질문할 수 있어요.", size: 12, color: AppStyle.muted)
+        let content = UIStackView(arrangedSubviews: [handle, title, makeOptionRows(), footer])
+        content.axis = .vertical
+        content.spacing = 16
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 38, trailing: 20)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        return content
+    }
+
+    private func makeOptionRows() -> UIStackView {
+        let rows = UIStackView(arrangedSubviews: [
+            makeOptionRow(title: "사진 보관함", subtitle: "이미지를 선택할 수 있어요", symbol: "photo",
+                action: #selector(openPhotoLibrary)),
+            makeDivider(),
+            makeOptionRow(title: "카메라 촬영", subtitle: "지금 찍어서 바로 질문해요", symbol: "camera",
+                action: #selector(openCamera)),
+            makeDivider(),
+            makeOptionRow(title: "파일에서 PDF 선택", subtitle: "PDF 문서를 첨부해요", symbol: "doc.text",
+                action: #selector(openFiles))
+        ])
+        rows.axis = .vertical
+        rows.spacing = 0
+        return rows
+    }
+
+    private func makeOptionRow(title: String, subtitle: String, symbol: String, action: Selector) -> UIView {
+        let button = UIButton(type: .system)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        button.accessibilityLabel = "\(title), \(subtitle)"
+        button.heightAnchor.constraint(equalToConstant: 68).isActive = true
+
+        let chip = UIView()
+        chip.backgroundColor = UIColor(red: 230 / 255.0, green: 241 / 255.0, blue: 254 / 255.0, alpha: 1)
+        chip.layer.cornerRadius = 12
+        chip.translatesAutoresizingMaskIntoConstraints = false
+        let icon = UIImageView(image: UIImage(systemName: symbol))
+        icon.tintColor = AppStyle.blue
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        chip.addSubview(icon)
+        NSLayoutConstraint.activate([
+            chip.widthAnchor.constraint(equalToConstant: 44),
+            chip.heightAnchor.constraint(equalToConstant: 44),
+            icon.centerXAnchor.constraint(equalTo: chip.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 22),
+            icon.heightAnchor.constraint(equalToConstant: 22)
+        ])
+
+        let heading = AppStyle.label(title, size: 15, weight: .medium, color: AppStyle.ink)
+        let detail = AppStyle.label(subtitle, size: 12, color: AppStyle.muted)
+        let labels = UIStackView(arrangedSubviews: [heading, detail])
+        labels.axis = .vertical
+        labels.spacing = 2
+        let chevron = UIImageView(image: UIImage(systemName: "chevron.right"))
+        chevron.tintColor = AppStyle.muted
+        chevron.contentMode = .scaleAspectFit
+        chevron.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        chevron.heightAnchor.constraint(equalToConstant: 18).isActive = true
+
+        let row = UIStackView(arrangedSubviews: [chip, labels, chevron])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 12
+        row.isUserInteractionEnabled = false
+        row.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            row.topAnchor.constraint(equalTo: button.topAnchor),
+            row.bottomAnchor.constraint(equalTo: button.bottomAnchor)
+        ])
+        return button
+    }
+
+    private func makeDivider() -> UIView {
+        let divider = UIView()
+        divider.backgroundColor = UIColor(red: 235 / 255.0, green: 241 / 255.0, blue: 250 / 255.0, alpha: 1)
+        divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        return divider
+    }
+
+    @objc private func dismissSheet() {
+        sheetBottomConstraint?.constant = 440
+        UIView.animate(withDuration: 0.24, animations: {
+            self.dimView.alpha = 0
+            self.view.layoutIfNeeded()
+        }, completion: { _ in self.dismiss(animated: false) })
+    }
+
+    @objc private func handleSheetPan(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: view)
+        switch gesture.state {
+        case .changed where translation.y > 0:
+            sheetBottomConstraint?.constant = translation.y
+            dimView.alpha = max(0, 1 - translation.y / 440)
+        case .ended:
+            if translation.y > 100 {
+                dismissSheet()
+            } else {
+                sheetBottomConstraint?.constant = 0
+                UIView.animate(withDuration: 0.22) {
+                    self.dimView.alpha = 1
+                    self.view.layoutIfNeeded()
+                }
+            }
+        default:
+            break
+        }
+    }
+
+    @objc private func openCamera() {
         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
             showMessage("이 기기에서는 카메라를 사용할 수 없어요")
             return
@@ -46,7 +214,7 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         present(picker, animated: true)
     }
 
-    private func openPhotoLibrary() {
+    @objc private func openPhotoLibrary() {
         var configuration = PHPickerConfiguration()
         configuration.filter = .images
         configuration.selectionLimit = 1
@@ -55,20 +223,20 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         present(picker, animated: true)
     }
 
-    private func openFiles() {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.image, .pdf], asCopy: true)
+    @objc private func openFiles() {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.pdf], asCopy: true)
         picker.delegate = self
         present(picker, animated: true)
     }
 
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         guard let result = results.first else {
-            dismiss(animated: true)
+            picker.dismiss(animated: true)
             return
         }
         let provider = result.itemProvider
         guard provider.canLoadObject(ofClass: UIImage.self) else {
-            dismiss(animated: true)
+            picker.dismiss(animated: true)
             return
         }
         provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in

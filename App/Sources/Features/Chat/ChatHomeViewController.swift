@@ -246,12 +246,6 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
             }
             self.present(preview, animated: true)
         }
-        picker.onLocationRequested = { [weak self] in
-            guard let self else { return }
-            let conversation = ChatConversationViewController(question: nil)
-            self.navigationController?.pushViewController(conversation, animated: true)
-            conversation.startLocationRequestFromHome()
-        }
         present(picker, animated: true)
     }
 
