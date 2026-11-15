@@ -2,7 +2,8 @@ import UIKit
 
 @MainActor
 extension SignupViewController {
-    func render() {
+    func render(focusField: Bool = true) {
+        emailErrorRow = nil
         contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         renderCurrentStep()
         let actionTopSpacer = UIView()
@@ -19,7 +20,9 @@ extension SignupViewController {
         updateActionButton()
         backButton.isHidden = step == .complete
         scrollView.setContentOffset(.zero, animated: false)
-        focusFieldForCurrentStep()
+        if focusField {
+            focusFieldForCurrentStep()
+        }
     }
 
     private func renderCurrentStep() {

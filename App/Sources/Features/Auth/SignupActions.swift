@@ -8,7 +8,7 @@ extension SignupViewController {
         switch step {
         case .email:
             title = "인증번호 받기"
-            enabled = true
+            enabled = emailError == nil
         case .verification:
             title = "인증하기"
             enabled = (codeField.text?.count ?? 0) == 6 && countdown > 0
@@ -256,7 +256,7 @@ extension SignupViewController {
         email = (emailField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard email.lowercased().hasSuffix("@gsm.hs.kr") else {
             emailError = "학교 이메일(@gsm.hs.kr)만 사용할 수 있어요."
-            render()
+            render(focusField: false)
             return
         }
         guard !UserProfileStore.shared.isRegistered(email: email) else {

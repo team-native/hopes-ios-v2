@@ -54,6 +54,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     var generationError = true
     var sheetView: UIView?
     var keyboardObservers: [NSObjectProtocol] = []
+    var emailErrorRow: UIStackView?
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
@@ -148,6 +149,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         emailField.text = email
         emailField.returnKeyType = .done
         emailField.delegate = self
+        emailField.addTarget(self, action: #selector(emailDidChange), for: .editingChanged)
 
         configureTextField(codeField, placeholder: "", contentType: .oneTimeCode, height: 56)
         codeField.keyboardType = .numberPad
