@@ -20,8 +20,7 @@ extension CommunityPostDetailViewController {
         circle.widthAnchor.constraint(equalToConstant: 88).isActive = true
         circle.heightAnchor.constraint(equalToConstant: 88).isActive = true
 
-        let trash = UIImageView(image: UIImage(systemName: "trash"))
-        trash.tintColor = AppStyle.blue
+        let trash = UIImageView(image: UIImage(named: "CommunityDeletedPostTrash"))
         trash.contentMode = .scaleAspectFit
         circle.addSubview(trash)
         trash.translatesAutoresizingMaskIntoConstraints = false

@@ -38,7 +38,9 @@ let project = Project(
                     "IPHONEOS_DEPLOYMENT_TARGET": "17.0",
                     "SWIFT_VERSION": "5.0",
                     "CODE_SIGN_STYLE": "Automatic",
-                    "DEVELOPMENT_TEAM": "XVUY3P7HN4"
+                    "DEVELOPMENT_TEAM": "XVUY3P7HN4",
+                    "ASSETCATALOG_COMPILER_APPICON_NAME": "",
+                    "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": ""
                 ]
             )
         )
