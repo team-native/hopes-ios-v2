@@ -22,7 +22,7 @@ extension ChatConversationViewController {
 
         switch locationManager.authorizationStatus {
         case .notDetermined:
-            showLocationPermissionCard()
+            locationManager.requestWhenInUseAuthorization()
         case .authorizedAlways, .authorizedWhenInUse:
             showLocationMeasurementCard()
             locationManager.requestLocation()
@@ -33,32 +33,9 @@ extension ChatConversationViewController {
         }
     }
 
-    func showLocationPermissionCard() {
-        let card = ChatLocationPermissionCardView(
-            onLater: { [weak self] in self?.cancelLocationRequest() },
-            onAllow: { [weak self] in self?.requestLocationPermission() }
-        )
-        replaceLocationCard(with: card)
-        scrollToLatestMessage()
-    }
-
-    func requestLocationPermission() {
-        showLocationMeasurementCard()
-        locationManager.requestWhenInUseAuthorization()
-    }
-
     func showLocationMeasurementCard() {
         replaceLocationCard(with: makeLocationMeasurementCard())
         scrollToLatestMessage()
-    }
-
-    func cancelLocationRequest() {
-        hasPendingLocationRequest = false
-        setLocationConversationHeader(active: false)
-        guard let locationCard else { return }
-        messagesStack.removeArrangedSubview(locationCard)
-        locationCard.removeFromSuperview()
-        self.locationCard = nil
     }
 
     func showLocationFailure() {
