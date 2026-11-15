@@ -16,9 +16,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     var isLiked = false
     var generationTimer: DispatchWorkItem?
     var pendingAnswerCard: UIView?
-    var pendingAttachmentAnalysisCard: UIView?
-    var attachmentAnalysisFailureCard: UIView?
-    var lastSentAttachments: [ChatAttachmentItem]?
+    let attachmentResponseState = ChatAttachmentResponseState()
     var answerFailureCard: UIView?
     var offlineBanner: UIView?
     var pendingStatusRow: UIView?
@@ -310,7 +308,7 @@ private extension ChatConversationViewController {
     func sendAttachmentQuestion(_ question: String) {
         guard !selectedAttachments.isEmpty else { return }
         let attachments = selectedAttachments
-        lastSentAttachments = attachments
+        attachmentResponseState.lastSentAttachments = attachments
         addSentAttachments(attachments)
         addUserMessage(question)
         selectedAttachments.removeAll()
