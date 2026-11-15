@@ -2,6 +2,15 @@ import UIKit
 
 @MainActor
 extension SignupViewController {
+    @objc func emailDidChange() {
+        guard emailError != nil else { return }
+        emailError = nil
+        emailErrorRow?.isHidden = true
+        emailField.layer.borderColor = Palette.focus.cgColor
+        emailField.layer.borderWidth = 1.5
+        updateActionButton()
+    }
+
     func textField(
         _ textField: UITextField,
         shouldChangeCharactersIn range: NSRange,
@@ -26,7 +35,7 @@ extension SignupViewController {
             || (textField === passwordField && passwordError != nil)
             || (textField === confirmField && confirmError != nil)
         textField.layer.borderColor = (hasError ? Palette.error : Palette.focus).cgColor
-        textField.layer.borderWidth = hasError ? 1 : 1.5
+        textField.layer.borderWidth = 1.5
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
@@ -34,6 +43,6 @@ extension SignupViewController {
             || (textField === passwordField && passwordError != nil)
             || (textField === confirmField && confirmError != nil)
         textField.layer.borderColor = (hasError ? Palette.error : Palette.line).cgColor
-        textField.layer.borderWidth = 1
+        textField.layer.borderWidth = hasError ? 1.5 : 1
     }
 }

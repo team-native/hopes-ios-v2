@@ -71,6 +71,7 @@ extension SignupViewController {
         group.addArrangedSubview(fieldLabel)
 
         field.layer.borderColor = (error == nil ? Palette.line : Palette.error).cgColor
+        field.layer.borderWidth = error == nil ? 1 : 1.5
         if showsVisibility {
             let visibility = UIButton(type: .system)
             visibility.setImage(UIImage(systemName: field.isSecureTextEntry ? "eye" : "eye.slash"), for: .normal)
@@ -85,7 +86,13 @@ extension SignupViewController {
             field.rightViewMode = .always
         }
         group.addArrangedSubview(field)
-        if let error { group.addArrangedSubview(makeInlineError(error)) }
+        if let error {
+            let errorRow = makeInlineError(error)
+            group.addArrangedSubview(errorRow)
+            if field === emailField {
+                emailErrorRow = errorRow
+            }
+        }
         contentStack.addArrangedSubview(group)
         group.translatesAutoresizingMaskIntoConstraints = false
     }
