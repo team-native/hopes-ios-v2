@@ -48,6 +48,7 @@ final class CommunityViewController: AppPageViewController {
     var selectedBoard = "전체"
     var boardFilters: UIStackView?
     var publishToast: UIView?
+    private var writeButtonBottomConstraint: NSLayoutConstraint?
     var showingLoadError = ProcessInfo.processInfo.arguments.contains("--community-load-error")
 
     override func viewDidLoad() {
@@ -84,6 +85,13 @@ final class CommunityViewController: AppPageViewController {
             renderPosts()
             if CommunityPostStore.shared.consumePublishedToast() { showPublishToast() }
         }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard let tabBar = tabBarController?.tabBar else { return }
+        let tabBarFrame = view.convert(tabBar.bounds, from: tabBar)
+        writeButtonBottomConstraint?.constant = -(view.bounds.maxY - tabBarFrame.minY + 26)
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -201,9 +209,11 @@ final class CommunityViewController: AppPageViewController {
         NSLayoutConstraint.activate([
             button.widthAnchor.constraint(equalToConstant: 56),
             button.heightAnchor.constraint(equalToConstant: 56),
-            button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30)
+            button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
+        let bottomConstraint = button.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -112)
+        bottomConstraint.isActive = true
+        writeButtonBottomConstraint = bottomConstraint
     }
 
 }
