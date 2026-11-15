@@ -33,6 +33,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var attachmentTrayHeightConstraint: NSLayoutConstraint?
     private var composerScrollConstraint: NSLayoutConstraint?
     private var attachmentTrayScrollConstraint: NSLayoutConstraint?
+    private var attachmentTrayScreenBottomConstraint: NSLayoutConstraint?
+    private var attachmentTrayKeyboardBottomConstraint: NSLayoutConstraint?
     var successToastView: UIView?
     var successToastDismissal: DispatchWorkItem?
 
@@ -270,7 +272,11 @@ private extension ChatConversationViewController {
         }
         tray.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tray)
+        configureComposerAndTrayConstraints(composer: composer, tray: tray)
+        observeAttachmentKeyboard()
+    }
 
+    func configureComposerAndTrayConstraints(composer: UIStackView, tray: ChatAttachmentTrayView) {
         let showComposerConstraint = scrollView.bottomAnchor.constraint(equalTo: composer.topAnchor)
         let showTrayConstraint = scrollView.bottomAnchor.constraint(equalTo: tray.topAnchor)
         showComposerConstraint.isActive = true
@@ -281,6 +287,11 @@ private extension ChatConversationViewController {
 
         let trayHeightConstraint = tray.heightAnchor.constraint(equalToConstant: 225)
         attachmentTrayHeightConstraint = trayHeightConstraint
+        let trayScreenBottom = tray.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        let trayKeyboardBottom = tray.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)
+        attachmentTrayScreenBottomConstraint = trayScreenBottom
+        attachmentTrayKeyboardBottomConstraint = trayKeyboardBottom
+        trayScreenBottom.isActive = true
         NSLayoutConstraint.activate([
             composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
@@ -288,10 +299,24 @@ private extension ChatConversationViewController {
             composer.heightAnchor.constraint(equalToConstant: 52),
             tray.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tray.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tray.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             trayHeightConstraint,
             inputField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
         ])
+    }
+
+    func observeAttachmentKeyboard() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(attachmentKeyboardWillShow(_:)),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(attachmentKeyboardWillHide(_:)),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
     }
 
     func addAttachments(_ attachments: [ChatAttachmentItem]) {
@@ -319,5 +344,26 @@ private extension ChatConversationViewController {
         selectedAttachments.removeAll()
         refreshAttachmentTray()
         beginAttachmentAnalysis(attachments: attachments)
+    }
+
+    @objc func attachmentKeyboardWillShow(_ notification: Notification) {
+        updateAttachmentTrayKeyboardLayout(isVisible: true, notification: notification)
+    }
+
+    @objc func attachmentKeyboardWillHide(_ notification: Notification) {
+        updateAttachmentTrayKeyboardLayout(isVisible: false, notification: notification)
+    }
+
+    func updateAttachmentTrayKeyboardLayout(isVisible: Bool, notification: Notification) {
+        attachmentTrayScreenBottomConstraint?.isActive = !isVisible
+        attachmentTrayKeyboardBottomConstraint?.isActive = isVisible
+        attachmentTrayView?.setKeyboardVisible(isVisible)
+
+        let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
+        let curve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt ?? 0
+        let options = UIView.AnimationOptions(rawValue: curve << 16)
+        UIView.animate(withDuration: duration, delay: 0, options: options) { [weak self] in
+            self?.view.layoutIfNeeded()
+        }
     }
 }

@@ -49,6 +49,9 @@ final class ChatAttachmentTrayView: UIView {
     )
     private weak var attachmentsScrollView: UIScrollView?
     private var documentCardWidthConstraints: [NSLayoutConstraint] = []
+    private var homeIndicatorSpacerHeightConstraint: NSLayoutConstraint?
+    private var preferredTrayHeight: CGFloat = 225
+    private var isKeyboardVisible = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -64,7 +67,9 @@ final class ChatAttachmentTrayView: UIView {
         let inputRow = makeQuestionInputRow()
         configureUnsupportedFormatBanner()
         let homeIndicatorSpacer = UIView()
-        homeIndicatorSpacer.heightAnchor.constraint(equalToConstant: 21).isActive = true
+        let spacerHeightConstraint = homeIndicatorSpacer.heightAnchor.constraint(equalToConstant: 21)
+        spacerHeightConstraint.isActive = true
+        homeIndicatorSpacerHeightConstraint = spacerHeightConstraint
         let content = UIStackView(arrangedSubviews: [
             unsupportedFormatBanner, countLabel, attachmentsScroll, inputRow, homeIndicatorSpacer
         ])
@@ -177,8 +182,8 @@ final class ChatAttachmentTrayView: UIView {
         bannerMessageLabel.textColor = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
         sendButton.isEnabled = !hasInvalidAttachment
         sendButton.backgroundColor = hasInvalidAttachment ? AppStyle.blue.withAlphaComponent(0.4) : AppStyle.blue
-        let trayHeight: CGFloat = unreadablePDF ? 293 : (hasUnsupportedAttachment ? 279 : 225)
-        onPreferredHeightChange?(trayHeight)
+        preferredTrayHeight = unreadablePDF ? 293 : (hasUnsupportedAttachment ? 279 : 225)
+        updatePreferredHeight()
         NSLayoutConstraint.deactivate(documentCardWidthConstraints)
         documentCardWidthConstraints.removeAll()
         attachmentsStack.arrangedSubviews.forEach { view in
@@ -189,6 +194,17 @@ final class ChatAttachmentTrayView: UIView {
             attachmentsStack.addArrangedSubview(makeAttachmentCard(attachment))
         }
         setNeedsLayout()
+    }
+
+    func setKeyboardVisible(_ visible: Bool) {
+        guard isKeyboardVisible != visible else { return }
+        isKeyboardVisible = visible
+        homeIndicatorSpacerHeightConstraint?.constant = visible ? 0 : 21
+        updatePreferredHeight()
+    }
+
+    private func updatePreferredHeight() {
+        onPreferredHeightChange?(preferredTrayHeight - (isKeyboardVisible ? 21 : 0))
     }
 
     override func layoutSubviews() {
