@@ -33,7 +33,7 @@ final class HomeViewController: AppPageViewController {
         }
 
         if ProcessInfo.processInfo.arguments.contains("--home-loading") {
-            let header = HomeLoadingHeaderFactory.make(borderColor: subtleBorder) { [weak self] in
+            let header = HomeLoadingHeaderFactory.make { [weak self] in
                 self?.openNotifications()
             }
             contentStack.addArrangedSubview(header)
@@ -77,8 +77,10 @@ final class HomeViewController: AppPageViewController {
         ])
         greeting.axis = .vertical
         greeting.spacing = 4
+        greeting.isLayoutMarginsRelativeArrangement = true
+        greeting.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 0)
 
-        let notificationButton = HomePreviewStateViews.notificationButton(borderColor: subtleBorder) { [weak self] in
+        let notificationButton = HomePreviewStateViews.notificationButton { [weak self] in
             self?.openNotifications()
         }
         notificationButton.accessibilityLabel = "알림"
@@ -102,7 +104,7 @@ final class HomeViewController: AppPageViewController {
     }
 
     private func addHeroCardContent() {
-        heroCloud.contentMode = .scaleAspectFit
+        heroCloud.contentMode = .scaleToFill
         heroCloud.translatesAutoresizingMaskIntoConstraints = false
         heroClipView.addSubview(heroCloud)
 
@@ -133,10 +135,10 @@ final class HomeViewController: AppPageViewController {
         heroClipView.addSubview(subtitle)
         heroClipView.addSubview(button)
         NSLayoutConstraint.activate([
-            heroCloud.widthAnchor.constraint(equalToConstant: 240),
-            heroCloud.heightAnchor.constraint(equalToConstant: 126),
-            heroCloud.leadingAnchor.constraint(equalTo: heroClipView.leadingAnchor, constant: 176),
-            heroCloud.topAnchor.constraint(equalTo: heroClipView.topAnchor, constant: 60),
+            heroCloud.widthAnchor.constraint(equalToConstant: 540),
+            heroCloud.heightAnchor.constraint(equalToConstant: 186),
+            heroCloud.leadingAnchor.constraint(equalTo: heroClipView.leadingAnchor, constant: 162),
+            heroCloud.topAnchor.constraint(equalTo: heroClipView.topAnchor, constant: 70),
             title.leadingAnchor.constraint(equalTo: heroClipView.leadingAnchor, constant: 21),
             title.topAnchor.constraint(equalTo: heroClipView.topAnchor, constant: 23),
             subtitle.leadingAnchor.constraint(equalTo: title.leadingAnchor),
