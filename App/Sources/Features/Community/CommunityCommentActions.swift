@@ -4,12 +4,18 @@ import UIKit
 extension CommunityPostDetailViewController {
     func addComment(author: String, time: String, text: String) {
         let isOwnComment = author == "나" || author.contains("(나)")
-        let authorLabel = AppStyle.label("\(author) · \(time)", size: 12, weight: .medium,
-            color: isOwnComment ? AppStyle.blue : AppStyle.muted)
-        let textLabel = AppStyle.label(text, size: 14)
+        let authorLabel = AppStyle.label(author, size: 14, weight: .medium,
+            color: isOwnComment ? AppStyle.blue : AppStyle.ink)
+        authorLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        let timeLabel = AppStyle.label("· \(time)", size: 12,
+            color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
+        timeLabel.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        let textLabel = AppStyle.label(text, size: 14, weight: .medium)
+        textLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 20).isActive = true
         if isOwnComment { editingCommentLabel = textLabel }
-        let header = UIStackView(arrangedSubviews: [authorLabel, UIView()])
+        let header = UIStackView(arrangedSubviews: [authorLabel, timeLabel, UIView()])
         let more = makeMoreButton(identifier: "community-comment-actions")
+        more.imageView?.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         more.widthAnchor.constraint(equalToConstant: 24).isActive = true
         more.heightAnchor.constraint(equalToConstant: 24).isActive = true
         more.addAction(UIAction { [weak self, weak textLabel, weak more] _ in
@@ -32,7 +38,7 @@ extension CommunityPostDetailViewController {
         stack.addArrangedSubview(header)
         stack.addArrangedSubview(textLabel)
         stack.axis = .vertical
-        stack.spacing = 6
+        stack.spacing = 4
         stack.isLayoutMarginsRelativeArrangement = true
         stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
         commentStack.addArrangedSubview(stack)

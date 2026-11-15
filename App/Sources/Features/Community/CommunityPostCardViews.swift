@@ -41,12 +41,12 @@ extension CommunityPostDetailViewController {
         head.axis = .horizontal
         head.alignment = .center
 
-        let title = AppStyle.label(post.title, size: 16, weight: .medium)
+        let title = makeFigmaLabel(post.title, size: 18, weight: .medium, lineHeight: 26)
         titleLabel = title
         let meta = AppStyle.label("\(post.authorCohort) · \(post.time)", size: 12, color: UIColor(red: 152 / 255,
             green: 163 / 255, blue: 184 / 255, alpha: 1))
-        let body = AppStyle.label(post.detailBody ?? post.body, size: 15, color: AppStyle.ink)
-        body.textColor = AppStyle.ink
+        meta.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        let body = makeFigmaLabel(post.detailBody ?? post.body, size: 15, lineHeight: 24)
         bodyLabel = body
 
         configureLikeButton()
@@ -58,12 +58,14 @@ extension CommunityPostDetailViewController {
         actions.axis = .horizontal
         actions.alignment = .center
         actions.spacing = 8
+        actions.isLayoutMarginsRelativeArrangement = true
+        actions.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0)
 
         let content = UIStackView(arrangedSubviews: [head, title, meta, body, actions])
         content.axis = .vertical
         content.spacing = 8
         content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 16, trailing: 16)
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
 
         let card = UIView()
         card.backgroundColor = .white
@@ -98,7 +100,7 @@ extension CommunityPostDetailViewController {
         likeButton.accessibilityIdentifier = "community-post-like"
         likeButton.addAction(UIAction { [weak self] _ in self?.toggleLike() }, for: .touchUpInside)
         NSLayoutConstraint.activate([
-            likeButton.heightAnchor.constraint(equalToConstant: 34),
+            likeButton.heightAnchor.constraint(equalToConstant: 32),
             likeButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 62)
         ])
     }
@@ -124,15 +126,15 @@ extension CommunityPostDetailViewController {
         commentCountButton.setTitleColor(secondaryText, for: .normal)
         commentCountButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .regular)
         commentCountButton.backgroundColor = .white
-        commentCountButton.layer.cornerRadius = 17
+        commentCountButton.layer.cornerRadius = 24
         commentCountButton.layer.borderWidth = 1
         commentCountButton.layer.borderColor = AppStyle.line.cgColor
         commentCountButton.accessibilityIdentifier = "community-post-comment-count"
         commentCountButton.addAction(UIAction { [weak self] _ in self?.commentField.becomeFirstResponder() },
             for: .touchUpInside)
         NSLayoutConstraint.activate([
-            commentCountButton.heightAnchor.constraint(equalToConstant: 34),
-            commentCountButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 62)
+            commentCountButton.heightAnchor.constraint(equalToConstant: 48),
+            commentCountButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 65)
         ])
     }
 
@@ -152,6 +154,24 @@ extension CommunityPostDetailViewController {
             button.heightAnchor.constraint(equalToConstant: 24)
         ])
         return button
+    }
+
+    private func makeFigmaLabel(
+        _ text: String,
+        size: CGFloat,
+        weight: UIFont.Weight = .regular,
+        lineHeight: CGFloat
+    ) -> UILabel {
+        let label = AppStyle.label(text, size: size, weight: weight)
+        let font = label.font ?? .systemFont(ofSize: size, weight: weight)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.minimumLineHeight = lineHeight
+        paragraphStyle.maximumLineHeight = lineHeight
+        label.attributedText = NSAttributedString(
+            string: text,
+            attributes: [.font: font, .paragraphStyle: paragraphStyle]
+        )
+        return label
     }
 
 }
