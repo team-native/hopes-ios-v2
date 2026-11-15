@@ -1,0 +1,48 @@
+name: iOS CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Generate, lint, and build
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install pinned tools
+        uses: jdx/mise-action@v4
+
+      - name: Show toolchain versions
+        run: |
+          tuist version
+          swiftlint version
+          xcodebuild -version
+
+      - name: Generate Xcode project
+        run: tuist generate --no-open
+
+      - name: Lint Swift sources
+        run: swiftlint lint --strict --no-cache --quiet
+
+      - name: Build for iOS Simulator
+        run: >-
+          xcodebuild
+          -project Hopes.xcodeproj
+          -scheme Hopes
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath "$RUNNER_TEMP/DerivedData"
+          CODE_SIGNING_ALLOWED=NO
+          build
