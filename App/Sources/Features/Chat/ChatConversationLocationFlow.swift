@@ -4,6 +4,17 @@ import UIKit
 
 @MainActor
 extension ChatConversationViewController {
+    func makeLocationActionButton() -> UIButton {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(named: "chat-location-pin")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.accessibilityLabel = "현재 위치 확인"
+        button.accessibilityIdentifier = "chat-current-location"
+        button.addAction(UIAction { [weak self] _ in self?.beginLocationMeasurement() }, for: .touchUpInside)
+        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        return button
+    }
+
     func beginLocationMeasurement(isRetry: Bool = false) {
         if !isRetry { addUserMessage("지금 내 위치 알려줘") }
         hasPendingLocationRequest = true

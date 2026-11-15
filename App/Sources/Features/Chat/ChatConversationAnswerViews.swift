@@ -65,10 +65,12 @@ extension ChatConversationViewController {
         let titleStack = UIStackView(arrangedSubviews: [title, context])
         titleStack.axis = .vertical
         titleStack.spacing = 0
-        let row = UIStackView(arrangedSubviews: [back, titleStack])
+        let location = makeLocationActionButton()
+        let row = UIStackView(arrangedSubviews: [back, titleStack, location])
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 12
+        row.setCustomSpacing(0, after: titleStack)
         messagesStack.addArrangedSubview(row)
     }
 

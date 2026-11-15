@@ -33,11 +33,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    func startLocationRequestFromHome() {
-        loadViewIfNeeded()
-        beginLocationMeasurement()
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppStyle.canvas
@@ -177,9 +172,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
                 let preview = ChatAttachmentPreviewViewController(fileName: fileName, image: image)
                 preview.onSend = { [weak self] in self?.addMessage("첨부했어요: \(fileName)", outgoing: true) }
                 self.present(preview, animated: true)
-            }
-            picker.onLocationRequested = { [weak self] in
-                self?.beginLocationMeasurement()
             }
             self.present(picker, animated: true)
         }, for: .touchUpInside)
