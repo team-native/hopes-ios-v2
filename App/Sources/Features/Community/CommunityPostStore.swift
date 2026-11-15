@@ -36,6 +36,7 @@ final class CommunityPostStore {
         CommunityComment(board: "10기", postTitle: "전공 프로젝트 준비 팁", text: "작게라도 먼저 만들어보는 걸 추천해요.", time: "지난주")
     ]
     private var shouldShowPublishedToast = false
+    private var reportedPostKeys = Set<String>()
 
     private init() {}
 
@@ -46,6 +47,18 @@ final class CommunityPostStore {
     func consumePublishedToast() -> Bool {
         defer { shouldShowPublishedToast = false }
         return shouldShowPublishedToast
+    }
+
+    func hasReported(_ post: CommunityPost) -> Bool {
+        reportedPostKeys.contains(reportKey(for: post))
+    }
+
+    func markReported(_ post: CommunityPost) {
+        reportedPostKeys.insert(reportKey(for: post))
+    }
+
+    private func reportKey(for post: CommunityPost) -> String {
+        "\(post.grade)\u{0}\(post.title)\u{0}\(post.body)"
     }
 
     func add(title: String, body: String, category: String, grade: String) {

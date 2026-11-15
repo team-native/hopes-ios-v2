@@ -294,11 +294,69 @@ extension CommunityPostDetailViewController {
     }
 
     func showReportReasons() {
-        presentReportFlow()
+        let store = CommunityPostStore.shared
+        guard !store.hasReported(post) else {
+            showDuplicateReportToast()
+            return
+        }
+        presentReportFlow { [weak self] in
+            guard let self else { return }
+            CommunityPostStore.shared.markReported(self.post)
+        }
     }
 
-    private func presentReportFlow() {
+    private func presentReportFlow(onSubmit: @escaping () -> Void = {}) {
         guard presentedViewController == nil else { return }
-        present(CommunityReportFlowViewController(), animated: false)
+        present(CommunityReportFlowViewController(onSubmit: onSubmit), animated: false)
+    }
+
+    private func showDuplicateReportToast() {
+        view.subviews.first { $0.accessibilityIdentifier == "community-duplicate-report-toast" }?.removeFromSuperview()
+
+        let checkCircle = UIView()
+        checkCircle.backgroundColor = AppStyle.blue
+        checkCircle.layer.cornerRadius = 11
+        checkCircle.widthAnchor.constraint(equalToConstant: 22).isActive = true
+        checkCircle.heightAnchor.constraint(equalToConstant: 22).isActive = true
+        let check = UIImageView(image: UIImage(named: "CommunityToastCheck")?.withRenderingMode(.alwaysOriginal))
+        check.translatesAutoresizingMaskIntoConstraints = false
+        checkCircle.addSubview(check)
+        NSLayoutConstraint.activate([
+            check.widthAnchor.constraint(equalToConstant: 14),
+            check.heightAnchor.constraint(equalToConstant: 14),
+            check.centerXAnchor.constraint(equalTo: checkCircle.centerXAnchor),
+            check.centerYAnchor.constraint(equalTo: checkCircle.centerYAnchor)
+        ])
+
+        let message = AppStyle.label("이미 신고한 게시글이에요", size: 14, weight: .medium, color: .white)
+        let toast = UIStackView(arrangedSubviews: [checkCircle, message])
+        toast.accessibilityIdentifier = "community-duplicate-report-toast"
+        toast.accessibilityLabel = "이미 신고한 게시글이에요"
+        toast.isAccessibilityElement = true
+        toast.axis = .horizontal
+        toast.alignment = .center
+        toast.spacing = 10
+        toast.isLayoutMarginsRelativeArrangement = true
+        toast.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 18)
+        toast.backgroundColor = AppStyle.ink.withAlphaComponent(0.92)
+        toast.layer.cornerRadius = 25
+        toast.layer.shadowColor = UIColor.black.cgColor
+        toast.layer.shadowOpacity = 0.18
+        toast.layer.shadowRadius = 12
+        toast.layer.shadowOffset = CGSize(width: 0, height: 8)
+        toast.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(toast)
+        NSLayoutConstraint.activate([
+            toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50)
+        ])
+        toast.alpha = 0
+        UIView.animate(withDuration: 0.2) { toast.alpha = 1 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak toast] in
+            guard let toast else { return }
+            UIView.animate(withDuration: 0.2, animations: { toast.alpha = 0 }, completion: { _ in
+                toast.removeFromSuperview()
+            })
+        }
     }
 }

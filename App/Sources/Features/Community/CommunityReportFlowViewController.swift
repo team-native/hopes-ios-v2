@@ -7,8 +7,17 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
     private let dimView = UIView()
     private let sheetView = UIView()
     private let contentStack = UIStackView()
+    private let onSubmit: () -> Void
     private var bottomConstraint: NSLayoutConstraint?
     private var isComplete = false
+
+    init(onSubmit: @escaping () -> Void = {}) {
+        self.onSubmit = onSubmit
+        super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .overFullScreen
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -91,6 +100,7 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
     private func showCompletion() {
         guard !isComplete else { return }
         isComplete = true
+        onSubmit()
         let handle = makeHandle()
         let icon = UIImageView(image: UIImage(named: "CommunityReportDoneCheck")?.withRenderingMode(.alwaysOriginal))
         icon.contentMode = .scaleAspectFit
