@@ -31,6 +31,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var attachmentTrayView: ChatAttachmentTrayView?
     private var composerScrollConstraint: NSLayoutConstraint?
     private var attachmentTrayScrollConstraint: NSLayoutConstraint?
+    var successToastView: UIView?
+    var successToastDismissal: DispatchWorkItem?
 
     init(question: String?, attachments: [ChatAttachmentItem] = []) {
         initialQuestion = question
@@ -67,6 +69,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        dismissSuccessToast()
         navigationController?.setNavigationBarHidden(false, animated: animated)
         tabBarController?.tabBar.isHidden = false
     }
@@ -259,12 +262,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         let answer = "Frontend 시작 순서\nHTML·CSS로 간단한 페이지 만들기 → JavaScript 기초 문법 익히기 → React로 작은 프로젝트 완성하기"
         let activity = UIActivityViewController(activityItems: [answer], applicationActivities: nil)
         present(activity, animated: true)
-    }
-
-    func showToast(_ message: String) {
-        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-        present(alert, animated: true)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak alert] in alert?.dismiss(animated: true) }
     }
 
     func presentMessage(_ message: String) {
