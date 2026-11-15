@@ -7,9 +7,9 @@ final class UserProfileStore {
     private let defaults = UserDefaults.standard
     private init() {}
 
-    var name: String { defaults.string(forKey: "profile.name") ?? "임서하" }
+    var name: String { defaults.string(forKey: "profile.name") ?? "Hopes 사용자" }
     var department: String { defaults.string(forKey: "profile.department") ?? "인공지능소프트웨어과" }
-    var email: String { defaults.string(forKey: "profile.email") ?? "s26055@gsm.hs.kr" }
+    var email: String { defaults.string(forKey: "profile.email") ?? "user@example.invalid" }
     var generation: String { defaults.string(forKey: "profile.generation") ?? "10기" }
     var introduction: String { defaults.string(forKey: "profile.introduction") ?? "" }
 

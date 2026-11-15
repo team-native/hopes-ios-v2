@@ -40,7 +40,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     let generationButton = UIButton(type: .system)
 
     var step: Step = .email
-    var email = "s26055@gsm.hs.kr"
+    var email = ""
     var selectedDepartment = UserProfileStore.shared.department
     var generation: String?
     var termsAccepted = true

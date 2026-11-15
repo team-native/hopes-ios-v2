@@ -297,16 +297,16 @@ extension LoginViewController {
     func configurePreviewState() {
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--login-error-preview") {
-            emailField.text = "s26055@gsm.hs.kr"
-            passwordField.text = "password"
+            emailField.text = "preview@example.invalid"
+            passwordField.text = nil
             feedback = .invalidCredentials
         } else if arguments.contains("--login-offline-preview") {
-            emailField.text = "s26055@gsm.hs.kr"
-            passwordField.text = "password"
+            emailField.text = "preview@example.invalid"
+            passwordField.text = nil
             feedback = .offline
         } else if arguments.contains("--login-loading-preview") {
-            emailField.text = "s26055@gsm.hs.kr"
-            passwordField.text = "password"
+            emailField.text = "preview@example.invalid"
+            passwordField.text = nil
             feedback = .loading
             loginPreviewIsStatic = true
         }
