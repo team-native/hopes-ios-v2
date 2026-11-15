@@ -25,6 +25,7 @@ extension ChatConversationViewController {
                     pendingAnswerCard.removeFromSuperview()
                     self.pendingAnswerCard = nil
                 }
+                removePendingAttachmentAnalysisCard()
                 stopAnswerButton.isHidden = true
                 retryWhenOnline = true
                 showPendingStatus()
@@ -124,8 +125,92 @@ extension ChatConversationViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
     }
 
+    func beginAttachmentAnalysis(attachments: [ChatAttachmentItem]) {
+        guard !isOffline else {
+            retryWhenOnline = true
+            showPendingStatus()
+            return
+        }
+
+        let imageCount = attachments.filter { $0.image != nil }.count
+        let pdfCount = attachments.count - imageCount
+        let countDescription = [
+            imageCount > 0 ? "이미지 \(imageCount)장" : nil,
+            pdfCount > 0 ? "PDF \(pdfCount)개" : nil
+        ].compactMap { $0 }.joined(separator: ", ")
+
+        let card = makeAttachmentAnalysisCard(countDescription: countDescription)
+        messagesStack.addArrangedSubview(card)
+        pendingAttachmentAnalysisCard = card
+        stopAnswerButton.isHidden = false
+        inputField.placeholder = "자료를 확인하는 중이에요…"
+        inputField.isEnabled = false
+
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.removePendingAttachmentAnalysisCard()
+            self.finishAnswerGeneration()
+        }
+        generationTimer = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
+    }
+
+    private func makeAttachmentAnalysisCard(countDescription: String) -> UIView {
+        let card = UIView()
+        card.backgroundColor = .white
+        card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = AppStyle.line.cgColor
+        card.layer.shadowColor = UIColor(red: 26 / 255.0, green: 64 / 255.0, blue: 128 / 255.0, alpha: 0.08).cgColor
+        card.layer.shadowOpacity = 1
+        card.layer.shadowRadius = 14
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
+
+        let dots = UIStackView()
+        dots.axis = .horizontal
+        dots.alignment = .center
+        dots.spacing = 4
+        for _ in 0..<3 {
+            let dot = UIView()
+            dot.backgroundColor = AppStyle.blue
+            dot.layer.cornerRadius = 3
+            dot.widthAnchor.constraint(equalToConstant: 6).isActive = true
+            dot.heightAnchor.constraint(equalToConstant: 6).isActive = true
+            dots.addArrangedSubview(dot)
+        }
+        let title = AppStyle.label("자료를 분석하고 있어요…", size: 15, weight: .medium)
+        let detail = AppStyle.label("첨부 자료 확인 중 · \(countDescription)", size: 12, color: AppStyle.muted)
+        let labels = UIStackView(arrangedSubviews: [title, detail])
+        labels.axis = .vertical
+        labels.spacing = 2
+        let content = UIStackView(arrangedSubviews: [dots, labels])
+        content.axis = .horizontal
+        content.alignment = .center
+        content.spacing = 12
+        content.isLayoutMarginsRelativeArrangement = true
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: card.topAnchor),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor),
+            dots.widthAnchor.constraint(equalToConstant: 32)
+        ])
+        return card
+    }
+
+    func removePendingAttachmentAnalysisCard() {
+        guard let pendingAttachmentAnalysisCard else { return }
+        messagesStack.removeArrangedSubview(pendingAttachmentAnalysisCard)
+        pendingAttachmentAnalysisCard.removeFromSuperview()
+        self.pendingAttachmentAnalysisCard = nil
+    }
+
     func finishAnswerGeneration() {
         generationTimer = nil
+        removePendingAttachmentAnalysisCard()
         if let pendingAnswerCard {
             messagesStack.removeArrangedSubview(pendingAnswerCard)
             pendingAnswerCard.removeFromSuperview()
@@ -140,6 +225,7 @@ extension ChatConversationViewController {
     func stopAnswerGeneration() {
         generationTimer?.cancel()
         generationTimer = nil
+        removePendingAttachmentAnalysisCard()
         stopAnswerButton.isHidden = true
         inputField.isEnabled = true
         inputField.placeholder = "추가 질문 입력…"
