@@ -19,7 +19,7 @@ extension ChatHomeViewController {
         content.alignment = .center
         content.spacing = 12
         content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 13, leading: 17, bottom: 13, trailing: 17)
 
         let card = UIControl()
         card.addSubview(content)
@@ -29,7 +29,7 @@ extension ChatHomeViewController {
             content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
             content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
             content.bottomAnchor.constraint(equalTo: card.bottomAnchor),
-            card.heightAnchor.constraint(equalToConstant: 60)
+            card.heightAnchor.constraint(equalToConstant: 62)
         ])
         card.backgroundColor = .white
         card.layer.cornerRadius = 20
