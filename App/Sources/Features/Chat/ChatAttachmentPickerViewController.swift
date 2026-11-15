@@ -1,3 +1,4 @@
+import AVFoundation
 import PhotosUI
 import PDFKit
 import UIKit
@@ -60,10 +61,46 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
             showMessage("이 기기에서는 카메라를 사용할 수 없어요")
             return
         }
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            presentCameraPicker()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] isAuthorized in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    if isAuthorized {
+                        self.presentCameraPicker()
+                    } else {
+                        self.showCameraPermissionAlert()
+                    }
+                }
+            }
+        case .denied, .restricted:
+            showCameraPermissionAlert()
+        @unknown default:
+            showCameraPermissionAlert()
+        }
+    }
+
+    private func presentCameraPicker() {
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.delegate = self
         present(picker, animated: true)
+    }
+
+    private func showCameraPermissionAlert() {
+        let alert = UIAlertController(
+            title: "사진 접근 권한이 필요해요",
+            message: "사진을 첨부하려면 설정에서 hopes의 사진·카메라 접근을 허용해 주세요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "설정 열기", style: .default) { _ in
+            guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+            UIApplication.shared.open(settingsURL)
+        })
+        present(alert, animated: true)
     }
 
     @objc private func openPhotoLibrary() {
