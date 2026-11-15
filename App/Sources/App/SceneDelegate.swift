@@ -21,14 +21,14 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             )
         } else if arguments.contains("--settings-preview") {
             let tabs = AppTabBarController()
-            tabs.selectedIndex = 3
+            tabs.selectedIndex = 4
             if let navigationController = tabs.selectedViewController as? UINavigationController {
                 navigationController.pushViewController(SettingsViewController(), animated: false)
             }
             window.rootViewController = tabs
         } else if arguments.contains("--mypage-preview") {
             let tabs = AppTabBarController()
-            tabs.selectedIndex = 3
+            tabs.selectedIndex = 4
             window.rootViewController = tabs
         } else if arguments.contains("--chat-home-preview") {
             let tabs = AppTabBarController()
