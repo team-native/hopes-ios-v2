@@ -1,6 +1,36 @@
 import CoreLocation
 import UIKit
 
+final class ChatLocationResultMessageView: UIView {
+    init(accuracy: CLLocationAccuracy, onMapRequested: @escaping () -> Void) {
+        super.init(frame: .zero)
+
+        let card = ChatLocationResultCardView(accuracy: accuracy, onMapRequested: onMapRequested)
+        let notice = AppStyle.label(
+            "층·교실 위치는 GPS만으로 확인하기 어려워요.",
+            size: 12,
+            color: LocationMapStyle.tertiary
+        )
+        notice.numberOfLines = 0
+
+        let content = UIStackView(arrangedSubviews: [card, notice])
+        content.axis = .vertical
+        content.spacing = 12
+        content.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(content)
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: topAnchor),
+            content.leadingAnchor.constraint(equalTo: leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 final class ChatLocationResultCardView: UIView {
     init(accuracy: CLLocationAccuracy, onMapRequested: @escaping () -> Void) {
         super.init(frame: .zero)
