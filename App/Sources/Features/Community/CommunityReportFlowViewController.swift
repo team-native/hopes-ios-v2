@@ -8,6 +8,11 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
     private let sheetView = UIView()
     private let contentStack = UIStackView()
     private let onSubmit: () -> Void
+    private let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+    private let primaryText = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    private let secondaryText = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+    private let subtleBorder = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+    private let defaultBorder = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
     private var bottomConstraint: NSLayoutConstraint?
     private var isComplete = false
 
@@ -79,22 +84,53 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
     private func showReasons() {
         isComplete = false
         let handle = makeHandle()
-        let title = AppStyle.label("신고 사유 선택", size: 18, weight: .bold)
-        let helper = AppStyle.label("신고한 사람의 정보는 공개되지 않아요.", size: 13, color: AppStyle.muted)
+        let title = AppStyle.label("신고 사유 선택", size: 22, weight: .bold, color: primaryText)
+        title.attributedText = NSAttributedString(string: "신고 사유 선택", attributes: [
+            .font: UIFont.systemFont(ofSize: 22, weight: .bold),
+            .foregroundColor: primaryText,
+            .kern: -0.3,
+            .paragraphStyle: makeLineStyle(height: 30)
+        ])
+        title.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        let helperText = "신고한 사람의 정보는 공개되지 않아요."
+        let helper = AppStyle.label(helperText, size: 14, weight: .medium, color: secondaryText)
+        helper.attributedText = NSAttributedString(string: helperText, attributes: [
+            .font: UIFont.systemFont(ofSize: 14, weight: .medium),
+            .foregroundColor: secondaryText,
+            .paragraphStyle: makeLineStyle(height: 20)
+        ])
+        helper.heightAnchor.constraint(equalToConstant: 20).isActive = true
         let rows = UIStackView()
         rows.axis = .vertical
         for (index, reason) in reasons.enumerated() {
             rows.addArrangedSubview(makeReasonRow(reason))
             if index < reasons.count - 1 { rows.addArrangedSubview(makeDivider()) }
         }
-        let submit = AppStyle.button("신고하기", primary: true) { [weak self] in
-            self?.showCompletion()
-        }
+        let submit = makeSubmitButton()
         submit.accessibilityIdentifier = "community-report-submit"
-        submit.heightAnchor.constraint(equalToConstant: 52).isActive = true
         let indicator = makeHomeIndicator()
         replaceContent([handle, title, helper, rows, submit, indicator], spacing: 16,
-            insets: NSDirectionalEdgeInsets(top: 12, leading: 24, bottom: 0, trailing: 24))
+            insets: NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 0, trailing: 20))
+    }
+
+    private func makeSubmitButton() -> UIButton {
+        let button = UIButton(type: .system)
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = "신고하기"
+        configuration.baseBackgroundColor = brandBlue
+        configuration.baseForegroundColor = .white
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 13, leading: 20, bottom: 13, trailing: 20)
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 15, weight: .medium)
+            return outgoing
+        }
+        button.configuration = configuration
+        button.layer.cornerRadius = 12
+        button.clipsToBounds = true
+        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        button.addAction(UIAction { [weak self] _ in self?.showCompletion() }, for: .touchUpInside)
+        return button
     }
 
     private func showCompletion() {
@@ -151,51 +187,6 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
         views.forEach(contentStack.addArrangedSubview)
     }
 
-    private func makeReasonRow(_ reason: String) -> UIButton {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        let label = AppStyle.label(reason, size: 15, weight: .medium)
-        let radio = UIView()
-        radio.layer.cornerRadius = 11
-        radio.layer.borderWidth = selectedReason == reason ? 0 : 1
-        radio.layer.borderColor = AppStyle.line.cgColor
-        radio.backgroundColor = selectedReason == reason ? AppStyle.blue : .white
-        radio.translatesAutoresizingMaskIntoConstraints = false
-        if selectedReason == reason {
-            let image = UIImage(named: "CommunityReportRadioCheck")?.withRenderingMode(.alwaysOriginal)
-            let check = UIImageView(image: image)
-            check.translatesAutoresizingMaskIntoConstraints = false
-            radio.addSubview(check)
-            NSLayoutConstraint.activate([
-                check.widthAnchor.constraint(equalToConstant: 14),
-                check.heightAnchor.constraint(equalToConstant: 14),
-                check.centerXAnchor.constraint(equalTo: radio.centerXAnchor),
-                check.centerYAnchor.constraint(equalTo: radio.centerYAnchor)
-            ])
-        }
-        label.translatesAutoresizingMaskIntoConstraints = false
-        button.addSubview(label)
-        button.addSubview(radio)
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: button.leadingAnchor),
-            label.centerYAnchor.constraint(equalTo: button.centerYAnchor),
-            radio.trailingAnchor.constraint(equalTo: button.trailingAnchor),
-            radio.centerYAnchor.constraint(equalTo: button.centerYAnchor),
-            radio.widthAnchor.constraint(equalToConstant: 22),
-            radio.heightAnchor.constraint(equalToConstant: 22)
-        ])
-        button.accessibilityLabel = reason
-        button.accessibilityTraits = selectedReason == reason ? [.button, .selected] : [.button]
-        button.accessibilityIdentifier = "community-report-reason-\(reasons.firstIndex(of: reason) ?? 0)"
-        button.addAction(UIAction { [weak self] _ in
-            guard let self else { return }
-            self.selectedReason = reason
-            self.showReasons()
-        }, for: .touchUpInside)
-        return button
-    }
-
     private func makeHandle() -> UIView {
         let handle = UIView()
         handle.backgroundColor = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
@@ -203,13 +194,6 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
         handle.widthAnchor.constraint(equalToConstant: 44).isActive = true
         handle.heightAnchor.constraint(equalToConstant: 5).isActive = true
         return handle
-    }
-
-    private func makeDivider() -> UIView {
-        let divider = UIView()
-        divider.backgroundColor = AppStyle.line
-        divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
-        return divider
     }
 
     private func makeHomeIndicator() -> UIView {
@@ -252,5 +236,77 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
             }
         default: break
         }
+    }
+}
+
+private extension CommunityReportFlowViewController {
+    func makeReasonRow(_ reason: String) -> UIButton {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalToConstant: 52).isActive = true
+        let selected = selectedReason == reason
+        let label = AppStyle.label(reason, size: 15, weight: selected ? .medium : .regular,
+            color: selected ? brandBlue : primaryText)
+        label.attributedText = NSAttributedString(string: reason, attributes: [
+            .font: UIFont.systemFont(ofSize: 15, weight: selected ? .medium : .regular),
+            .foregroundColor: selected ? brandBlue : primaryText,
+            .kern: -0.1,
+            .paragraphStyle: makeLineStyle(height: 24)
+        ])
+        label.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        let radio = UIView()
+        radio.layer.cornerRadius = 11
+        radio.layer.borderWidth = selected ? 0 : 1
+        radio.layer.borderColor = defaultBorder.cgColor
+        radio.backgroundColor = selected ? brandBlue : .white
+        radio.translatesAutoresizingMaskIntoConstraints = false
+        if selected { addCheckIcon(to: radio) }
+        label.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(label)
+        button.addSubview(radio)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            label.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            radio.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            radio.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            radio.widthAnchor.constraint(equalToConstant: 22),
+            radio.heightAnchor.constraint(equalToConstant: 22)
+        ])
+        button.accessibilityLabel = reason
+        button.accessibilityTraits = selected ? [.button, .selected] : [.button]
+        button.accessibilityIdentifier = "community-report-reason-\(reasons.firstIndex(of: reason) ?? 0)"
+        button.addAction(UIAction { [weak self] _ in
+            guard let self else { return }
+            self.selectedReason = reason
+            self.showReasons()
+        }, for: .touchUpInside)
+        return button
+    }
+
+    private func addCheckIcon(to radio: UIView) {
+        let image = UIImage(named: "CommunityReportRadioCheck")?.withRenderingMode(.alwaysOriginal)
+        let check = UIImageView(image: image)
+        check.translatesAutoresizingMaskIntoConstraints = false
+        radio.addSubview(check)
+        NSLayoutConstraint.activate([
+            check.widthAnchor.constraint(equalToConstant: 14),
+            check.heightAnchor.constraint(equalToConstant: 14),
+            check.centerXAnchor.constraint(equalTo: radio.centerXAnchor),
+            check.centerYAnchor.constraint(equalTo: radio.centerYAnchor)
+        ])
+    }
+
+    func makeDivider() -> UIView {
+        let divider = UIView()
+        divider.backgroundColor = subtleBorder
+        divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        return divider
+    }
+
+    func makeLineStyle(height: CGFloat) -> NSMutableParagraphStyle {
+        let style = NSMutableParagraphStyle()
+        style.minimumLineHeight = height
+        style.maximumLineHeight = height
+        return style
     }
 }
