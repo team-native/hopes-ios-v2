@@ -60,6 +60,11 @@ final class CommunityViewController: AppPageViewController {
         }) {
             topConstraint.constant = 8
         }
+        if let bottomConstraint = scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .bottom
+        }) {
+            bottomConstraint.constant = -16
+        }
 
         addHeader()
         addBoardFilters()
