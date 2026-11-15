@@ -5,6 +5,17 @@ extension SignupViewController {
     func render() {
         contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         renderCurrentStep()
+        let actionTopSpacer = UIView()
+        actionTopSpacer.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        contentStack.addArrangedSubview(actionTopSpacer)
+        let actionContainer = UIStackView(arrangedSubviews: [actionButton])
+        actionContainer.axis = .vertical
+        actionContainer.isLayoutMarginsRelativeArrangement = true
+        actionContainer.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
+        contentStack.addArrangedSubview(actionContainer)
+        let actionBottomSpacer = UIView()
+        actionBottomSpacer.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        contentStack.addArrangedSubview(actionBottomSpacer)
         updateActionButton()
         backButton.isHidden = step == .complete
         scrollView.setContentOffset(.zero, animated: false)
@@ -37,9 +48,8 @@ extension SignupViewController {
 
     func renderEmailStep() {
         addStepper(current: 0)
-        addHeading(lines: ["학교 이메일로", "인증해 주세요"])
+        addHeading(lines: ["학교 이메일로", "인증해 주세요"], accentPrefix: "학교 이메일")
         addField(label: "학교 이메일", field: emailField, error: emailError)
-        addSpacer(30)
     }
 
 }

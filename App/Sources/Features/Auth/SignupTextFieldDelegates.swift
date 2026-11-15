@@ -25,7 +25,8 @@ extension SignupViewController {
         let hasError = (textField === emailField && emailError != nil)
             || (textField === passwordField && passwordError != nil)
             || (textField === confirmField && confirmError != nil)
-        textField.layer.borderColor = (hasError ? Palette.error : Palette.blue).cgColor
+        textField.layer.borderColor = (hasError ? Palette.error : Palette.focus).cgColor
+        textField.layer.borderWidth = hasError ? 1 : 1.5
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
@@ -33,5 +34,6 @@ extension SignupViewController {
             || (textField === passwordField && passwordError != nil)
             || (textField === confirmField && confirmError != nil)
         textField.layer.borderColor = (hasError ? Palette.error : Palette.line).cgColor
+        textField.layer.borderWidth = 1
     }
 }
