@@ -1,22 +1,32 @@
 import UIKit
-import UniformTypeIdentifiers
+
+enum ChatAttachmentValidationState: Equatable, Sendable {
+    case supported
+    case unsupportedFormat
+    case unreadablePDF
+}
 
 struct ChatAttachmentItem: Identifiable {
     let id = UUID()
     let fileName: String
     let image: UIImage?
     let url: URL?
+    let validationState: ChatAttachmentValidationState
 
     var isSupported: Bool {
-        if image != nil { return true }
-        guard let url else { return false }
-        return UTType(filenameExtension: url.pathExtension)?.conforms(to: .pdf) == true
+        image != nil || (url != nil && validationState == .supported)
     }
 
-    init(fileName: String, image: UIImage?, url: URL? = nil) {
+    init(
+        fileName: String,
+        image: UIImage?,
+        url: URL? = nil,
+        validationState: ChatAttachmentValidationState = .supported
+    ) {
         self.fileName = fileName
         self.image = image
         self.url = url
+        self.validationState = validationState
     }
 }
 
@@ -34,6 +44,11 @@ final class ChatAttachmentTrayView: UIView {
     private let inputField = UITextField()
     private let sendButton = UIButton(type: .system)
     private let unsupportedFormatBanner = UIStackView()
+    private let bannerMessageLabel = AppStyle.label(
+        "", size: 12, color: UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
+    )
+    private weak var attachmentsScrollView: UIScrollView?
+    private var documentCardWidthConstraints: [NSLayoutConstraint] = []
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -45,6 +60,7 @@ final class ChatAttachmentTrayView: UIView {
     private func configureLayout() {
         configureAppearance()
         let attachmentsScroll = makeAttachmentsScrollView()
+        attachmentsScrollView = attachmentsScroll
         let inputRow = makeQuestionInputRow()
         configureUnsupportedFormatBanner()
         let homeIndicatorSpacer = UIView()
@@ -151,11 +167,20 @@ final class ChatAttachmentTrayView: UIView {
 
     private func updateAttachments() {
         countLabel.text = "첨부 \(attachments.count)개"
+        let unreadablePDF = attachments.contains { $0.validationState == .unreadablePDF }
         let hasUnsupportedAttachment = attachments.contains { !$0.isSupported }
-        unsupportedFormatBanner.isHidden = !hasUnsupportedAttachment
-        sendButton.isEnabled = !hasUnsupportedAttachment
-        sendButton.backgroundColor = hasUnsupportedAttachment ? AppStyle.blue.withAlphaComponent(0.4) : AppStyle.blue
-        onPreferredHeightChange?(hasUnsupportedAttachment ? 277 : 225)
+        let hasInvalidAttachment = unreadablePDF || hasUnsupportedAttachment
+        unsupportedFormatBanner.isHidden = !hasInvalidAttachment
+        bannerMessageLabel.text = unreadablePDF
+            ? "이 PDF는 열 수 없어요. 암호를 풀거나 다른 파일로 다시 첨부해 주세요."
+            : "이미지와 PDF만 첨부할 수 있어요."
+        bannerMessageLabel.textColor = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
+        sendButton.isEnabled = !hasInvalidAttachment
+        sendButton.backgroundColor = hasInvalidAttachment ? AppStyle.blue.withAlphaComponent(0.4) : AppStyle.blue
+        let trayHeight: CGFloat = unreadablePDF ? 293 : (hasUnsupportedAttachment ? 279 : 225)
+        onPreferredHeightChange?(trayHeight)
+        NSLayoutConstraint.deactivate(documentCardWidthConstraints)
+        documentCardWidthConstraints.removeAll()
         attachmentsStack.arrangedSubviews.forEach { view in
             attachmentsStack.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -163,13 +188,23 @@ final class ChatAttachmentTrayView: UIView {
         attachments.forEach { attachment in
             attachmentsStack.addArrangedSubview(makeAttachmentCard(attachment))
         }
+        setNeedsLayout()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        updateDocumentCardWidths()
     }
 
     private func makeAttachmentCard(_ attachment: ChatAttachmentItem) -> UIView {
         if let image = attachment.image {
             return makeImageCard(image, id: attachment.id)
         }
-        return makeDocumentCard(attachment)
+        let documentCard = ChatAttachmentDocumentCardFactory.make(attachment) { [weak self] id in
+            self?.onRemove?(id)
+        }
+        documentCardWidthConstraints.append(documentCard.widthConstraint)
+        return documentCard.view
     }
 
 }
@@ -216,82 +251,26 @@ private extension ChatAttachmentTrayView {
         icon.tintColor = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
         icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
         icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
-        let danger = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
-        let message = AppStyle.label("이미지와 PDF만 첨부할 수 있어요.", size: 12, color: danger)
         unsupportedFormatBanner.addArrangedSubview(icon)
-        unsupportedFormatBanner.addArrangedSubview(message)
+        unsupportedFormatBanner.addArrangedSubview(bannerMessageLabel)
         unsupportedFormatBanner.isHidden = true
     }
 
-    func makeDocumentCard(_ attachment: ChatAttachmentItem) -> UIView {
-        let card = UIView()
-        card.backgroundColor = .white
-        card.layer.cornerRadius = 16
-        card.layer.borderWidth = 1
-        card.layer.borderColor = AppStyle.line.cgColor
-        card.translatesAutoresizingMaskIntoConstraints = false
-        card.widthAnchor.constraint(equalToConstant: 192).isActive = true
-        card.heightAnchor.constraint(equalToConstant: 72).isActive = true
-
-        let iconChip = makeDocumentIconChip(isSupported: attachment.isSupported)
-        let name = AppStyle.label(attachment.fileName, size: 14, weight: .medium, color: AppStyle.ink)
-        name.lineBreakMode = .byTruncatingMiddle
-        let type = makeDocumentTypeLabel(isSupported: attachment.isSupported)
-        let content = makeDocumentCardContent(iconChip: iconChip, name: name, type: type)
-        card.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
-        ])
-        addPDFRemoveButton(to: card, id: attachment.id)
-        return card
-    }
-
-    func makeDocumentIconChip(isSupported: Bool) -> UIView {
-        let iconChip = UIView()
-        iconChip.backgroundColor = isSupported ? AppStyle.paleBlue : .white
-        iconChip.layer.cornerRadius = 12
-        let icon = UIImageView(image: UIImage(systemName: "doc.text"))
-        icon.tintColor = AppStyle.blue
-        icon.contentMode = .scaleAspectFit
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        iconChip.translatesAutoresizingMaskIntoConstraints = false
-        iconChip.addSubview(icon)
-        NSLayoutConstraint.activate([
-            iconChip.widthAnchor.constraint(equalToConstant: 32),
-            iconChip.heightAnchor.constraint(equalToConstant: 32),
-            icon.centerXAnchor.constraint(equalTo: iconChip.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: iconChip.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 16),
-            icon.heightAnchor.constraint(equalToConstant: 16)
-        ])
-        return iconChip
-    }
-
-    func makeDocumentTypeLabel(isSupported: Bool) -> UILabel {
-        let danger = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
-        let type = AppStyle.label(
-            isSupported ? "PDF 문서" : "지원하지 않는 형식",
-            size: 12,
-            color: isSupported ? AppStyle.muted : danger
-        )
-        return type
-    }
-
-    func makeDocumentCardContent(iconChip: UIView, name: UILabel, type: UILabel) -> UIStackView {
-        let labels = UIStackView(arrangedSubviews: [name, type])
-        labels.axis = .vertical
-        labels.spacing = 2
-        let content = UIStackView(arrangedSubviews: [iconChip, labels])
-        content.axis = .horizontal
-        content.alignment = .center
-        content.spacing = 8
-        content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 13, bottom: 8, trailing: 13)
-        content.translatesAutoresizingMaskIntoConstraints = false
-        return content
+    func updateDocumentCardWidths() {
+        guard !documentCardWidthConstraints.isEmpty,
+              let attachmentsScrollView,
+              attachmentsScrollView.bounds.width > 0 else { return }
+        let imageCount = attachments.filter { $0.image != nil }.count
+        let documentCount = documentCardWidthConstraints.count
+        let spacing = CGFloat(max(0, attachments.count - 1)) * 12
+        let imageWidth = CGFloat(imageCount) * 72
+        let remainingWidth = attachmentsScrollView.bounds.width - imageWidth - spacing
+        let documentWidth = max(192, remainingWidth / CGFloat(documentCount))
+        documentCardWidthConstraints.forEach { constraint in
+            if abs(constraint.constant - documentWidth) > 0.5 {
+                constraint.constant = documentWidth
+            }
+        }
     }
 
     func addRemoveButton(to card: UIView, id: UUID) {
@@ -316,29 +295,6 @@ private extension ChatAttachmentTrayView {
             remove.centerYAnchor.constraint(equalTo: hitArea.centerYAnchor),
             remove.widthAnchor.constraint(equalToConstant: 20),
             remove.heightAnchor.constraint(equalToConstant: 20)
-        ])
-    }
-
-    func addPDFRemoveButton(to card: UIView, id: UUID) {
-        let hitArea = UIView()
-        hitArea.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(hitArea)
-        let remove = UIButton(type: .system)
-        remove.setImage(UIImage(systemName: "xmark"), for: .normal)
-        remove.tintColor = AppStyle.muted
-        remove.accessibilityLabel = "첨부 제거"
-        remove.addAction(UIAction { [weak self] _ in self?.onRemove?(id) }, for: .touchUpInside)
-        remove.translatesAutoresizingMaskIntoConstraints = false
-        hitArea.addSubview(remove)
-        NSLayoutConstraint.activate([
-            hitArea.centerYAnchor.constraint(equalTo: card.centerYAnchor),
-            hitArea.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: 1),
-            hitArea.widthAnchor.constraint(equalToConstant: 44),
-            hitArea.heightAnchor.constraint(equalToConstant: 44),
-            remove.centerXAnchor.constraint(equalTo: hitArea.centerXAnchor),
-            remove.centerYAnchor.constraint(equalTo: hitArea.centerYAnchor),
-            remove.widthAnchor.constraint(equalToConstant: 16),
-            remove.heightAnchor.constraint(equalToConstant: 16)
         ])
     }
 
