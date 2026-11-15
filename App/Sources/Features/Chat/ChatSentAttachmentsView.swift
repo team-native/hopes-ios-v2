@@ -3,6 +3,7 @@ import UIKit
 @MainActor
 extension ChatConversationViewController {
     func addSentAttachments(_ attachments: [ChatAttachmentItem]) {
+        attachmentResponseState.thumbnails.removeAll()
         let row = UIStackView()
         row.axis = .horizontal
         row.alignment = .center
@@ -11,7 +12,9 @@ extension ChatConversationViewController {
 
         for attachment in attachments {
             if let image = attachment.image {
-                row.addArrangedSubview(makeSentImageThumbnail(image))
+                let thumbnail = makeSentImageThumbnail(image)
+                attachmentResponseState.thumbnails.append(thumbnail)
+                row.addArrangedSubview(thumbnail)
             } else {
                 row.addArrangedSubview(makeSentPDFChip(attachment.fileName))
             }
@@ -55,7 +58,7 @@ extension ChatConversationViewController {
         chip.alignment = .center
         chip.spacing = 8
         chip.isLayoutMarginsRelativeArrangement = true
-        chip.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
+        chip.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
         chip.backgroundColor = .white
         chip.layer.cornerRadius = 16
         chip.layer.borderWidth = 1
@@ -70,5 +73,14 @@ extension ChatConversationViewController {
         chip.layer.shadowRadius = 8
         chip.layer.shadowOffset = CGSize(width: 0, height: 4)
         return chip
+    }
+
+    func resizeSentAttachmentThumbnails(to size: CGFloat) {
+        for thumbnail in attachmentResponseState.thumbnails {
+            thumbnail.constraints
+                .filter { $0.firstAttribute == .width || $0.firstAttribute == .height }
+                .forEach { $0.constant = size }
+        }
+        view.layoutIfNeeded()
     }
 }

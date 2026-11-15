@@ -27,7 +27,7 @@ extension ChatConversationViewController {
                 }
                 removePendingAttachmentAnalysisCard()
                 stopAnswerButton.isHidden = true
-                if lastSentAttachments != nil {
+                if attachmentResponseState.lastSentAttachments != nil {
                     showAttachmentAnalysisFailure()
                 } else {
                     retryWhenOnline = true
@@ -130,6 +130,7 @@ extension ChatConversationViewController {
     }
 
     func beginAttachmentAnalysis(attachments: [ChatAttachmentItem]) {
+        attachmentResponseState.isResponse = true
         guard !isOffline else {
             showAttachmentAnalysisFailure()
             return
@@ -144,7 +145,7 @@ extension ChatConversationViewController {
 
         let card = makeAttachmentAnalysisCard(countDescription: countDescription)
         messagesStack.addArrangedSubview(card)
-        pendingAttachmentAnalysisCard = card
+        attachmentResponseState.pendingCard = card
         stopAnswerButton.isHidden = false
         inputField.placeholder = "자료를 확인하는 중이에요…"
         inputField.isEnabled = false
@@ -205,17 +206,17 @@ extension ChatConversationViewController {
     }
 
     func removePendingAttachmentAnalysisCard() {
-        guard let pendingAttachmentAnalysisCard else { return }
-        messagesStack.removeArrangedSubview(pendingAttachmentAnalysisCard)
-        pendingAttachmentAnalysisCard.removeFromSuperview()
-        self.pendingAttachmentAnalysisCard = nil
+        guard let pendingCard = attachmentResponseState.pendingCard else { return }
+        messagesStack.removeArrangedSubview(pendingCard)
+        pendingCard.removeFromSuperview()
+        attachmentResponseState.pendingCard = nil
     }
 
     func showAttachmentAnalysisFailure() {
-        guard attachmentAnalysisFailureCard == nil else { return }
+        guard attachmentResponseState.failureCard == nil else { return }
         let card = makeAttachmentAnalysisFailureCard()
         messagesStack.addArrangedSubview(card)
-        attachmentAnalysisFailureCard = card
+        attachmentResponseState.failureCard = card
     }
 
     private func makeAttachmentAnalysisFailureCard() -> UIView {
@@ -262,18 +263,24 @@ extension ChatConversationViewController {
     }
 
     private func retryAttachmentAnalysis() {
-        guard !isOffline, let lastSentAttachments else { return }
-        attachmentAnalysisFailureCard?.removeFromSuperview()
-        attachmentAnalysisFailureCard = nil
-        beginAttachmentAnalysis(attachments: lastSentAttachments)
+        guard !isOffline, let attachments = attachmentResponseState.lastSentAttachments else { return }
+        attachmentResponseState.failureCard?.removeFromSuperview()
+        attachmentResponseState.failureCard = nil
+        beginAttachmentAnalysis(attachments: attachments)
     }
 
     func finishAnswerGeneration() {
+        let isAttachmentResponse = attachmentResponseState.isResponse
+        let attachments = attachmentResponseState.lastSentAttachments
+        let attachmentSourceFileName = attachments?.first(where: { $0.image == nil })?.fileName
+            ?? attachments?.first?.fileName
+            ?? "첨부 자료"
         generationTimer = nil
         removePendingAttachmentAnalysisCard()
-        attachmentAnalysisFailureCard?.removeFromSuperview()
-        attachmentAnalysisFailureCard = nil
-        lastSentAttachments = nil
+        attachmentResponseState.failureCard?.removeFromSuperview()
+        attachmentResponseState.failureCard = nil
+        attachmentResponseState.lastSentAttachments = nil
+        attachmentResponseState.isResponse = false
         if let pendingAnswerCard {
             messagesStack.removeArrangedSubview(pendingAnswerCard)
             pendingAnswerCard.removeFromSuperview()
@@ -282,16 +289,22 @@ extension ChatConversationViewController {
         stopAnswerButton.isHidden = true
         inputField.isEnabled = true
         inputField.placeholder = "추가 질문 입력…"
-        addFormattedAnswer()
+        if isAttachmentResponse {
+            resizeSentAttachmentThumbnails(to: 56)
+            addAttachmentFormattedAnswer(sourceFileName: attachmentSourceFileName)
+        } else {
+            addFormattedAnswer()
+        }
     }
 
     func stopAnswerGeneration() {
         generationTimer?.cancel()
         generationTimer = nil
         removePendingAttachmentAnalysisCard()
-        attachmentAnalysisFailureCard?.removeFromSuperview()
-        attachmentAnalysisFailureCard = nil
-        lastSentAttachments = nil
+        attachmentResponseState.failureCard?.removeFromSuperview()
+        attachmentResponseState.failureCard = nil
+        attachmentResponseState.lastSentAttachments = nil
+        attachmentResponseState.isResponse = false
         stopAnswerButton.isHidden = true
         inputField.isEnabled = true
         inputField.placeholder = "추가 질문 입력…"
