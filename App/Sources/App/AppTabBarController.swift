@@ -5,78 +5,179 @@ final class AppTabBarController: UITabBarController {
     private struct TabItem {
         let controller: UIViewController
         let title: String
-        let iconName: String
-        let selectedSymbolName: String
         let identifier: String
+    }
+
+    private let customBar = UIView()
+    private var tabButtons: [UIButton] = []
+    private let tabRowHeight: CGFloat = 56
+    private var requestedSelectedIndex = 0
+
+    override var selectedIndex: Int {
+        get { super.selectedIndex }
+        set {
+            requestedSelectedIndex = newValue
+            super.selectedIndex = newValue
+            updateSelection()
+        }
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
-        let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
-        let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
-        let tabFont = UIFont.systemFont(ofSize: 11, weight: .medium)
-        tabBar.tintColor = brandBlue
-        tabBar.backgroundColor = .white
-        tabBar.isTranslucent = false
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
-        appearance.shadowColor = UIColor(red: 214 / 255, green: 224 / 255, blue: 237 / 255, alpha: 1)
-        let normal = appearance.stackedLayoutAppearance.normal
-        normal.iconColor = tertiary
-        normal.titleTextAttributes = [.font: tabFont, .foregroundColor: tertiary]
-        let selected = appearance.stackedLayoutAppearance.selected
-        selected.iconColor = brandBlue
-        selected.titleTextAttributes = [.font: tabFont, .foregroundColor: brandBlue]
-        let indicator = UIGraphicsImageRenderer(size: CGSize(width: 76, height: 56)).image { _ in
-            softBlue.setFill()
-            UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 76, height: 56), cornerRadius: 16).fill()
-        }
-        appearance.selectionIndicatorImage = indicator.withRenderingMode(.alwaysOriginal)
-        appearance.selectionIndicatorTintColor = softBlue
-        tabBar.selectionIndicatorImage = indicator.withRenderingMode(.alwaysOriginal)
-        tabBar.standardAppearance = appearance
-        tabBar.scrollEdgeAppearance = appearance
         let tabs: [TabItem] = [
             TabItem(
-                controller: HomeViewController(), title: "홈", iconName: "home-tab-icon-inactive",
-                selectedSymbolName: "house", identifier: "home"
+                controller: HomeViewController(), title: "홈", identifier: "home"
             ),
             TabItem(
-                controller: ChatHomeViewController(), title: "채팅", iconName: "chat-tab-icon",
-                selectedSymbolName: "bubble.left", identifier: "chat"
+                controller: ChatHomeViewController(), title: "채팅", identifier: "chat"
             ),
             TabItem(
-                controller: CommunityViewController(), title: "커뮤니티", iconName: "community-tab-icon",
-                selectedSymbolName: "person.2", identifier: "community"
+                controller: CommunityViewController(), title: "커뮤니티", identifier: "community"
             ),
             TabItem(
-                controller: HistoryViewController(), title: "기록", iconName: "history-tab-icon",
-                selectedSymbolName: "clock", identifier: "history"
+                controller: HistoryViewController(), title: "기록", identifier: "history"
             ),
             TabItem(
-                controller: MyPageViewController(), title: "마이페이지", iconName: "mypage-tab-icon",
-                selectedSymbolName: "person", identifier: "mypage"
+                controller: MyPageViewController(), title: "마이페이지", identifier: "mypage"
             )
         ]
+        let initialIndex = requestedSelectedIndex
         viewControllers = makeNavigationControllers(for: tabs)
+        if initialIndex < tabs.count {
+            selectedIndex = initialIndex
+        }
+        configureNativeTabBarForNavigationCompatibility()
+        configureCustomBar(for: tabs)
+        delegate = self
+        updateSelection()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let shouldShowBar = !tabBar.isHidden
+        customBar.isHidden = !shouldShowBar
+        if let parent = tabBar.superview {
+            parent.bringSubviewToFront(customBar)
+        }
+    }
+
+    private func configureNativeTabBarForNavigationCompatibility() {
+        tabBar.alpha = 0
+        tabBar.isUserInteractionEnabled = false
+        tabBar.backgroundColor = .white
+    }
+
+    private func configureCustomBar(for tabs: [TabItem]) {
+        customBar.backgroundColor = .white
+        customBar.translatesAutoresizingMaskIntoConstraints = false
+        guard let parent = tabBar.superview else { return }
+        parent.insertSubview(customBar, aboveSubview: tabBar)
+        NSLayoutConstraint.activate([
+            customBar.leadingAnchor.constraint(equalTo: tabBar.leadingAnchor),
+            customBar.trailingAnchor.constraint(equalTo: tabBar.trailingAnchor),
+            customBar.topAnchor.constraint(equalTo: tabBar.topAnchor),
+            customBar.bottomAnchor.constraint(equalTo: tabBar.bottomAnchor)
+        ])
+
+        let row = makeTabRow(for: tabs)
+        customBar.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.leadingAnchor.constraint(equalTo: customBar.leadingAnchor, constant: 12),
+            row.trailingAnchor.constraint(equalTo: customBar.trailingAnchor, constant: -12),
+            row.topAnchor.constraint(equalTo: customBar.topAnchor, constant: 4),
+            row.heightAnchor.constraint(equalToConstant: tabRowHeight)
+        ])
+    }
+
+    private func makeTabRow(for tabs: [TabItem]) -> UIStackView {
+        let row = UIStackView()
+        row.axis = .horizontal
+        row.alignment = .center
+        row.distribution = .fillEqually
+        row.translatesAutoresizingMaskIntoConstraints = false
+
+        for (index, item) in tabs.enumerated() {
+            let button = UIButton(type: .custom)
+            button.tag = index
+            button.accessibilityIdentifier = "tab-\(item.identifier)"
+            button.accessibilityLabel = item.title
+            button.accessibilityTraits = .button
+            button.addAction(UIAction { [weak self] action in
+                guard let button = action.sender as? UIButton else { return }
+                self?.selectedIndex = button.tag
+                self?.updateSelection()
+            }, for: .touchUpInside)
+
+            let icon = UIImageView()
+            icon.tag = 100
+            icon.contentMode = .scaleAspectFit
+            icon.translatesAutoresizingMaskIntoConstraints = false
+            let label = UILabel()
+            label.tag = 101
+            label.font = .systemFont(ofSize: 11, weight: .medium)
+            label.text = item.title
+            label.textAlignment = .center
+            label.translatesAutoresizingMaskIntoConstraints = false
+            button.addSubview(icon)
+            button.addSubview(label)
+            NSLayoutConstraint.activate([
+                button.heightAnchor.constraint(equalToConstant: 56),
+                icon.topAnchor.constraint(equalTo: button.topAnchor, constant: 8),
+                icon.centerXAnchor.constraint(equalTo: button.centerXAnchor),
+                icon.widthAnchor.constraint(equalToConstant: 22),
+                icon.heightAnchor.constraint(equalToConstant: 22),
+                label.topAnchor.constraint(equalTo: icon.bottomAnchor, constant: 2),
+                label.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 2),
+                label.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -2),
+                label.bottomAnchor.constraint(lessThanOrEqualTo: button.bottomAnchor, constant: -3)
+            ])
+            row.addArrangedSubview(button)
+            tabButtons.append(button)
+        }
+        return row
     }
 
     private func makeNavigationControllers(for tabs: [TabItem]) -> [UIViewController] {
         tabs.map { item in
             let navigation = UINavigationController(rootViewController: item.controller)
-            navigation.tabBarItem = UITabBarItem(
-                title: item.title,
-                image: UIImage(named: item.iconName)?.withRenderingMode(.alwaysOriginal),
-                selectedImage: selectedImage(for: item)
-            )
+            navigation.tabBarItem = UITabBarItem(title: item.title, image: nil, tag: 0)
             navigation.tabBarItem.accessibilityIdentifier = "tab-\(item.identifier)"
             return navigation
         }
     }
 
-    private func selectedImage(for item: TabItem) -> UIImage? {
-        UIImage(systemName: item.selectedSymbolName)?.withRenderingMode(.alwaysTemplate)
+    private func updateSelection() {
+        let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+        let inactive = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+        let selectedFill = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+        for (index, button) in tabButtons.enumerated() {
+            let isSelected = index == selectedIndex
+            button.backgroundColor = isSelected ? selectedFill : .clear
+            button.layer.cornerRadius = 16
+            button.accessibilityTraits = isSelected ? [.button, .selected] : [.button]
+            (button.viewWithTag(101) as? UILabel)?.textColor = isSelected ? blue : inactive
+            guard let icon = button.viewWithTag(100) as? UIImageView else { continue }
+            let assetNames = iconNames(isSelected: isSelected)
+            icon.image = UIImage(named: assetNames[index])?.withRenderingMode(.alwaysOriginal)
+        }
+    }
+
+    private func iconNames(isSelected: Bool) -> [String] {
+        if isSelected {
+            return [
+                "home-tab-icon", "chat-tab-icon", "community-tab-icon", "history-tab-icon",
+                "mypage-tab-icon-selected"
+            ]
+        }
+        return [
+            "home-tab-icon-inactive", "chat-tab-icon", "community-tab-icon", "history-tab-icon",
+            "mypage-tab-icon"
+        ]
+    }
+}
+
+extension AppTabBarController: UITabBarControllerDelegate {
+    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
+        updateSelection()
     }
 }
