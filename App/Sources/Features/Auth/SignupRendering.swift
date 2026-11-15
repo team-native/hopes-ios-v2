@@ -216,58 +216,12 @@ extension SignupViewController {
         addStepper(current: 0)
         addHeading(lines: ["메일로 받은", "인증번호를 입력해 주세요"])
 
-        addVerifiedEmailRow()
+        addVerificationEmailRow()
 
-        addVerifiedCodeDigits()
+        addVerificationCodeDigits()
+        addSpacer(14)
 
         addVerifiedConfirmation()
-    }
-
-    private func addVerifiedEmailRow() {
-        let emailRow = UIStackView()
-        emailRow.axis = .vertical
-        emailRow.spacing = 6
-        emailRow.isLayoutMarginsRelativeArrangement = true
-        emailRow.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        emailRow.addArrangedSubview(makeLabel("학교 이메일", size: 12, weight: .medium, color: Palette.muted))
-        let address = UIView()
-        address.backgroundColor = Palette.paleBlue
-        address.layer.cornerRadius = 10
-        let addressLabel = makeLabel(email, size: 13, color: Palette.ink)
-        addressLabel.translatesAutoresizingMaskIntoConstraints = false
-        address.addSubview(addressLabel)
-        NSLayoutConstraint.activate([
-            address.heightAnchor.constraint(equalToConstant: 44),
-            addressLabel.leadingAnchor.constraint(equalTo: address.leadingAnchor, constant: 14),
-            addressLabel.centerYAnchor.constraint(equalTo: address.centerYAnchor)
-        ])
-        emailRow.addArrangedSubview(address)
-        contentStack.addArrangedSubview(emailRow)
-        emailRow.translatesAutoresizingMaskIntoConstraints = false
-        addSpacer(14)
-    }
-
-    private func addVerifiedCodeDigits() {
-        codeDigits.arrangedSubviews.forEach { codeDigits.removeArrangedSubview($0); $0.removeFromSuperview() }
-        for index in 0..<6 {
-            let digitBox = UIView()
-            digitBox.backgroundColor = .white
-            digitBox.layer.cornerRadius = 10
-            digitBox.layer.borderWidth = 1
-            digitBox.layer.borderColor = Palette.line.cgColor
-            let digit = makeLabel(character(at: index), size: 20, weight: .semibold, color: Palette.ink)
-            digit.textAlignment = .center
-            digit.translatesAutoresizingMaskIntoConstraints = false
-            digitBox.addSubview(digit)
-            NSLayoutConstraint.activate([
-                digit.centerXAnchor.constraint(equalTo: digitBox.centerXAnchor),
-                digit.centerYAnchor.constraint(equalTo: digitBox.centerYAnchor)
-            ])
-            codeDigits.addArrangedSubview(digitBox)
-        }
-        contentStack.addArrangedSubview(codeDigits)
-        codeDigits.heightAnchor.constraint(equalToConstant: 56).isActive = true
-        addSpacer(10)
     }
 
     private func addVerifiedConfirmation() {
@@ -277,10 +231,10 @@ extension SignupViewController {
         verified.spacing = 6
         let icon = UIImageView(image: UIImage(systemName: "checkmark"))
         icon.tintColor = Palette.blue
-        icon.widthAnchor.constraint(equalToConstant: 14).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        icon.widthAnchor.constraint(equalToConstant: 16).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 16).isActive = true
         verified.addArrangedSubview(icon)
-        verified.addArrangedSubview(makeLabel("이메일 인증이 완료됐어요", size: 12, color: Palette.blue))
+        verified.addArrangedSubview(makeLabel("이메일 인증이 완료됐어요", size: 14, weight: .medium, color: Palette.blue))
         verified.isLayoutMarginsRelativeArrangement = true
         verified.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         contentStack.addArrangedSubview(verified)
