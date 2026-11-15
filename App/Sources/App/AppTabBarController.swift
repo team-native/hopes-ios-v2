@@ -29,9 +29,9 @@ final class AppTabBarController: UITabBarController {
         let selected = appearance.stackedLayoutAppearance.selected
         selected.iconColor = brandBlue
         selected.titleTextAttributes = [.font: tabFont, .foregroundColor: brandBlue]
-        let indicator = UIGraphicsImageRenderer(size: CGSize(width: 64, height: 52)).image { _ in
+        let indicator = UIGraphicsImageRenderer(size: CGSize(width: 76, height: 56)).image { _ in
             softBlue.setFill()
-            UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 64, height: 52), cornerRadius: 16).fill()
+            UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 76, height: 56), cornerRadius: 16).fill()
         }
         appearance.selectionIndicatorImage = indicator.withRenderingMode(.alwaysOriginal)
         appearance.selectionIndicatorTintColor = softBlue
