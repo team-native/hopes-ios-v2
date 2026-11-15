@@ -19,4 +19,4 @@ tuist generate
 open Hopes.xcodeproj
 ```
 
-The app currently opens a UIKit home screen stub. Add feature modules as boundaries become clear.
+The app opens through a splash screen into the UIKit welcome screen. The welcome screen links to the existing sign-up and login flows. Authentication, account creation, and password reset are currently local UI prototypes; production server integration is not present in this repository.
