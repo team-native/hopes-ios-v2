@@ -40,7 +40,7 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
         super.viewDidLoad()
         title = nil
         view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
-        contentStack.spacing = 16
+        contentStack.spacing = 10
         if let topConstraint = scrollView.constraints.first(where: {
             $0.firstItem === contentStack && $0.firstAttribute == .top
         }) {
@@ -156,7 +156,7 @@ extension CommunityPostDetailViewController {
         composerBar.addSubview(stack)
 
         commentField.placeholder = "댓글 달기"
-        commentField.font = .systemFont(ofSize: 14)
+        commentField.font = .systemFont(ofSize: 15)
         commentField.textColor = AppStyle.ink
         commentField.backgroundColor = .white
         commentField.layer.cornerRadius = 25
@@ -164,7 +164,7 @@ extension CommunityPostDetailViewController {
         commentField.layer.borderColor = AppStyle.line.cgColor
         commentField.returnKeyType = .send
         commentField.delegate = self
-        commentField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
+        commentField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 19, height: 1))
         commentField.leftViewMode = .always
         commentField.heightAnchor.constraint(equalToConstant: 52).isActive = true
 
