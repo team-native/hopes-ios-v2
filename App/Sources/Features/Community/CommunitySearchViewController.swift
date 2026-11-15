@@ -251,7 +251,7 @@ extension CommunitySearchViewController {
 
     private func makeResultFooter(_ post: CommunityPost) -> UIStackView {
         let footer = UIStackView(arrangedSubviews: [
-            AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: tertiary),
+            AppStyle.label("\(post.authorCohort) · \(post.time)", size: 12, color: tertiary),
             UIView(),
             makeStat(icon: "community-search-heart-icon", count: post.likes),
             makeStat(icon: "community-search-comment-icon", count: post.comments)

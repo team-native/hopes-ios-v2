@@ -200,7 +200,7 @@ extension MyActivityViewController {
         body.numberOfLines = 2
 
         let footer = UIStackView(arrangedSubviews: [
-            AppStyle.label("\(post.grade) · \(post.time)", size: 12, color: tertiary),
+            AppStyle.label("\(post.authorCohort) · \(post.time)", size: 12, color: tertiary),
             UIView(),
             makeStat(icon: "my-activity-heart-icon", count: post.likes),
             makeStat(icon: "my-activity-chat-icon", count: post.comments)
