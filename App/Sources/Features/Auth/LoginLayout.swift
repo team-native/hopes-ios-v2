@@ -141,7 +141,7 @@ extension LoginViewController {
         field.autocapitalizationType = .none
         field.autocorrectionType = .no
         field.translatesAutoresizingMaskIntoConstraints = false
-        field.heightAnchor.constraint(equalToConstant: 54).isActive = true
+        field.heightAnchor.constraint(equalToConstant: 56).isActive = true
     }
 
     func makeFieldLabel(_ title: String) -> UILabel {
