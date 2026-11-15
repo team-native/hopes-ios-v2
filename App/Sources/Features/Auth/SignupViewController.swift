@@ -57,6 +57,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     var emailErrorRow: UIStackView?
     var actionTopSpacer: UIView?
     var actionTopSpacerHeightConstraint: NSLayoutConstraint?
+    var confirmFieldHeightConstraint: NSLayoutConstraint?
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
@@ -174,7 +175,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         passwordField.delegate = self
         passwordField.addTarget(self, action: #selector(passwordChanged), for: .editingChanged)
 
-        configureTextField(confirmField, placeholder: "비밀번호 다시 입력", contentType: .newPassword)
+        configureTextField(confirmField, placeholder: "비밀번호 다시 입력", contentType: .newPassword, height: 54)
         confirmField.isSecureTextEntry = true
         confirmField.delegate = self
         confirmField.addTarget(self, action: #selector(passwordChanged), for: .editingChanged)
@@ -222,7 +223,11 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         field.autocapitalizationType = .none
         field.autocorrectionType = .no
         if let contentType { field.textContentType = contentType }
-        field.heightAnchor.constraint(equalToConstant: height).isActive = true
+        let heightConstraint = field.heightAnchor.constraint(equalToConstant: height)
+        heightConstraint.isActive = true
+        if field === confirmField {
+            confirmFieldHeightConstraint = heightConstraint
+        }
     }
 
 }
