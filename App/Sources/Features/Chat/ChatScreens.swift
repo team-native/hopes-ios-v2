@@ -137,11 +137,13 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         showComposerConstraint.isActive = true
         composerScrollConstraint = showComposerConstraint
         attachmentTrayScrollConstraint = showTrayConstraint
+        view.keyboardLayoutGuide.usesBottomSafeArea = true
+        view.keyboardLayoutGuide.followsUndockedKeyboard = false
 
         NSLayoutConstraint.activate([
             composer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             composer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            composer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+            composer.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -8),
             composer.heightAnchor.constraint(equalToConstant: 52),
             tray.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tray.trailingAnchor.constraint(equalTo: view.trailingAnchor),
