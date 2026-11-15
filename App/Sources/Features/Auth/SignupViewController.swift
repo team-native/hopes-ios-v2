@@ -174,7 +174,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         passwordField.delegate = self
         passwordField.addTarget(self, action: #selector(passwordChanged), for: .editingChanged)
 
-        configureTextField(confirmField, placeholder: "비밀번호 확인", contentType: .newPassword)
+        configureTextField(confirmField, placeholder: "비밀번호 다시 입력", contentType: .newPassword)
         confirmField.isSecureTextEntry = true
         confirmField.delegate = self
         confirmField.addTarget(self, action: #selector(passwordChanged), for: .editingChanged)
@@ -215,7 +215,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         field.layer.cornerRadius = 16
         field.layer.borderWidth = 1
         field.layer.borderColor = Palette.line.cgColor
-        field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 14, height: 1))
+        field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
         field.leftViewMode = .always
         field.attributedPlaceholder = NSAttributedString(string: placeholder,
             attributes: [.foregroundColor: Palette.placeholder])

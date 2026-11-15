@@ -247,6 +247,7 @@ extension SignupViewController {
         addStepper(current: 1)
         addHeading(lines: ["로그인에 쓸", "비밀번호를 만들어 주세요"])
         addField(label: "비밀번호", field: passwordField, error: passwordError, showsVisibility: true)
+        addSpacer(14)
 
         let requirements = UIStackView()
         requirements.axis = .vertical
@@ -266,7 +267,7 @@ extension SignupViewController {
             row.axis = .horizontal
             row.alignment = .center
             row.spacing = 6
-            let image = UIImageView(image: UIImage(systemName: isValid ? "checkmark.circle.fill" : "circle"))
+            let image = UIImageView(image: UIImage(systemName: "checkmark"))
             image.tintColor = isValid ? Palette.blue : Palette.placeholder
             image.widthAnchor.constraint(equalToConstant: 14).isActive = true
             image.heightAnchor.constraint(equalToConstant: 14).isActive = true
@@ -279,7 +280,6 @@ extension SignupViewController {
         requirements.heightAnchor.constraint(equalToConstant: 60).isActive = true
         addSpacer(14)
         addField(label: "비밀번호 확인", field: confirmField, error: confirmError, showsVisibility: true)
-        addSpacer(28)
     }
 
     func renderProfileStep() {
