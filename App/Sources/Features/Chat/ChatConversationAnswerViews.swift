@@ -4,8 +4,7 @@ import UIKit
 extension ChatConversationViewController {
     func addConversationHeader() {
         let back = UIButton(type: .system)
-        back.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        back.tintColor = AppStyle.ink
+        back.setImage(UIImage(named: "ChatConversationBack")?.withRenderingMode(.alwaysOriginal), for: .normal)
         back.widthAnchor.constraint(equalToConstant: 44).isActive = true
         back.heightAnchor.constraint(equalToConstant: 44).isActive = true
         back.addAction(UIAction { [weak self] _ in self?.navigationController?.popViewController(animated: true) },
@@ -20,10 +19,14 @@ extension ChatConversationViewController {
         applyLineHeight(title, lineHeight: 26, height: 26)
         context.textColor = ChatDetailPalette.muted
         applyLineHeight(context, lineHeight: 16, height: 16)
+        conversationHeaderTitleLabel = title
+        conversationHeaderSubtitleLabel = context
+        conversationHeaderDefaultSubtitle = "\(department) · \(major)"
         let titleStack = UIStackView(arrangedSubviews: [title, context])
         titleStack.axis = .vertical
         titleStack.spacing = 0
         let location = makeLocationActionButton()
+        locationHeaderActionButton = location
         let row = UIStackView(arrangedSubviews: [back, titleStack, location])
         row.axis = .horizontal
         row.alignment = .center
@@ -32,18 +35,38 @@ extension ChatConversationViewController {
         messagesStack.addArrangedSubview(row)
     }
 
-    func addUserMessage(_ text: String) {
-        let bubble = UIView()
-        bubble.backgroundColor = AppStyle.blue
-        bubble.layer.cornerRadius = 20
-        bubble.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner]
-        bubble.layer.shadowColor = UIColor(red: 46 / 255, green: 135 / 255, blue: 245 / 255, alpha: 0.2).cgColor
+    func addUserMessage(_ text: String, isLocationRequest: Bool = false) {
+        let bubble: UIView
+        if isLocationRequest {
+            let figmaBubble = ChatConversationBubbleView(
+                fillColor: ChatDetailPalette.brand,
+                topLeftRadius: 24,
+                topRightRadius: 24,
+                bottomRightRadius: 6,
+                bottomLeftRadius: 24
+            )
+            figmaBubble.layer.shadowColor = UIColor(
+                red: 46 / 255, green: 135 / 255, blue: 245 / 255, alpha: 0.2
+            ).cgColor
+            bubble = figmaBubble
+        } else {
+            let standardBubble = UIView()
+            standardBubble.backgroundColor = AppStyle.blue
+            standardBubble.layer.cornerRadius = 20
+            standardBubble.layer.maskedCorners = [
+                .layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner
+            ]
+            standardBubble.layer.shadowColor = UIColor(
+                red: 46 / 255, green: 135 / 255, blue: 245 / 255, alpha: 0.2
+            ).cgColor
+            bubble = standardBubble
+        }
         bubble.layer.shadowOpacity = 1
         bubble.layer.shadowRadius = 10
         bubble.layer.shadowOffset = CGSize(width: 0, height: 8)
         bubble.widthAnchor.constraint(lessThanOrEqualToConstant: 340).isActive = true
         let label = AppStyle.label(text, size: 15, color: .white)
-        applyLineHeight(label, lineHeight: 24, height: 24)
+        applyLineHeight(label, lineHeight: 24, height: 24, kern: isLocationRequest ? -0.1 : nil)
         let wrapper = UIView()
         wrapper.addSubview(bubble)
         bubble.addSubview(label)
@@ -343,15 +366,34 @@ extension ChatConversationViewController {
         }, for: .touchUpInside)
         return button
     }
-    func applyLineHeight(_ label: UILabel, lineHeight: CGFloat, height: CGFloat) {
+    func applyLineHeight(_ label: UILabel, lineHeight: CGFloat, height: CGFloat, kern: CGFloat? = nil) {
         let paragraph = NSMutableParagraphStyle()
         paragraph.minimumLineHeight = lineHeight
         paragraph.maximumLineHeight = lineHeight
-        label.attributedText = NSAttributedString(string: label.text ?? "", attributes: [
+        var attributes: [NSAttributedString.Key: Any] = [
             .font: label.font as Any,
             .foregroundColor: label.textColor as Any,
             .paragraphStyle: paragraph
-        ])
-        label.heightAnchor.constraint(equalToConstant: height).isActive = true
+        ]
+        if let kern {
+            attributes[.kern] = kern
+        }
+        label.attributedText = NSAttributedString(string: label.text ?? "", attributes: attributes)
+        if !label.constraints.contains(where: { $0.firstAttribute == .height }) {
+            label.heightAnchor.constraint(equalToConstant: height).isActive = true
+        }
+    }
+
+    func setLocationConversationHeader(active: Bool) {
+        conversationHeaderTitleLabel?.text = active ? "학교 생활" : "전공 공부"
+        conversationHeaderSubtitleLabel?.text = active ? "선배 답변 · 위치 안내" : conversationHeaderDefaultSubtitle
+        locationHeaderActionButton?.isHidden = active
+        view.backgroundColor = active ? ChatDetailPalette.canvas : AppStyle.canvas
+        if let conversationHeaderTitleLabel {
+            applyLineHeight(conversationHeaderTitleLabel, lineHeight: 26, height: 26, kern: -0.2)
+        }
+        if let conversationHeaderSubtitleLabel {
+            applyLineHeight(conversationHeaderSubtitleLabel, lineHeight: 16, height: 16)
+        }
     }
 }

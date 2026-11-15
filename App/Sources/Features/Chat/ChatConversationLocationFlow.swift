@@ -6,7 +6,7 @@ import UIKit
 extension ChatConversationViewController {
     func makeLocationActionButton() -> UIButton {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "chat-location-pin")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.setImage(UIImage(named: "ChatConversationLocationPin")?.withRenderingMode(.alwaysOriginal), for: .normal)
         button.accessibilityLabel = "현재 위치 확인"
         button.accessibilityIdentifier = "chat-current-location"
         button.addAction(UIAction { [weak self] _ in self?.beginLocationMeasurement() }, for: .touchUpInside)
@@ -16,7 +16,8 @@ extension ChatConversationViewController {
     }
 
     func beginLocationMeasurement(isRetry: Bool = false) {
-        if !isRetry { addUserMessage("지금 내 위치 알려줘") }
+        setLocationConversationHeader(active: true)
+        if !isRetry { addUserMessage("지금 내 위치 알려줘", isLocationRequest: true) }
         hasPendingLocationRequest = true
 
         switch locationManager.authorizationStatus {
@@ -53,6 +54,7 @@ extension ChatConversationViewController {
 
     func cancelLocationRequest() {
         hasPendingLocationRequest = false
+        setLocationConversationHeader(active: false)
         guard let locationCard else { return }
         messagesStack.removeArrangedSubview(locationCard)
         locationCard.removeFromSuperview()
@@ -75,12 +77,18 @@ extension ChatConversationViewController {
     }
 
     func makeLocationMeasurementCard() -> UIView {
-        let card = AppStyle.card()
-        card.layer.cornerRadius = 24
-        card.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.08).cgColor
+        let card = ChatConversationBubbleView(
+            fillColor: .white,
+            topLeftRadius: 6,
+            topRightRadius: 24,
+            bottomRightRadius: 24,
+            bottomLeftRadius: 24,
+            borderColor: ChatDetailPalette.border
+        )
+        card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.05).cgColor
         card.layer.shadowOpacity = 1
-        card.layer.shadowRadius = 14
-        card.layer.shadowOffset = CGSize(width: 0, height: 6)
+        card.layer.shadowRadius = 8
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
 
         let row = makeLocationMeasurementRow()
         let progress = makeLocationProgressView()
@@ -88,7 +96,7 @@ extension ChatConversationViewController {
         content.axis = .vertical
         content.spacing = 10
         content.isLayoutMarginsRelativeArrangement = true
-        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14)
+        content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
         content.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(content)
         NSLayoutConstraint.activate([
@@ -102,23 +110,33 @@ extension ChatConversationViewController {
 
     private func makeLocationMeasurementRow() -> UIStackView {
         let iconContainer = UIView()
-        iconContainer.backgroundColor = AppStyle.paleBlue
+        iconContainer.backgroundColor = ChatDetailPalette.brandSoft
         iconContainer.layer.cornerRadius = 12
         iconContainer.widthAnchor.constraint(equalToConstant: 44).isActive = true
         iconContainer.heightAnchor.constraint(equalToConstant: 44).isActive = true
-        let pinPath = Bundle.main.path(forResource: "chat-location-pin", ofType: "png")
-        let pin = UIImageView(image: pinPath.flatMap(UIImage.init(contentsOfFile:)))
+        let pin = UIImageView(image: UIImage(named: "ChatConversationLocationPin"))
         pin.contentMode = .scaleAspectFit
         pin.translatesAutoresizingMaskIntoConstraints = false
         iconContainer.addSubview(pin)
         NSLayoutConstraint.activate([
             pin.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
             pin.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
-            pin.widthAnchor.constraint(equalToConstant: 24),
-            pin.heightAnchor.constraint(equalToConstant: 24)
+            pin.widthAnchor.constraint(equalToConstant: 22),
+            pin.heightAnchor.constraint(equalToConstant: 22)
         ])
-        let title = AppStyle.label("현재 위치를 확인하고 있어요…", size: 15, weight: .medium)
-        let subtitle = AppStyle.label("잠시만 기다려 주세요. 보통 몇 초면 끝나요.", size: 12, color: AppStyle.muted)
+        let title = AppStyle.label(
+            "현재 위치를 확인하고 있어요…",
+            size: 15,
+            weight: .medium,
+            color: ChatDetailPalette.ink
+        )
+        applyLineHeight(title, lineHeight: 24, height: 24, kern: -0.1)
+        let subtitle = AppStyle.label(
+            "잠시만 기다려 주세요. 보통 몇 초면 끝나요.",
+            size: 12,
+            color: ChatDetailPalette.muted
+        )
+        applyLineHeight(subtitle, lineHeight: 16, height: 16)
         subtitle.numberOfLines = 1
         let labels = UIStackView(arrangedSubviews: [title, subtitle])
         labels.axis = .vertical
@@ -126,21 +144,29 @@ extension ChatConversationViewController {
         let row = UIStackView(arrangedSubviews: [iconContainer, labels])
         row.axis = .horizontal
         row.alignment = .center
-        row.spacing = 10
+        row.spacing = 12
 
         return row
     }
 
-    private func makeLocationProgressView() -> UIProgressView {
-        let progress = UIProgressView(progressViewStyle: .default)
-        progress.progress = 0.42
-        progress.progressTintColor = AppStyle.blue
-        progress.trackTintColor = UIColor(red: 0.90, green: 0.94, blue: 0.99, alpha: 1)
-        progress.layer.cornerRadius = 3
-        progress.clipsToBounds = true
-        progress.heightAnchor.constraint(equalToConstant: 6).isActive = true
+    private func makeLocationProgressView() -> UIView {
+        let track = UIView()
+        track.backgroundColor = ChatDetailPalette.brandSoft
+        track.layer.cornerRadius = 3
+        track.heightAnchor.constraint(equalToConstant: 6).isActive = true
 
-        return progress
+        let fill = UIView()
+        fill.backgroundColor = ChatDetailPalette.brand
+        fill.layer.cornerRadius = 3
+        fill.translatesAutoresizingMaskIntoConstraints = false
+        track.addSubview(fill)
+        NSLayoutConstraint.activate([
+            fill.leadingAnchor.constraint(equalTo: track.leadingAnchor),
+            fill.topAnchor.constraint(equalTo: track.topAnchor),
+            fill.bottomAnchor.constraint(equalTo: track.bottomAnchor),
+            fill.widthAnchor.constraint(equalToConstant: 140)
+        ])
+        return track
     }
 
     func replaceLocationCard(with card: UIView) {

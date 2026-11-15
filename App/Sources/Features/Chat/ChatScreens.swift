@@ -37,6 +37,10 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private var attachmentTrayKeyboardBottomConstraint: NSLayoutConstraint?
     var successToastView: UIView?
     var successToastDismissal: DispatchWorkItem?
+    var conversationHeaderTitleLabel: UILabel?
+    var conversationHeaderSubtitleLabel: UILabel?
+    var conversationHeaderDefaultSubtitle = ""
+    var locationHeaderActionButton: UIButton?
 
     init(question: String?, attachments: [ChatAttachmentItem] = []) {
         initialQuestion = question
@@ -118,7 +122,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     private func makeComposerContainer() -> UIStackView {
         let composer = UIStackView()
         composer.axis = .horizontal
-        composer.spacing = 10
+        composer.spacing = 2
         composer.alignment = .center
         composer.backgroundColor = .white
         composer.layer.cornerRadius = 28
@@ -142,6 +146,15 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     private func configureInputField() {
         inputField.placeholder = "추가 질문 입력…"
+        inputField.font = .systemFont(ofSize: 15)
+        inputField.textColor = ChatDetailPalette.ink
+        inputField.attributedPlaceholder = NSAttributedString(
+            string: "추가 질문 입력…",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 15),
+                .foregroundColor: ChatDetailPalette.placeholder
+            ]
+        )
         inputField.borderStyle = .none
         inputField.returnKeyType = .send
         inputField.delegate = self
@@ -150,7 +163,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     private func makeAttachmentButton() -> UIButton {
         let attach = UIButton(type: .system)
-        attach.setImage(UIImage(named: "chat-plus-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        attach.setImage(UIImage(named: "ChatComposerPlusFigma")?.withRenderingMode(.alwaysOriginal), for: .normal)
         attach.imageView?.contentMode = .scaleAspectFit
         attach.backgroundColor = .white
         attach.layer.cornerRadius = 20
@@ -169,7 +182,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     private func makeSendButton() -> UIButton {
         let send = UIButton(type: .system)
-        send.setImage(UIImage(named: "chat-send-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        send.setImage(UIImage(named: "ChatComposerSendFigma")?.withRenderingMode(.alwaysOriginal), for: .normal)
         send.imageView?.contentMode = .scaleAspectFit
         send.backgroundColor = LocationMapStyle.brand
         send.layer.cornerRadius = 20
@@ -183,7 +196,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     private func makeVoiceButton() -> UIButton {
         let mic = UIButton(type: .system)
-        mic.setImage(UIImage(named: "chat-mic-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        mic.setImage(UIImage(named: "ChatComposerMicFigma")?.withRenderingMode(.alwaysOriginal), for: .normal)
         mic.imageView?.contentMode = .scaleAspectFit
         mic.widthAnchor.constraint(equalToConstant: 40).isActive = true
         mic.heightAnchor.constraint(equalToConstant: 40).isActive = true
