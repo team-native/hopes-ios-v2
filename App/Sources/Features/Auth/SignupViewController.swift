@@ -165,7 +165,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         codeField.delegate = self
         codeField.addTarget(self, action: #selector(codeChanged), for: .editingChanged)
 
-        configureTextField(nameField, placeholder: "이름", contentType: .name)
+        configureTextField(nameField, placeholder: "이름", contentType: .name, height: 54)
         nameField.text = UserProfileStore.shared.name
         nameField.addTarget(self, action: #selector(profileNameChanged), for: .editingChanged)
 
@@ -179,8 +179,8 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         confirmField.delegate = self
         confirmField.addTarget(self, action: #selector(passwordChanged), for: .editingChanged)
 
-        departmentButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
-        generationButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        departmentButton.heightAnchor.constraint(equalToConstant: 54).isActive = true
+        generationButton.heightAnchor.constraint(equalToConstant: 55).isActive = true
 
         codeDigits.axis = .horizontal
         codeDigits.alignment = .fill
