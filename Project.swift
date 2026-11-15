@@ -36,7 +36,9 @@ let project = Project(
             settings: .settings(
                 base: [
                     "IPHONEOS_DEPLOYMENT_TARGET": "17.0",
-                    "SWIFT_VERSION": "5.0"
+                    "SWIFT_VERSION": "5.0",
+                    "CODE_SIGN_STYLE": "Automatic",
+                    "DEVELOPMENT_TEAM": "XVUY3P7HN4"
                 ]
             )
         )
