@@ -62,8 +62,7 @@ extension ChatConversationViewController {
         banner.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
         banner.backgroundColor = AppStyle.ink
         banner.layer.cornerRadius = 14
-        let icon = UIImageView(image: UIImage(systemName: "wifi.slash"))
-        icon.tintColor = .white
+        let icon = UIImageView(image: UIImage(named: "ChatOfflineWifi")?.withRenderingMode(.alwaysOriginal))
         icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
         icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
         let message = AppStyle.label("인터넷 연결이 끊겼어요. 연결되면 자동으로 다시 시도해요.", size: 12, color: .white)
@@ -79,8 +78,7 @@ extension ChatConversationViewController {
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 6
-        let clock = UIImageView(image: UIImage(systemName: "clock"))
-        clock.tintColor = AppStyle.muted
+        let clock = UIImageView(image: UIImage(named: "ChatOfflineClock")?.withRenderingMode(.alwaysOriginal))
         clock.widthAnchor.constraint(equalToConstant: 14).isActive = true
         clock.heightAnchor.constraint(equalToConstant: 14).isActive = true
         row.addArrangedSubview(UIView())
