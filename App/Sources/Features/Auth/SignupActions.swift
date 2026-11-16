@@ -335,8 +335,12 @@ extension SignupViewController {
     @objc func passwordChanged() {
         let password = passwordField.text ?? ""
         let confirmation = confirmField.text ?? ""
-        passwordError = password.isEmpty || passwordRequirementsMet ? nil : "비밀번호 조건을 모두 맞춰 주세요."
-        confirmError = confirmation.isEmpty || confirmation == password ? nil : "비밀번호가 일치하지 않아요."
+        if passwordError != nil, password.isEmpty || passwordRequirementsMet {
+            passwordError = nil
+        }
+        if confirmError != nil, confirmation.isEmpty || confirmation == password {
+            confirmError = nil
+        }
         let responder = [passwordField, confirmField].first(where: \.isFirstResponder)
         render()
         DispatchQueue.main.async { responder?.becomeFirstResponder() }

@@ -4,7 +4,7 @@ import UIKit
 extension SignupViewController {
     func renderCompleteStep() {
         addSpacer(16)
-        addFlexibleCompletionSpacer()
+        let topSpacer = addFlexibleCompletionSpacer()
         addSpacer(16)
 
         let content = UIStackView()
@@ -18,8 +18,9 @@ extension SignupViewController {
         contentStack.addArrangedSubview(content)
 
         addSpacer(16)
-        addFlexibleCompletionSpacer()
+        let bottomSpacer = addFlexibleCompletionSpacer()
         addSpacer(16)
+        topSpacer.heightAnchor.constraint(equalTo: bottomSpacer.heightAnchor).isActive = true
     }
 
     private func makeSignupCompletionCheck() -> UIView {
@@ -79,11 +80,13 @@ extension SignupViewController {
         return summary
     }
 
-    private func addFlexibleCompletionSpacer() {
+    @discardableResult
+    private func addFlexibleCompletionSpacer() -> UIView {
         let spacer = UIView()
         spacer.setContentHuggingPriority(.defaultLow, for: .vertical)
         spacer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         spacer.heightAnchor.constraint(greaterThanOrEqualToConstant: 0).isActive = true
         contentStack.addArrangedSubview(spacer)
+        return spacer
     }
 }

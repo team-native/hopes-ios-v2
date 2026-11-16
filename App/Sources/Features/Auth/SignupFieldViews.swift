@@ -10,6 +10,7 @@ extension SignupViewController {
         let bars = UIStackView()
         bars.axis = .horizontal
         bars.spacing = 6
+        bars.distribution = .fillEqually
         for index in 0..<3 {
             let bar = UIView()
             bar.backgroundColor = index <= current ? Palette.blue : Palette.line
@@ -54,8 +55,6 @@ extension SignupViewController {
             description.heightAnchor.constraint(equalToConstant: 20).isActive = true
             stack.addArrangedSubview(description)
         }
-        stack.isLayoutMarginsRelativeArrangement = true
-        stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         contentStack.addArrangedSubview(stack)
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSpacer(14)
@@ -65,8 +64,6 @@ extension SignupViewController {
         let group = UIStackView()
         group.axis = .vertical
         group.spacing = 6
-        group.isLayoutMarginsRelativeArrangement = true
-        group.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         let fieldLabel = makeLabel(label, size: 14, weight: .medium, color: Palette.muted)
         fieldLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
         group.addArrangedSubview(fieldLabel)
@@ -74,7 +71,9 @@ extension SignupViewController {
         field.layer.borderColor = (error == nil ? Palette.line : Palette.error).cgColor
         field.layer.borderWidth = error == nil ? 1 : 1.5
         if showsVisibility {
-            let visibility = UIButton(type: .system)
+            var visibilityConfig = UIButton.Configuration.plain()
+            visibilityConfig.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 16)
+            let visibility = UIButton(configuration: visibilityConfig)
             let eye = UIImage(named: "SignupPasswordEye")?.withRenderingMode(.alwaysOriginal)
             visibility.setImage(field.isSecureTextEntry ? eye : UIImage(systemName: "eye.slash"), for: .normal)
             visibility.tintColor = Palette.muted
@@ -85,7 +84,7 @@ extension SignupViewController {
                     : UIImage(systemName: "eye.slash")
                 visibility?.setImage(image, for: .normal)
             }, for: .touchUpInside)
-            visibility.frame = CGRect(x: 0, y: 0, width: 40, height: 44)
+            visibility.frame = CGRect(x: 0, y: 0, width: 42, height: 44)
             field.rightView = visibility
             field.rightViewMode = .always
         }
@@ -105,9 +104,10 @@ extension SignupViewController {
         let group = UIStackView()
         group.axis = .vertical
         group.spacing = 6
-        group.isLayoutMarginsRelativeArrangement = true
-        group.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        group.addArrangedSubview(makeLabel(label, size: 14, weight: .medium, color: Palette.muted))
+        let controlLabel = makeLabel(label, size: 14, weight: .medium, color: Palette.muted)
+        controlLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        group.addArrangedSubview(controlLabel)
+        addDropdownIcon(to: control)
         group.addArrangedSubview(control)
         if let error { group.addArrangedSubview(makeInlineError(error)) }
         contentStack.addArrangedSubview(group)
@@ -132,7 +132,7 @@ extension SignupViewController {
     func addInlineError(_ text: String) {
         let row = makeInlineError(text)
         row.isLayoutMarginsRelativeArrangement = true
-        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 2, leading: 20, bottom: 0, trailing: 20)
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 2, leading: 0, bottom: 0, trailing: 0)
         contentStack.addArrangedSubview(row)
     }
 
@@ -161,11 +161,14 @@ extension SignupViewController {
     func dropdownConfiguration(title: String, error: Bool) -> UIButton.Configuration {
         var config = UIButton.Configuration.plain()
         config.title = title
-        config.image = UIImage(systemName: "chevron.down")
-        config.imagePlacement = .trailing
-        config.imagePadding = 8
         config.baseForegroundColor = title == "기수 선택" ? Palette.placeholder : Palette.ink
-        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 46)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 15)
+            outgoing.kern = -0.1
+            return outgoing
+        }
         config.background.backgroundColor = .white
         config.background.strokeColor = error ? Palette.error : Palette.line
         config.background.strokeWidth = error ? 1.5 : 1
@@ -175,17 +178,55 @@ extension SignupViewController {
 
     func checkboxConfiguration() -> UIButton.Configuration {
         var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: termsAccepted ? "checkmark.square.fill" : "square")
+        config.image = checkboxImage(checked: termsAccepted)
         config.title = "서비스 이용약관 및 개인정보 처리방침 동의 (필수)"
-        config.imagePadding = 6
+        config.imagePadding = 8
         config.contentInsets = .zero
         config.baseForegroundColor = Palette.muted
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 12, weight: .medium)
+            outgoing.font = .systemFont(ofSize: 12)
             return outgoing
         }
         return config
     }
+
+    private func checkboxImage(checked: Bool) -> UIImage {
+        let size = CGSize(width: 20, height: 20)
+        let image = UIGraphicsImageRenderer(size: size).image { _ in
+            let box = UIBezierPath(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 0.5, dy: 0.5),
+                cornerRadius: 6)
+            if checked {
+                Palette.blue.setFill()
+                box.fill()
+                UIImage(named: "LoginKeepCheck")?.draw(in: CGRect(x: 3, y: 3, width: 14, height: 14))
+            } else {
+                UIColor.white.setFill()
+                box.fill()
+                UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1).setStroke()
+                box.lineWidth = 1
+                box.stroke()
+            }
+        }
+        return image.withRenderingMode(.alwaysOriginal)
+    }
+
+    private func addDropdownIcon(to control: UIButton) {
+        control.contentHorizontalAlignment = .leading
+        guard control.viewWithTag(Self.dropdownIconTag) == nil else { return }
+        let icon = UIImageView(image: UIImage(named: "SignupDropdownDown")?.withRenderingMode(.alwaysOriginal))
+        icon.tag = Self.dropdownIconTag
+        icon.isUserInteractionEnabled = false
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        control.addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.trailingAnchor.constraint(equalTo: control.trailingAnchor, constant: -16),
+            icon.centerYAnchor.constraint(equalTo: control.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 18),
+            icon.heightAnchor.constraint(equalToConstant: 18)
+        ])
+    }
+
+    private static var dropdownIconTag: Int { 7_310 }
 
 }
