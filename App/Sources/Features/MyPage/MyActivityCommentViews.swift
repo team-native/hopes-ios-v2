@@ -78,4 +78,11 @@ extension MyActivityViewController {
         ])
         return label
     }
+
+    func lineStyle(height: CGFloat) -> NSMutableParagraphStyle {
+        let style = NSMutableParagraphStyle()
+        style.minimumLineHeight = height
+        style.maximumLineHeight = height
+        return style
+    }
 }

@@ -12,6 +12,13 @@ final class MyActivityViewController: AppPageViewController {
     var selectedTab = 0
     var previousNavigationBarHidden = false
 
+    init() {
+        super.init(nibName: nil, bundle: nil)
+        hidesBottomBarWhenPushed = true
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "내 활동"
@@ -291,13 +298,6 @@ extension MyActivityViewController {
         stat.alignment = .center
         stat.spacing = 4
         return stat
-    }
-
-    func lineStyle(height: CGFloat) -> NSMutableParagraphStyle {
-        let style = NSMutableParagraphStyle()
-        style.minimumLineHeight = height
-        style.maximumLineHeight = height
-        return style
     }
 
     func addPostsEmptyState() {
