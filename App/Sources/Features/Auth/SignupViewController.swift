@@ -59,6 +59,12 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     var actionTopSpacer: UIView?
     var actionTopSpacerHeightConstraint: NSLayoutConstraint?
     var confirmFieldHeightConstraint: NSLayoutConstraint?
+    weak var passwordRequirementsStack: UIStackView?
+    var fieldErrorRows: [ObjectIdentifier: UIView] = [:]
+    lazy var scrollTopToBarConstraint = scrollView.topAnchor.constraint(equalTo: topBar.bottomAnchor)
+    lazy var scrollTopToSafeAreaConstraint = scrollView.topAnchor.constraint(
+        equalTo: view.safeAreaLayoutGuide.topAnchor
+    )
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
@@ -84,8 +90,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         topBar.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(topBar)
 
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        backButton.tintColor = Palette.ink
+        backButton.setImage(UIImage(named: "SettingsBack")?.withRenderingMode(.alwaysOriginal), for: .normal)
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
         backButton.accessibilityLabel = "뒤로 가기"
         backButton.translatesAutoresizingMaskIntoConstraints = false
@@ -123,11 +128,13 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
         contentStack.axis = .vertical
         contentStack.alignment = .fill
         contentStack.spacing = 0
+        contentStack.isLayoutMarginsRelativeArrangement = true
+        contentStack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: topBar.bottomAnchor),
+            scrollTopToBarConstraint,
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),

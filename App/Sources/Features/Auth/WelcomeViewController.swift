@@ -107,7 +107,7 @@ final class WelcomeViewController: UIViewController {
             contentStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
             contentStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
             contentStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
-            contentStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            contentStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset)
         ])
     }
 

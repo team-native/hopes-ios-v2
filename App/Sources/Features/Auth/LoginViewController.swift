@@ -28,6 +28,7 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     let passwordGroup = UIStackView()
     let errorRow = UIStackView()
     let keepRow = UIStackView()
+    let keepRowSpacer = UIView()
     let keepCheckbox = UIButton(type: .system)
     let forgotButton = UIButton(type: .system)
     let loginButton = UIButton(type: .system)
@@ -106,6 +107,7 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         sheetStackLeadingConstraint.constant = horizontalInset
         sheetStackTrailingConstraint.constant = -horizontalInset
         keepRow.isHidden = newMode != .sheet
+        keepRowSpacer.isHidden = newMode != .sheet
         signupRow.isHidden = newMode == .keyboard
         forgotButton.isHidden = newMode != .sheet
         heroTitleLabel.isHidden = newMode != .sheet

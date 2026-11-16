@@ -17,22 +17,23 @@ extension SignupViewController {
             actionTopSpacerHeightConstraint = spacerHeightConstraint
             contentStack.addArrangedSubview(actionTopSpacer)
         }
-        let actionContainer = UIStackView(arrangedSubviews: [actionButton])
-        actionContainer.axis = .vertical
-        actionContainer.isLayoutMarginsRelativeArrangement = true
-        actionContainer.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        contentStack.addArrangedSubview(actionContainer)
-        let actionBottomSpacer = UIView()
-        actionBottomSpacer.heightAnchor.constraint(equalToConstant: 16).isActive = true
-        contentStack.addArrangedSubview(actionBottomSpacer)
-        if step == .complete {
-            let minimumHeight = contentStack.heightAnchor.constraint(
-                greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor
-            )
-            minimumHeight.isActive = true
+        if step != .complete {
+            let actionContainer = UIStackView(arrangedSubviews: [actionButton])
+            actionContainer.axis = .vertical
+            contentStack.addArrangedSubview(actionContainer)
+            let actionBottomSpacer = UIView()
+            actionBottomSpacer.heightAnchor.constraint(equalToConstant: 16).isActive = true
+            contentStack.addArrangedSubview(actionBottomSpacer)
         }
         updateActionButton()
-        backButton.isHidden = step == .complete
+        topBar.isHidden = step == .complete
+        if step == .complete {
+            scrollTopToBarConstraint.isActive = false
+            scrollTopToSafeAreaConstraint.isActive = true
+        } else {
+            scrollTopToSafeAreaConstraint.isActive = false
+            scrollTopToBarConstraint.isActive = true
+        }
         scrollView.setContentOffset(.zero, animated: false)
         let willFocusInput: Bool
         switch step {
@@ -84,7 +85,7 @@ extension SignupViewController {
     func renderVerificationStep() {
         codeField.isUserInteractionEnabled = true
         addStepper(current: 0)
-        addHeading(lines: ["메일로 받은", "인증번호를 입력해 주세요"])
+        addHeading(lines: ["메일로 받은", "인증번호를 입력해 주세요"], accentPrefix: "인증번호")
 
         addVerificationEmailRow()
 
@@ -97,9 +98,9 @@ extension SignupViewController {
         let emailSection = UIStackView()
         emailSection.axis = .vertical
         emailSection.spacing = 6
-        emailSection.isLayoutMarginsRelativeArrangement = true
-        emailSection.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        emailSection.addArrangedSubview(makeLabel("학교 이메일", size: 14, weight: .medium, color: Palette.muted))
+        let emailLabel = makeLabel("학교 이메일", size: 14, weight: .medium, color: Palette.muted)
+        emailLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        emailSection.addArrangedSubview(emailLabel)
         let emailRow = UIStackView()
         emailRow.axis = .horizontal
         emailRow.alignment = .center
@@ -135,8 +136,13 @@ extension SignupViewController {
             digitBox.layer.cornerRadius = 16
             digitBox.layer.borderWidth = 1
             digitBox.layer.borderColor = codeError == nil ? Palette.line.cgColor : Palette.error.cgColor
-            let digit = makeLabel(character(at: index), size: 20, weight: .semibold, color: Palette.ink)
+            let digit = makeLabel(character(at: index), size: 22, weight: .bold, color: Palette.ink)
             digit.textAlignment = .center
+            digit.attributedText = NSAttributedString(string: character(at: index), attributes: [
+                .font: UIFont.systemFont(ofSize: 22, weight: .bold),
+                .foregroundColor: Palette.ink,
+                .kern: -0.3
+            ])
             digit.translatesAutoresizingMaskIntoConstraints = false
             digitBox.addSubview(digit)
             NSLayoutConstraint.activate([
@@ -147,10 +153,9 @@ extension SignupViewController {
         }
         codeDigits.translatesAutoresizingMaskIntoConstraints = false
         codeDigits.heightAnchor.constraint(equalToConstant: 56).isActive = true
-        let codeSection = UIStackView(arrangedSubviews: [
-            makeLabel("인증번호 6자리", size: 14, weight: .medium, color: Palette.muted),
-            codeDigits
-        ])
+        let codeLabel = makeLabel("인증번호 6자리", size: 14, weight: .medium, color: Palette.muted)
+        codeLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        let codeSection = UIStackView(arrangedSubviews: [codeLabel, codeDigits])
         codeSection.axis = .vertical
         codeSection.spacing = 8
         contentStack.addArrangedSubview(codeSection)
@@ -193,8 +198,8 @@ extension SignupViewController {
         timerLabel.text = formattedCountdown
         timerLabel.textColor = countdown == 0 ? Palette.error : Palette.blue
         timerLabel.accessibilityLabel = "인증번호 유효 시간 \(formattedCountdown)"
-        let clockIcon = UIImageView(image: UIImage(systemName: "clock"))
-        clockIcon.tintColor = Palette.blue
+        let clockIcon = UIImageView(image: UIImage(named: "PasswordResetClock")?.withRenderingMode(.alwaysTemplate))
+        clockIcon.tintColor = countdown == 0 ? Palette.error : Palette.blue
         clockIcon.contentMode = .scaleAspectFit
         clockIcon.widthAnchor.constraint(equalToConstant: 14).isActive = true
         clockIcon.heightAnchor.constraint(equalToConstant: 14).isActive = true
@@ -206,7 +211,7 @@ extension SignupViewController {
         timerRow.addArrangedSubview(UIView())
         let resend = UIButton(type: .system)
         resend.setTitle("인증번호 다시 받기", for: .normal)
-        resend.setTitleColor(countdown == 0 ? Palette.muted : Palette.blue, for: .normal)
+        resend.setTitleColor(Palette.muted, for: .normal)
         resend.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         resend.addTarget(self, action: #selector(resendCode), for: .touchUpInside)
         timerRow.addArrangedSubview(resend)
@@ -226,7 +231,7 @@ extension SignupViewController {
     func renderVerifiedStep() {
         codeField.isUserInteractionEnabled = false
         addStepper(current: 0)
-        addHeading(lines: ["메일로 받은", "인증번호를 입력해 주세요"])
+        addHeading(lines: ["메일로 받은", "인증번호를 입력해 주세요"], accentPrefix: "인증번호")
 
         addVerificationEmailRow()
 
@@ -247,8 +252,6 @@ extension SignupViewController {
         icon.heightAnchor.constraint(equalToConstant: 16).isActive = true
         verified.addArrangedSubview(icon)
         verified.addArrangedSubview(makeLabel("이메일 인증이 완료됐어요", size: 14, weight: .medium, color: Palette.blue))
-        verified.isLayoutMarginsRelativeArrangement = true
-        verified.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         contentStack.addArrangedSubview(verified)
     }
 
@@ -258,52 +261,39 @@ extension SignupViewController {
         confirmField.isUserInteractionEnabled = !isReady
         confirmFieldHeightConstraint?.constant = confirmError == nil ? 54 : 55
         addStepper(current: 1)
-        addHeading(lines: ["로그인에 쓸", "비밀번호를 만들어 주세요"])
+        addHeading(lines: ["로그인에 쓸", "비밀번호를 만들어 주세요"], accentPrefix: "비밀번호")
         addField(label: "비밀번호", field: passwordField, error: passwordError, showsVisibility: true)
         addSpacer(14)
 
         let requirements = UIStackView()
         requirements.axis = .vertical
         requirements.spacing = 6
-        let value = passwordField.text ?? ""
-        let requirementsList: [(String, Bool)] = [
-            ("8자 이상", value.count >= 8),
-            (
-                "영문과 숫자 포함",
-                value.rangeOfCharacter(from: .letters) != nil &&
-                    value.rangeOfCharacter(from: .decimalDigits) != nil
-            ),
-            ("특수문자 포함", value.rangeOfCharacter(from: CharacterSet.punctuationCharacters.union(.symbols)) != nil)
-        ]
-        requirementsList.forEach { text, isValid in
+        for _ in 0..<3 {
             let row = UIStackView()
             row.axis = .horizontal
             row.alignment = .center
             row.spacing = 6
-            let showsRequirementError = passwordError != nil && !isValid
-            let imageName = showsRequirementError
-                ? "SignupRuleX"
-                : (isValid ? "SignupRuleCheck" : "SignupRuleCheckMuted")
-            let icon = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal)
-            let image = UIImageView(image: icon)
+            let image = UIImageView()
             image.widthAnchor.constraint(equalToConstant: 14).isActive = true
             image.heightAnchor.constraint(equalToConstant: 14).isActive = true
             row.addArrangedSubview(image)
-            let textColor = isValid ? Palette.blue : (showsRequirementError ? Palette.error : Palette.placeholder)
-            row.addArrangedSubview(makeLabel(text, size: 12, color: textColor))
+            row.addArrangedSubview(makeLabel("", size: 12, color: Palette.placeholder))
             requirements.addArrangedSubview(row)
         }
+        passwordRequirementsStack = requirements
+        updatePasswordRequirementRows()
         contentStack.addArrangedSubview(requirements)
         requirements.translatesAutoresizingMaskIntoConstraints = false
         requirements.heightAnchor.constraint(equalToConstant: 60).isActive = true
         addSpacer(14)
-        addField(label: "비밀번호 확인", field: confirmField, error: confirmError, showsVisibility: true)
+        addField(label: "비밀번호 확인", field: confirmField, error: confirmError)
     }
 
     func renderProfileStep() {
         addStepper(current: 2)
         addHeading(lines: ["선배에게 보여줄", "기본 정보를 알려주세요"], subtitle: "커뮤니티에는 이름 대신 기수만 표시돼요.", accentPrefix: "선배")
         addField(label: "이름", field: nameField)
+        addSpacer(14)
 
         departmentButton.configuration = dropdownConfiguration(title: selectedDepartment, error: false)
         addLabeledControl(label: "과", control: departmentButton)
@@ -312,6 +302,7 @@ extension SignupViewController {
         addLabeledControl(label: "기수", control: generationButton, error: generationError ? "기수를 선택해 주세요." : nil)
 
         termsButton.configuration = checkboxConfiguration()
+        termsButton.contentHorizontalAlignment = .leading
         contentStack.addArrangedSubview(termsButton)
         termsButton.translatesAutoresizingMaskIntoConstraints = false
         termsButton.heightAnchor.constraint(equalToConstant: 20).isActive = true
@@ -325,6 +316,39 @@ extension SignupViewController {
 
     var formattedCountdown: String {
         String(format: "%02d:%02d", countdown / 60, countdown % 60)
+    }
+
+    var passwordRequirementStates: [(String, Bool)] {
+        let value = passwordField.text ?? ""
+        return [
+            ("8자 이상", value.count >= 8),
+            (
+                "영문과 숫자 포함",
+                value.rangeOfCharacter(from: .letters) != nil &&
+                    value.rangeOfCharacter(from: .decimalDigits) != nil
+            ),
+            ("특수문자 포함", value.rangeOfCharacter(from: CharacterSet.punctuationCharacters.union(.symbols)) != nil)
+        ]
+    }
+
+    func updatePasswordRequirementRows() {
+        guard let rows = passwordRequirementsStack?.arrangedSubviews as? [UIStackView] else { return }
+        for (row, state) in zip(rows, passwordRequirementStates) {
+            let (text, isValid) = state
+            let showsError = passwordError != nil && !isValid
+            let imageName = showsError ? "SignupRuleX" : (isValid ? "SignupRuleCheck" : "SignupRuleCheckMuted")
+            (row.arrangedSubviews.first as? UIImageView)?.image = UIImage(named: imageName)?
+                .withRenderingMode(.alwaysOriginal)
+            let label = row.arrangedSubviews.last as? UILabel
+            label?.text = text
+            label?.textColor = isValid ? Palette.blue : (showsError ? Palette.error : Palette.placeholder)
+        }
+    }
+
+    func clearInlineError(for field: UITextField) {
+        fieldErrorRows[ObjectIdentifier(field)]?.isHidden = true
+        field.layer.borderColor = (field.isFirstResponder ? Palette.focus : Palette.line).cgColor
+        field.layer.borderWidth = field.isFirstResponder ? 1.5 : 1
     }
 
     var passwordRequirementsMet: Bool {

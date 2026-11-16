@@ -212,7 +212,11 @@ extension SignupViewController {
     @objc func goBack() {
         switch step {
         case .email:
-            navigationController?.popViewController(animated: true)
+            if let navigationController, navigationController.viewControllers.count > 1 {
+                navigationController.popViewController(animated: true)
+            } else {
+                dismiss(animated: true)
+            }
         case .verification:
             step = .email
             codeError = nil
@@ -296,13 +300,9 @@ extension SignupViewController {
     }
 
     private func validatePassword() {
-        guard passwordRequirementsMet else {
-            passwordError = "비밀번호 조건을 모두 맞춰 주세요."
-            render(focusField: false)
-            return
-        }
-        guard passwordField.text == confirmField.text else {
-            confirmError = "비밀번호가 일치하지 않아요."
+        passwordError = passwordRequirementsMet ? nil : "비밀번호 조건을 모두 맞춰 주세요."
+        confirmError = passwordField.text == confirmField.text ? nil : "비밀번호가 일치하지 않아요."
+        guard passwordError == nil, confirmError == nil else {
             render(focusField: false)
             return
         }
@@ -335,11 +335,16 @@ extension SignupViewController {
     @objc func passwordChanged() {
         let password = passwordField.text ?? ""
         let confirmation = confirmField.text ?? ""
-        passwordError = password.isEmpty || passwordRequirementsMet ? nil : "비밀번호 조건을 모두 맞춰 주세요."
-        confirmError = confirmation.isEmpty || confirmation == password ? nil : "비밀번호가 일치하지 않아요."
-        let responder = [passwordField, confirmField].first(where: \.isFirstResponder)
-        render()
-        DispatchQueue.main.async { responder?.becomeFirstResponder() }
+        if passwordError != nil, password.isEmpty || passwordRequirementsMet {
+            passwordError = nil
+            clearInlineError(for: passwordField)
+        }
+        if confirmError != nil, confirmation.isEmpty || confirmation == password {
+            confirmError = nil
+            clearInlineError(for: confirmField)
+        }
+        updatePasswordRequirementRows()
+        updateActionButton()
     }
 
     @objc func changeEmail() {

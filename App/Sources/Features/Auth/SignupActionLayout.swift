@@ -12,7 +12,7 @@ extension SignupViewController {
         }
 
         view.layoutIfNeeded()
-        let targetBottom = view.safeAreaLayoutGuide.layoutFrame.maxY - 16
+        let targetBottom = view.bounds.maxY - AppStyle.bottomActionInset
         let targetTop = targetBottom - 50
         let spacerTop = actionTopSpacer.convert(.zero, to: view).y
         actionTopSpacerHeightConstraint.constant = max(14, targetTop - spacerTop)

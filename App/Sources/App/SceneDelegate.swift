@@ -41,6 +41,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         } else {
             window.rootViewController = SplashViewController()
         }
+        KeyboardDismissGesture.shared.install(on: window)
         self.window = window
         (UIApplication.shared.delegate as? AppDelegate)?.window = window
         window.makeKeyAndVisible()

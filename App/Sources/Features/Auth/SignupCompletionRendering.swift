@@ -3,9 +3,6 @@ import UIKit
 @MainActor
 extension SignupViewController {
     func renderCompleteStep() {
-        addSpacer(16)
-        addFlexibleCompletionSpacer()
-        addSpacer(16)
 
         let content = UIStackView()
         content.axis = .vertical
@@ -15,11 +12,23 @@ extension SignupViewController {
         let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? UserProfileStore.shared.name
         content.addArrangedSubview(makeSignupCompletionTitle(name: name))
         content.addArrangedSubview(makeSignupCompletionSummary())
-        contentStack.addArrangedSubview(content)
-
-        addSpacer(16)
-        addFlexibleCompletionSpacer()
-        addSpacer(16)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        actionButton.removeFromSuperview()
+        actionButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(content)
+        view.addSubview(actionButton)
+        let centerGuide = UILayoutGuide()
+        view.addLayoutGuide(centerGuide)
+        NSLayoutConstraint.activate([
+            actionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            actionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            actionButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset),
+            centerGuide.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            centerGuide.bottomAnchor.constraint(equalTo: actionButton.topAnchor),
+            content.centerYAnchor.constraint(equalTo: centerGuide.centerYAnchor),
+            content.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            content.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        ])
     }
 
     private func makeSignupCompletionCheck() -> UIView {
@@ -77,13 +86,5 @@ extension SignupViewController {
             .paragraphStyle: paragraph
         ])
         return summary
-    }
-
-    private func addFlexibleCompletionSpacer() {
-        let spacer = UIView()
-        spacer.setContentHuggingPriority(.defaultLow, for: .vertical)
-        spacer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
-        spacer.heightAnchor.constraint(greaterThanOrEqualToConstant: 0).isActive = true
-        contentStack.addArrangedSubview(spacer)
     }
 }
