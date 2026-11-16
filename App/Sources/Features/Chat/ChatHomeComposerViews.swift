@@ -251,11 +251,13 @@ extension ChatHomeViewController {
         controls.translatesAutoresizingMaskIntoConstraints = false
         composerBar.addSubview(controls)
 
+        view.keyboardLayoutGuide.usesBottomSafeArea = true
+        view.keyboardLayoutGuide.followsUndockedKeyboard = false
         NSLayoutConstraint.activate([
             composerBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             composerBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             composerBar.heightAnchor.constraint(equalToConstant: 52),
-            composerBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            composerBar.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -10),
             controls.topAnchor.constraint(equalTo: composerBar.topAnchor),
             controls.leadingAnchor.constraint(equalTo: composerBar.leadingAnchor),
             controls.trailingAnchor.constraint(equalTo: composerBar.trailingAnchor),
