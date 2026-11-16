@@ -27,7 +27,18 @@ extension CommunityPostDetailViewController {
         header.axis = .horizontal
         header.alignment = .center
         header.spacing = 12
-        contentStack.addArrangedSubview(header)
+        header.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(header)
+        view.constraints
+            .filter { $0.firstItem === scrollView && $0.firstAttribute == .top }
+            .forEach { $0.isActive = false }
+        NSLayoutConstraint.activate([
+            header.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            header.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            header.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            header.heightAnchor.constraint(equalToConstant: 44),
+            scrollView.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 2)
+        ])
     }
 
     func makePostCard() -> UIView {
