@@ -198,7 +198,10 @@ extension LoginViewController {
         keepCheckbox.layer.borderWidth = keepSignedIn ? 0 : 1
         keepCheckbox.layer.borderColor = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1).cgColor
         keepCheckbox.tintColor = .white
-        keepCheckbox.setImage(keepSignedIn ? UIImage(systemName: "checkmark") : nil, for: .normal)
+        keepCheckbox.setImage(
+            keepSignedIn ? UIImage(named: "LoginKeepCheck")?.withRenderingMode(.alwaysOriginal) : nil,
+            for: .normal
+        )
         keepCheckbox.imageView?.contentMode = .scaleAspectFit
     }
 
