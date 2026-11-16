@@ -140,10 +140,10 @@ final class NotificationsViewController: AppPageViewController {
         rows.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(rows)
         NSLayoutConstraint.activate([
-            rows.topAnchor.constraint(equalTo: card.topAnchor, constant: 4),
-            rows.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            rows.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -4)
+            rows.topAnchor.constraint(equalTo: card.topAnchor, constant: 5),
+            rows.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 17),
+            rows.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -17),
+            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -5)
         ])
 
         for _ in 0..<4 {
@@ -250,7 +250,7 @@ extension NotificationsViewController {
         itemsStack.layer.shadowRadius = 4
         itemsStack.layer.shadowOffset = CGSize(width: 0, height: 4)
         itemsStack.isLayoutMarginsRelativeArrangement = true
-        itemsStack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 17, bottom: 14, trailing: 17)
+        itemsStack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 15, leading: 17, bottom: 15, trailing: 17)
         itemsStack.spacing = 0
         items.enumerated().forEach { index, item in
             if index > 0 {
@@ -319,10 +319,10 @@ extension NotificationsViewController {
         row.addSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: row.topAnchor, constant: 14),
+            content.topAnchor.constraint(equalTo: row.topAnchor, constant: 15),
             content.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             content.trailingAnchor.constraint(equalTo: row.trailingAnchor),
-            content.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -14)
+            content.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -15)
         ])
         row.accessibilityLabel = "\(item.title), \(item.detail), 보기"
         row.accessibilityIdentifier = "notification-row-\(index)"
