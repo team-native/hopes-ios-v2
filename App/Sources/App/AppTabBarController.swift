@@ -13,6 +13,7 @@ final class AppTabBarController: UITabBarController {
     private let tabRowHeight: CGFloat = 56
     private let tabBarBorder = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     private var requestedSelectedIndex = 0
+    private var didHandleSessionExpiredPreview = false
 
     override var selectedIndex: Int {
         get { super.selectedIndex }
@@ -51,6 +52,30 @@ final class AppTabBarController: UITabBarController {
         configureCustomBar(for: tabs)
         delegate = self
         updateSelection()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSessionExpired),
+            name: .authSessionDidExpire,
+            object: nil
+        )
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if !didHandleSessionExpiredPreview,
+           ProcessInfo.processInfo.arguments.contains("--session-expired-preview") {
+            didHandleSessionExpiredPreview = true
+            AuthSessionRouter.notifySessionExpired()
+        }
+    }
+
+    @objc private func handleSessionExpired() {
+        guard view.window != nil else { return }
+        var top: UIViewController = self
+        while let presented = top.presentedViewController, !presented.isBeingDismissed {
+            top = presented
+        }
+        AuthSessionRouter.presentSessionExpiredAlert(from: top)
     }
 
     override func viewDidLayoutSubviews() {

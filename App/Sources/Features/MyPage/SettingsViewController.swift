@@ -250,10 +250,7 @@ final class SettingsViewController: AppPageViewController {
         )
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "로그아웃", style: .destructive) { _ in
-            guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-                  let window = appDelegate.window else { return }
-            window.rootViewController = UINavigationController(rootViewController: LoginViewController())
-            window.makeKeyAndVisible()
+            AuthSessionRouter.logOut()
         })
         present(alert, animated: true)
     }

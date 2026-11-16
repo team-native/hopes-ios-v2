@@ -32,6 +32,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let tabs = AppTabBarController()
             tabs.selectedIndex = 4
             window.rootViewController = tabs
+        } else if arguments.contains("--session-expired-preview") {
+            window.rootViewController = AppTabBarController()
         } else if arguments.contains("--chat-home-preview") {
             let tabs = AppTabBarController()
             tabs.selectedIndex = 1

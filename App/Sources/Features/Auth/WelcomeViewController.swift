@@ -11,6 +11,7 @@ final class WelcomeViewController: UIViewController {
     private let startButton = UIButton(type: .system)
     private let loginButton = UIButton(type: .system)
     private var didOpenLogin = false
+    var opensLoginOnAppear = false
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
@@ -28,7 +29,8 @@ final class WelcomeViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("--login-preview")
+        if opensLoginOnAppear
+            || arguments.contains("--login-preview")
             || arguments.contains("--login-error-preview")
             || arguments.contains("--login-offline-preview")
             || arguments.contains("--login-loading-preview")
