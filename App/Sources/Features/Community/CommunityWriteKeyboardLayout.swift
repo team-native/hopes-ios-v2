@@ -6,6 +6,8 @@ final class CommunityWriteKeyboardLayout {
     private let bodyHeightConstraint: NSLayoutConstraint
     private let privacyNotice: UIView
     private var keyboardObserver: NSObjectProtocol?
+    private var isKeyboardVisible = false
+    private var hasBodyValidationError = false
 
     init(
         view: UIView,
@@ -41,6 +43,11 @@ final class CommunityWriteKeyboardLayout {
         if let keyboardObserver { NotificationCenter.default.removeObserver(keyboardObserver) }
     }
 
+    func setBodyValidationError(_ isError: Bool) {
+        hasBodyValidationError = isError
+        updateBodyHeight()
+    }
+
     private func observeKeyboard() {
         keyboardObserver = NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillChangeFrameNotification,
@@ -57,12 +64,21 @@ final class CommunityWriteKeyboardLayout {
                 let keyboardFrame = self.hostView.convert(frame, from: nil)
                 let isVisible = keyboardFrame.minY < self.hostView.bounds.maxY &&
                     keyboardFrame.maxY > self.hostView.bounds.maxY - 1
-                self.bodyHeightConstraint.constant = isVisible ? 120 : 511
+                self.isKeyboardVisible = isVisible
+                self.updateBodyHeight()
                 self.privacyNotice.isHidden = isVisible
                 UIView.animate(withDuration: duration) {
                     self.hostView.layoutIfNeeded()
                 }
             }
+        }
+    }
+
+    private func updateBodyHeight() {
+        if isKeyboardVisible {
+            bodyHeightConstraint.constant = 120
+        } else {
+            bodyHeightConstraint.constant = hasBodyValidationError ? 300 : 511
         }
     }
 }

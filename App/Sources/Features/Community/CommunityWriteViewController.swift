@@ -331,9 +331,10 @@ extension CommunityWriteViewController {
         let bodyText = bodyView.text == bodyPlaceholder
             ? ""
             : bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let bodyIsEmpty = bodyText.isEmpty || isShowingBodySample
         setTitleError(titleText.isEmpty)
-        setBodyError(bodyText.isEmpty)
-        guard !titleText.isEmpty, !bodyText.isEmpty, !isShowingBodySample else {
+        setBodyError(bodyIsEmpty)
+        guard !titleText.isEmpty, !bodyIsEmpty else {
             return
         }
         if shouldSimulateRegistrationFailure {
@@ -360,5 +361,6 @@ extension CommunityWriteViewController {
         bodyErrorRow?.isHidden = !isError
         bodyView.layer.borderWidth = isError ? 1.5 : 1
         bodyView.layer.borderColor = isError ? UIColor.systemRed.cgColor : fieldBorderColor.cgColor
+        keyboardLayout?.setBodyValidationError(isError)
     }
 }
