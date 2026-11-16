@@ -3,6 +3,28 @@ import XCTest
 
 @MainActor
 final class ScreenEntryTests: XCTestCase {
+    func testRepeatedTabTransitions() {
+        let tabs = AppTabBarController()
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = tabs
+        window.makeKeyAndVisible()
+        defer {
+            window.isHidden = true
+            window.rootViewController = nil
+        }
+        tabs.loadViewIfNeeded()
+        XCTAssertEqual(tabs.viewControllers?.count, 5)
+        for _ in 0..<3 {
+            for index in [0, 1, 2, 3, 4, 3, 2, 1, 0] {
+                tabs.selectedIndex = index
+                tabs.selectedViewController?.loadViewIfNeeded()
+                tabs.view.layoutIfNeeded()
+                XCTAssertEqual(tabs.selectedIndex, index)
+                XCTAssertNotNil(tabs.selectedViewController?.view.window)
+            }
+        }
+    }
+
     func testEmptyHistoryEntryAndRebuild() {
         let controller = HistoryViewController()
         controller.conversations = []
