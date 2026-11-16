@@ -339,7 +339,7 @@ extension SignupViewController {
     }
 
     @objc func showDepartmentPicker() {
-        presentPicker(title: "과 선택", options: ["소프트웨어과", "인공지능과", "게임과", "스마트IoT과"],
+        presentPicker(title: "과 선택", options: ["소프트웨어개발과", "스마트IoT과", "인공지능과"],
             selected: selectedDepartment) { [weak self] value in
             self?.selectedDepartment = value
         }
