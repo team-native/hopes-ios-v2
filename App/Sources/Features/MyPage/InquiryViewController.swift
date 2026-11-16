@@ -130,6 +130,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             messageView.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
             messageMinimumHeightConstraint.constant = 160
             messageHeightConstraint.constant = 160
+            updateValidationLayout()
         }
     }
 
@@ -168,7 +169,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         guard textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         textView.text = messagePlaceholder
         textView.textColor = secondaryTextColor
-        let height: CGFloat = keyboardLayoutIsActive ? 54 : 160
+        let height: CGFloat = keyboardLayoutIsActive ? 55 : 160
         messageMinimumHeightConstraint.constant = height
         messageHeightConstraint.constant = height
     }
@@ -179,13 +180,14 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             messageErrorRow.isHidden = true
             messageView.layer.borderColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1).cgColor
             messageMinimumHeightConstraint.constant = 160
+            updateValidationLayout()
         }
         let fittingSize = CGSize(width: textView.bounds.width, height: .greatestFiniteMagnitude)
         let measuredHeight = textView.sizeThatFits(fittingSize).height
-        let minimumHeight: CGFloat = keyboardLayoutIsActive ? 54 : (hasMessageError ? 150 : 160)
+        let minimumHeight: CGFloat = keyboardLayoutIsActive ? 55 : (hasMessageError ? 150 : 160)
         messageMinimumHeightConstraint.constant = minimumHeight
         messageHeightConstraint.constant = keyboardLayoutIsActive
-            ? 54
+            ? 55
             : min(max(minimumHeight, measuredHeight), 220)
     }
 
@@ -211,7 +213,8 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         hasMessageError = messageEmpty
         emailErrorRow.isHidden = !emailInvalid
         messageErrorRow.isHidden = !messageEmpty
-        emailHeightConstraint.constant = emailInvalid ? 55 : 56
+        updateValidationLayout()
+        emailHeightConstraint.constant = emailInvalid ? 55 : 54
         emailField.layer.borderWidth = emailInvalid ? 1.5 : 1
         emailField.layer.borderColor = (emailInvalid
             ? UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
@@ -228,6 +231,14 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         }
     }
 
+    func updateValidationLayout() {
+        let hasErrors = hasEmailError || hasMessageError
+        mailInfoRow.isHidden = hasErrors || keyboardLayoutIsActive
+        if let headerView, contentStack.arrangedSubviews.contains(headerView) {
+            contentStack.setCustomSpacing(hasErrors ? 14 : 16, after: headerView)
+        }
+    }
+
     @objc func emailDidChange() {
         emailLabel.text = (emailField.text?.isEmpty == false) ? "답변 받을 이메일" : "이메일"
         guard hasEmailError else { return }
@@ -235,8 +246,9 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         guard email.contains("@") else { return }
         hasEmailError = false
         emailErrorRow.isHidden = true
-        emailHeightConstraint.constant = 56
+        emailHeightConstraint.constant = 54
         emailField.layer.borderWidth = 1
         emailField.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+        updateValidationLayout()
     }
 }

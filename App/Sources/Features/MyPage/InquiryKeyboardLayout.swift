@@ -32,8 +32,8 @@ extension InquiryViewController {
         scrollBottomConstraint?.isActive = true
         mailInfoRow.isHidden = true
         emailHeightConstraint.constant = 54
-        messageMinimumHeightConstraint.constant = 54
-        messageHeightConstraint.constant = 54
+        messageMinimumHeightConstraint.constant = 55
+        messageHeightConstraint.constant = 55
         contentStack.spacing = 14
     }
 
@@ -58,10 +58,11 @@ extension InquiryViewController {
         scrollTopConstraint?.isActive = true
 
         mailInfoRow.isHidden = false
-        emailHeightConstraint.constant = 56
+        emailHeightConstraint.constant = 54
         let normalMessageHeight: CGFloat = hasMessageError ? 150 : 160
         messageMinimumHeightConstraint.constant = normalMessageHeight
         messageHeightConstraint.constant = normalMessageHeight
         contentStack.spacing = 16
+        updateValidationLayout()
     }
 }
