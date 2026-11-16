@@ -105,6 +105,7 @@ extension CommunityViewController {
             guard let self else { return }
             self.showingLoadError = false
             self.renderPosts()
+            self.refreshPosts()
         }, for: .touchUpInside)
         return retryButton
     }
