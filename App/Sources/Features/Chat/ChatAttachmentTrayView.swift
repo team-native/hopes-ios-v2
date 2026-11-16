@@ -268,8 +268,10 @@ private extension ChatAttachmentTrayView {
         unsupportedFormatBanner.backgroundColor = UIColor(red: 1, green: 0.945, blue: 0.949, alpha: 1)
         unsupportedFormatBanner.layer.cornerRadius = 14
 
-        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle.fill"))
-        icon.tintColor = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
+        let icon = UIImageView(
+            image: UIImage(named: "ChatAttachmentAlert")?.withRenderingMode(.alwaysOriginal)
+        )
+        icon.contentMode = .scaleAspectFit
         icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
         icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
         unsupportedFormatBanner.addArrangedSubview(icon)

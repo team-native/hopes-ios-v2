@@ -34,8 +34,10 @@ enum ChatAttachmentDocumentCardFactory {
         iconChip.backgroundColor = attachment.isSupported ? ChatDetailPalette.brandSoft : .white
         iconChip.layer.cornerRadius = 12
         iconChip.translatesAutoresizingMaskIntoConstraints = false
-        let icon = UIImageView(image: UIImage(systemName: "doc.text"))
-        icon.tintColor = attachment.isSupported ? ChatDetailPalette.brand : dangerColor
+        let iconName = attachment.isSupported ? "ChatAttachmentFile" : "ChatAttachmentErrorFile"
+        let icon = UIImageView(
+            image: UIImage(named: iconName)?.withRenderingMode(.alwaysOriginal)
+        )
         icon.contentMode = .scaleAspectFit
         icon.translatesAutoresizingMaskIntoConstraints = false
         iconChip.addSubview(icon)
