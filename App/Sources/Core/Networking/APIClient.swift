@@ -1,5 +1,23 @@
 import Foundation
 
+private final class APIUploadProgressDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    private let onProgress: @Sendable (Int64, Int64) -> Void
+
+    init(onProgress: @escaping @Sendable (Int64, Int64) -> Void) {
+        self.onProgress = onProgress
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didSendBodyData bytesSent: Int64,
+        totalBytesSent: Int64,
+        totalBytesExpectedToSend: Int64
+    ) {
+        onProgress(totalBytesSent, totalBytesExpectedToSend)
+    }
+}
+
 final class APIClient: @unchecked Sendable {
     static let shared = APIClient()
 
@@ -64,7 +82,8 @@ final class APIClient: @unchecked Sendable {
         fileData: Data,
         fileName: String,
         mimeType: String,
-        clientRequestId: String
+        clientRequestId: String,
+        onProgress: @escaping @Sendable (Int64, Int64) -> Void = { _, _ in }
     ) async throws -> Response {
         let boundary = "Boundary-\(UUID().uuidString)"
         var body = Data()
@@ -77,7 +96,7 @@ final class APIClient: @unchecked Sendable {
         body.append(Data("\(clientRequestId)\r\n--\(boundary)--\r\n".utf8))
         let data = try await perform(
             "POST", path, rawBody: body, contentType: "multipart/form-data; boundary=\(boundary)",
-            authenticated: true
+            authenticated: true, uploadProgress: onProgress
         )
         do {
             return try decoder.decode(Response.self, from: data)
@@ -106,7 +125,8 @@ final class APIClient: @unchecked Sendable {
         rawBody: Data?,
         contentType: String?,
         authenticated: Bool,
-        expiresSessionOnUnauthorized: Bool = true
+        expiresSessionOnUnauthorized: Bool = true,
+        uploadProgress: (@Sendable (Int64, Int64) -> Void)? = nil
     ) async throws -> Data {
         guard let url = URL(string: path, relativeTo: baseURL) else { throw APIError.decoding }
         var request = URLRequest(url: url)
@@ -115,7 +135,7 @@ final class APIClient: @unchecked Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let rawBody, let contentType {
             request.setValue(contentType, forHTTPHeaderField: "Content-Type")
-            request.httpBody = rawBody
+            if uploadProgress == nil { request.httpBody = rawBody }
         }
         if authenticated {
             guard let token = tokenStore.token else { throw APIError.unauthorized(message: "로그인이 필요합니다") }
@@ -125,10 +145,21 @@ final class APIClient: @unchecked Sendable {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await session.data(for: request)
+            (data, response) = try await send(request, body: rawBody, uploadProgress: uploadProgress)
         } catch {
+            if error is CancellationError { throw error }
             throw APIError.network
         }
+        return try await validate(data: data, response: response, authenticated: authenticated,
+                                  expiresSessionOnUnauthorized: expiresSessionOnUnauthorized)
+    }
+
+    private func validate(
+        data: Data,
+        response: URLResponse,
+        authenticated: Bool,
+        expiresSessionOnUnauthorized: Bool
+    ) async throws -> Data {
         guard let http = response as? HTTPURLResponse else { throw APIError.decoding }
         guard (200..<300).contains(http.statusCode) else {
             let errorBody = try? decoder.decode(APIErrorBody.self, from: data)
@@ -148,5 +179,17 @@ final class APIClient: @unchecked Sendable {
             )
         }
         return data
+    }
+
+    private func send(
+        _ request: URLRequest,
+        body: Data?,
+        uploadProgress: (@Sendable (Int64, Int64) -> Void)?
+    ) async throws -> (Data, URLResponse) {
+        guard let uploadProgress, let body else {
+            return try await session.data(for: request)
+        }
+        let delegate = APIUploadProgressDelegate(onProgress: uploadProgress)
+        return try await session.upload(for: request, from: body, delegate: delegate)
     }
 }
