@@ -179,8 +179,8 @@ final class AppTabBarController: UITabBarController {
             ]
         }
         return [
-            "home-tab-icon-inactive", "chat-tab-icon", "community-tab-icon", "history-tab-icon",
-            "mypage-tab-icon"
+            "home-tab-icon-inactive", "chat-tab-icon-inactive", "community-tab-icon-inactive",
+            "history-tab-icon-inactive", "mypage-tab-icon"
         ]
     }
 }
