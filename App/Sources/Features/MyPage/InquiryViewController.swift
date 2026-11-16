@@ -211,6 +211,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         hasMessageError = messageEmpty
         emailErrorRow.isHidden = !emailInvalid
         messageErrorRow.isHidden = !messageEmpty
+        emailHeightConstraint.constant = emailInvalid ? 55 : 56
         emailField.layer.borderWidth = emailInvalid ? 1.5 : 1
         emailField.layer.borderColor = (emailInvalid
             ? UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
@@ -234,6 +235,7 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         guard email.contains("@") else { return }
         hasEmailError = false
         emailErrorRow.isHidden = true
+        emailHeightConstraint.constant = 56
         emailField.layer.borderWidth = 1
         emailField.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
     }
