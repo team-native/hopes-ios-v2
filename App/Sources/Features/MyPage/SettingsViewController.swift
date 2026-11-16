@@ -229,7 +229,11 @@ final class SettingsViewController: AppPageViewController {
     }
 
     private func confirmLogout() {
-        let alert = UIAlertController(title: "로그아웃", message: "로그아웃할까요?", preferredStyle: .alert)
+        let alert = UIAlertController(
+            title: "로그아웃할까요?",
+            message: "다시 로그인하면 대화 기록을 그대로 볼 수 있어요.",
+            preferredStyle: .alert
+        )
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "로그아웃", style: .destructive) { _ in
             guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
