@@ -40,16 +40,15 @@ extension ChatConversationViewController {
         let checkBackground = UIView()
         checkBackground.backgroundColor = AppStyle.blue
         checkBackground.layer.cornerRadius = 11
-        let check = UIImageView(image: UIImage(systemName: "checkmark"))
-        check.tintColor = .white
+        let check = UIImageView(image: UIImage(named: "ChatToastCheck")?.withRenderingMode(.alwaysOriginal))
         check.contentMode = .scaleAspectFit
         check.translatesAutoresizingMaskIntoConstraints = false
         checkBackground.addSubview(check)
         NSLayoutConstraint.activate([
             checkBackground.widthAnchor.constraint(equalToConstant: 22),
             checkBackground.heightAnchor.constraint(equalToConstant: 22),
-            check.widthAnchor.constraint(equalToConstant: 12),
-            check.heightAnchor.constraint(equalToConstant: 12),
+            check.widthAnchor.constraint(equalToConstant: 14),
+            check.heightAnchor.constraint(equalToConstant: 14),
             check.centerXAnchor.constraint(equalTo: checkBackground.centerXAnchor),
             check.centerYAnchor.constraint(equalTo: checkBackground.centerYAnchor)
         ])
