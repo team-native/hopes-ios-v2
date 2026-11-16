@@ -281,13 +281,15 @@ extension SignupViewController {
             row.alignment = .center
             row.spacing = 6
             let showsRequirementError = passwordError != nil && !isValid
-            let imageName = showsRequirementError ? "xmark" : "checkmark"
-            let image = UIImageView(image: UIImage(systemName: imageName))
-            image.tintColor = isValid ? Palette.blue : (showsRequirementError ? Palette.error : Palette.placeholder)
+            let imageName = showsRequirementError
+                ? "SignupRuleX"
+                : (isValid ? "SignupRuleCheck" : "SignupRuleCheckMuted")
+            let icon = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal)
+            let image = UIImageView(image: icon)
             image.widthAnchor.constraint(equalToConstant: 14).isActive = true
             image.heightAnchor.constraint(equalToConstant: 14).isActive = true
             row.addArrangedSubview(image)
-            let textColor = isValid ? Palette.blue : (showsRequirementError ? Palette.error : Palette.muted)
+            let textColor = isValid ? Palette.blue : (showsRequirementError ? Palette.error : Palette.placeholder)
             row.addArrangedSubview(makeLabel(text, size: 12, color: textColor))
             requirements.addArrangedSubview(row)
         }

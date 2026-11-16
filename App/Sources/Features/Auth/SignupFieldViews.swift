@@ -75,12 +75,15 @@ extension SignupViewController {
         field.layer.borderWidth = error == nil ? 1 : 1.5
         if showsVisibility {
             let visibility = UIButton(type: .system)
-            visibility.setImage(UIImage(systemName: field.isSecureTextEntry ? "eye" : "eye.slash"), for: .normal)
+            let eye = UIImage(named: "SignupPasswordEye")?.withRenderingMode(.alwaysOriginal)
+            visibility.setImage(field.isSecureTextEntry ? eye : UIImage(systemName: "eye.slash"), for: .normal)
             visibility.tintColor = Palette.muted
-            visibility.addAction(UIAction { [weak field] _ in
+            visibility.addAction(UIAction { [weak field, weak visibility] _ in
                 field?.isSecureTextEntry.toggle()
-                visibility.setImage(UIImage(systemName: field?.isSecureTextEntry == true ? "eye" : "eye.slash"),
-                    for: .normal)
+                let image = field?.isSecureTextEntry == true
+                    ? UIImage(named: "SignupPasswordEye")?.withRenderingMode(.alwaysOriginal)
+                    : UIImage(systemName: "eye.slash")
+                visibility?.setImage(image, for: .normal)
             }, for: .touchUpInside)
             visibility.frame = CGRect(x: 0, y: 0, width: 40, height: 44)
             field.rightView = visibility
@@ -117,8 +120,7 @@ extension SignupViewController {
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 4
-        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
-        icon.tintColor = Palette.error
+        let icon = UIImageView(image: UIImage(named: "SignupInlineAlert")?.withRenderingMode(.alwaysOriginal))
         icon.widthAnchor.constraint(equalToConstant: 14).isActive = true
         icon.heightAnchor.constraint(equalToConstant: 14).isActive = true
         row.addArrangedSubview(icon)
