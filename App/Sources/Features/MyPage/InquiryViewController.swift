@@ -12,8 +12,12 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
     let focusedPreviewMessage = "추천 질문이 학과를 바꿔도 그대로 나와요"
     let showsInputPreview = ProcessInfo.processInfo.arguments.contains("--inquiry-input-preview")
     let showsErrorPreview = ProcessInfo.processInfo.arguments.contains("--inquiry-error-preview")
+    var inquirySender: (String, String) async throws -> Void = { email, message in
+        try await AccountAPI.sendInquiry(email: email, message: message)
+    }
     var headerView: UIView?
     var submitButton: UIButton?
+    var isSubmitting = false
     var messageHeightConstraint: NSLayoutConstraint!
     var messageMinimumHeightConstraint: NSLayoutConstraint!
     var emailHeightConstraint: NSLayoutConstraint!
@@ -189,33 +193,6 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
         messageHeightConstraint.constant = keyboardLayoutIsActive
             ? 55
             : min(max(minimumHeight, measuredHeight), 220)
-    }
-
-    func submit() {
-        let email = emailField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let isPlaceholder = messageView.text == messagePlaceholder || messageView.text == messageErrorPlaceholder
-        let message = isPlaceholder || (showsInputPreview && messageView.text == focusedPreviewMessage)
-            ? ""
-            : messageView.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let emailInvalid = !email.contains("@")
-        let messageEmpty = message.isEmpty
-        guard !emailInvalid, !messageEmpty else {
-            view.endEditing(true)
-            displayValidationErrors(emailInvalid: emailInvalid, messageEmpty: messageEmpty)
-            return
-        }
-        view.endEditing(true)
-        Task { [weak self] in
-            if AccessTokenStore.shared.hasToken {
-                do {
-                    try await AccountAPI.sendInquiry(email: email, message: message)
-                } catch {
-                    self?.showMessage((error as? APIError)?.message ?? "문의를 보내지 못했어요.")
-                    return
-                }
-            }
-            self?.push(InquiryCompletionViewController(email: email))
-        }
     }
 
     func displayValidationErrors(emailInvalid: Bool, messageEmpty: Bool) {
