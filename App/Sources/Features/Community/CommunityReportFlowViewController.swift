@@ -349,6 +349,9 @@ private extension CommunityReportFlowViewController {
         return helper
     }
 
+}
+
+extension CommunityReportFlowViewController {
     static func reasonCode(for reason: String) -> String {
         switch reason {
         case "욕설·비방": "ABUSE"

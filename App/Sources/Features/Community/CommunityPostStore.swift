@@ -39,6 +39,7 @@ final class CommunityPostStore {
     ]
     private var shouldShowPublishedToast = false
     var reportedPostKeys = Set<String>()
+    var reportedCommentIDs = Set<Int64>()
     var boards: [BoardDTO] = []
 
     private init() {}
@@ -60,6 +61,11 @@ final class CommunityPostStore {
         reportedPostKeys.insert(reportKey(for: post))
         guard let id = post.id ?? postID(forTitle: post.title) else { return }
         syncWithServer { try await CommunityAPI.report(postID: id, reasonCode: reasonCode) }
+    }
+
+    func markCommentReported(id: Int64, reasonCode: String) {
+        reportedCommentIDs.insert(id)
+        syncWithServer { try await CommunityAPI.reportComment(id: id, reasonCode: reasonCode) }
     }
 
     private func reportKey(for post: CommunityPost) -> String {

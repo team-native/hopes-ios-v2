@@ -110,7 +110,15 @@ enum CommunityAPI {
     }
 
     static func report(postID: Int64, reasonCode: String) async throws {
-        let payload = ReportPayload(targetType: "POST", targetId: postID, reasonCode: reasonCode)
+        try await report(targetType: "POST", targetID: postID, reasonCode: reasonCode)
+    }
+
+    static func reportComment(id: Int64, reasonCode: String) async throws {
+        try await report(targetType: "COMMENT", targetID: id, reasonCode: reasonCode)
+    }
+
+    private static func report(targetType: String, targetID: Int64, reasonCode: String) async throws {
+        let payload = ReportPayload(targetType: targetType, targetId: targetID, reasonCode: reasonCode)
         try await client.send("POST", "\(base)/reports", body: payload, authenticated: true)
     }
 
