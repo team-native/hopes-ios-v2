@@ -60,8 +60,7 @@ final class DepartmentPickerViewController: ChatContextPickerSheetViewController
         let radio = UIView()
         radio.layer.cornerRadius = 11
         radio.layer.borderWidth = 1
-        let check = UIImageView(image: UIImage(systemName: "checkmark"))
-        check.tintColor = .white
+        let check = UIImageView(image: UIImage(named: "DepartmentPickerCheck")?.withRenderingMode(.alwaysOriginal))
         check.contentMode = .scaleAspectFit
         check.translatesAutoresizingMaskIntoConstraints = false
         radio.addSubview(check)
