@@ -207,7 +207,7 @@ extension CommunityPostDetailViewController {
             return
         }
         if shouldSimulateCommentFailure {
-            // The prototype has no comment API yet; this reproduces a transient send failure once per detail session.
+            // Explicit preview only; normal submissions use the server synchronization path below.
             shouldSimulateCommentFailure = false
             _ = addFailedComment(text: text)
             commentField.text = nil
