@@ -202,6 +202,58 @@ final class ScreenEntryTests: XCTestCase {
             XCTAssertEqual($0 as? ChatAttachmentLimitError, .imageTooLarge)
         }
     }
+
+    func testAttachmentTrayMatchesFigmaKeyboardHeight() {
+        let tray = ChatAttachmentTrayView()
+        var heights: [CGFloat] = []
+        tray.onPreferredHeightChange = { heights.append($0) }
+        tray.attachments = [
+            ChatAttachmentItem(fileName: "사진.png", image: UIImage()),
+            ChatAttachmentItem(fileName: "첫번째.pdf", image: nil, url: URL(fileURLWithPath: "/tmp/first.pdf"))
+        ]
+
+        XCTAssertEqual(heights.last ?? 0, 225, accuracy: 0.5)
+        tray.frame = CGRect(x: 0, y: 0, width: 402, height: 225)
+        tray.layoutIfNeeded()
+        let attachmentScroll = tray.findView(identifier: "chat-attachment-scroll")
+        let imageCard = tray.findView(identifier: "chat-attachment-image-card")
+        let documentCard = tray.findView(identifier: "chat-attachment-document-card")
+        let questionInputContainer = tray.findView(identifier: "chat-attachment-question-container")
+        XCTAssertEqual(attachmentScroll?.frame.height ?? 0, 78, accuracy: 0.5)
+        XCTAssertEqual(imageCard?.frame.width ?? 0, 72, accuracy: 0.5)
+        XCTAssertEqual(imageCard?.frame.height ?? 0, 72, accuracy: 0.5)
+        XCTAssertEqual(documentCard?.frame.height ?? 0, 72, accuracy: 0.5)
+        XCTAssertEqual(documentCard?.frame.width ?? 0, 276, accuracy: 0.5)
+        XCTAssertEqual(questionInputContainer?.frame.height ?? 0, 52, accuracy: 0.5)
+
+        tray.setKeyboardVisible(true)
+        XCTAssertEqual(heights.last ?? 0, 196, accuracy: 0.5)
+        tray.frame = CGRect(x: 0, y: 0, width: 402, height: 196)
+        tray.layoutIfNeeded()
+
+        XCTAssertEqual(attachmentScroll?.frame.height ?? 0, 70, accuracy: 0.5)
+        XCTAssertEqual(imageCard?.frame.width ?? 0, 64, accuracy: 0.5)
+        XCTAssertEqual(imageCard?.frame.height ?? 0, 64, accuracy: 0.5)
+        XCTAssertEqual(documentCard?.frame.height ?? 0, 64, accuracy: 0.5)
+        XCTAssertEqual(documentCard?.frame.width ?? 0, 284, accuracy: 0.5)
+        XCTAssertEqual(questionInputContainer?.frame.height ?? 0, 52, accuracy: 0.5)
+
+        tray.setKeyboardVisible(false)
+        XCTAssertEqual(heights.last ?? 0, 225, accuracy: 0.5)
+    }
+
+    func testAttachmentQuestionInputUsesFigmaFocusBorder() {
+        let tray = ChatAttachmentTrayView()
+        guard let input = tray.findView(identifier: "chat-attachment-question-input") as? UITextField,
+              let inputContainer = input.superview else {
+            return XCTFail("첨부 질문 입력창이 트레이에 있어야 합니다")
+        }
+
+        tray.textFieldDidBeginEditing(input)
+        XCTAssertEqual(inputContainer.layer.borderColor, ChatDetailPalette.brandBorder.cgColor)
+        tray.textFieldDidEndEditing(input)
+        XCTAssertEqual(inputContainer.layer.borderColor, ChatDetailPalette.border.cgColor)
+    }
 }
 
 private extension UIView {

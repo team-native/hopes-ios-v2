@@ -1,18 +1,28 @@
 import UIKit
 
 @MainActor
+struct ChatAttachmentDocumentCard {
+    let view: UIView
+    let widthConstraint: NSLayoutConstraint
+    let heightConstraint: NSLayoutConstraint
+}
+
+@MainActor
 enum ChatAttachmentDocumentCardFactory {
     static func make(
         _ attachment: ChatAttachmentItem,
+        height: CGFloat,
         onRemove: @escaping (UUID) -> Void
-    ) -> (view: UIView, widthConstraint: NSLayoutConstraint) {
+    ) -> ChatAttachmentDocumentCard {
         let card = UIView()
+        card.accessibilityIdentifier = "chat-attachment-document-card"
         card.backgroundColor = .white
         card.layer.cornerRadius = 16
         card.layer.borderWidth = 1
         card.layer.borderColor = ChatDetailPalette.border.cgColor
         card.translatesAutoresizingMaskIntoConstraints = false
-        card.heightAnchor.constraint(equalToConstant: 72).isActive = true
+        let heightConstraint = card.heightAnchor.constraint(equalToConstant: height)
+        heightConstraint.isActive = true
         let widthConstraint = card.widthAnchor.constraint(equalToConstant: 192)
         widthConstraint.isActive = true
 
@@ -26,7 +36,11 @@ enum ChatAttachmentDocumentCardFactory {
             content.bottomAnchor.constraint(equalTo: card.bottomAnchor)
         ])
         addRemoveButton(to: card, id: attachment.id, action: onRemove)
-        return (card, widthConstraint)
+        return ChatAttachmentDocumentCard(
+            view: card,
+            widthConstraint: widthConstraint,
+            heightConstraint: heightConstraint
+        )
     }
 
     private static func makeContent(_ attachment: ChatAttachmentItem) -> UIStackView {
