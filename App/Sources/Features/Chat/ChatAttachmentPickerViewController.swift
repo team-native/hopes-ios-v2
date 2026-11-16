@@ -263,8 +263,12 @@ private extension ChatAttachmentPickerViewController {
     }
 
     func makeSheetContent(handle: UIView) -> UIStackView {
-        let title = AppStyle.label("자료 첨부", size: 22, weight: .bold, color: AppStyle.ink)
-        let footer = AppStyle.label("이미지와 PDF를 첨부해서 질문할 수 있어요.", size: 12, color: AppStyle.muted)
+        let title = AppStyle.label("자료 첨부", size: 22, weight: .bold, color: ChatDetailPalette.ink)
+        let footer = AppStyle.label(
+            "이미지와 PDF를 첨부해서 질문할 수 있어요.",
+            size: 12,
+            color: ChatDetailPalette.placeholder
+        )
         let content = UIStackView(arrangedSubviews: [handle, title, makeOptionRows(), footer])
         content.axis = .vertical
         content.spacing = 16
@@ -296,13 +300,13 @@ private extension ChatAttachmentPickerViewController {
         button.accessibilityLabel = "\(title), \(subtitle)"
         button.heightAnchor.constraint(equalToConstant: 68).isActive = true
         let chip = makeOptionIconChip(symbol: symbol)
-        let heading = AppStyle.label(title, size: 15, weight: .medium, color: AppStyle.ink)
-        let detail = AppStyle.label(subtitle, size: 12, color: AppStyle.muted)
+        let heading = AppStyle.label(title, size: 15, weight: .medium, color: ChatDetailPalette.ink)
+        let detail = AppStyle.label(subtitle, size: 12, color: ChatDetailPalette.muted)
         let labels = UIStackView(arrangedSubviews: [heading, detail])
         labels.axis = .vertical
         labels.spacing = 2
         let chevron = UIImageView(image: UIImage(systemName: "chevron.right"))
-        chevron.tintColor = AppStyle.muted
+        chevron.tintColor = ChatDetailPalette.placeholder
         chevron.contentMode = .scaleAspectFit
         chevron.widthAnchor.constraint(equalToConstant: 18).isActive = true
         chevron.heightAnchor.constraint(equalToConstant: 18).isActive = true
@@ -325,11 +329,11 @@ private extension ChatAttachmentPickerViewController {
 
     func makeOptionIconChip(symbol: String) -> UIView {
         let chip = UIView()
-        chip.backgroundColor = UIColor(red: 230 / 255.0, green: 241 / 255.0, blue: 254 / 255.0, alpha: 1)
+        chip.backgroundColor = ChatDetailPalette.brandSoft
         chip.layer.cornerRadius = 12
         chip.translatesAutoresizingMaskIntoConstraints = false
         let icon = UIImageView(image: UIImage(systemName: symbol))
-        icon.tintColor = AppStyle.blue
+        icon.tintColor = ChatDetailPalette.brand
         icon.contentMode = .scaleAspectFit
         icon.translatesAutoresizingMaskIntoConstraints = false
         chip.addSubview(icon)
@@ -346,7 +350,7 @@ private extension ChatAttachmentPickerViewController {
 
     func makeDivider() -> UIView {
         let divider = UIView()
-        divider.backgroundColor = UIColor(red: 235 / 255.0, green: 241 / 255.0, blue: 250 / 255.0, alpha: 1)
+        divider.backgroundColor = ChatDetailPalette.border
         divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
         return divider
     }

@@ -42,7 +42,7 @@ final class ChatAttachmentTrayView: UIView {
         didSet { updateAttachments() }
     }
 
-    private let countLabel = AppStyle.label("첨부 0개", size: 14, weight: .medium, color: AppStyle.muted)
+    private let countLabel = AppStyle.label("첨부 0개", size: 14, weight: .medium, color: ChatDetailPalette.muted)
     private let attachmentsStack = UIStackView()
     private let inputField = UITextField()
     private let sendButton = UIButton(type: .system)
@@ -95,11 +95,11 @@ final class ChatAttachmentTrayView: UIView {
         layer.cornerRadius = 28
         layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         layer.borderWidth = 1
-        layer.borderColor = AppStyle.line.cgColor
-        layer.shadowColor = UIColor(red: 26 / 255.0, green: 64 / 255.0, blue: 128 / 255.0, alpha: 0.09).cgColor
+        layer.borderColor = ChatDetailPalette.border.cgColor
+        layer.shadowColor = ChatDetailPalette.shadow.cgColor
         layer.shadowOpacity = 1
         layer.shadowRadius = 14
-        layer.shadowOffset = CGSize(width: 0, height: 4)
+        layer.shadowOffset = CGSize(width: 0, height: 8)
     }
 
     private func makeAttachmentsScrollView() -> UIScrollView {
@@ -137,16 +137,16 @@ final class ChatAttachmentTrayView: UIView {
     private func makeInputContainer() -> UIView {
         inputField.text = "이 자료 요약해줘"
         inputField.font = .systemFont(ofSize: 15)
-        inputField.textColor = AppStyle.ink
+        inputField.textColor = ChatDetailPalette.ink
         inputField.borderStyle = .none
         inputField.returnKeyType = .send
         inputField.accessibilityLabel = "첨부 자료에 대한 질문"
 
         let inputContainer = UIView()
-        inputContainer.backgroundColor = AppStyle.canvas
+        inputContainer.backgroundColor = ChatDetailPalette.canvas
         inputContainer.layer.cornerRadius = 24
         inputContainer.layer.borderWidth = 1
-        inputContainer.layer.borderColor = AppStyle.line.cgColor
+        inputContainer.layer.borderColor = ChatDetailPalette.border.cgColor
         inputContainer.heightAnchor.constraint(equalToConstant: 52).isActive = true
         inputField.translatesAutoresizingMaskIntoConstraints = false
         inputContainer.addSubview(inputField)
@@ -161,7 +161,7 @@ final class ChatAttachmentTrayView: UIView {
 
     private func makeSendButton() -> UIButton {
         let send = sendButton
-        send.backgroundColor = AppStyle.blue
+        send.backgroundColor = ChatDetailPalette.brand
         send.layer.cornerRadius = 24
         send.setImage(UIImage(named: "chat-send-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
         send.imageView?.contentMode = .scaleAspectFit
@@ -184,7 +184,9 @@ final class ChatAttachmentTrayView: UIView {
             : "이미지와 PDF만 첨부할 수 있어요."
         bannerMessageLabel.textColor = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
         sendButton.isEnabled = !hasInvalidAttachment
-        sendButton.backgroundColor = hasInvalidAttachment ? AppStyle.blue.withAlphaComponent(0.4) : AppStyle.blue
+        sendButton.backgroundColor = hasInvalidAttachment
+            ? ChatDetailPalette.brand.withAlphaComponent(0.4)
+            : ChatDetailPalette.brand
         preferredTrayHeight = unreadablePDF ? 293 : (hasUnsupportedAttachment ? 279 : 225)
         updatePreferredHeight()
         NSLayoutConstraint.deactivate(documentCardWidthConstraints)
@@ -232,10 +234,10 @@ final class ChatAttachmentTrayView: UIView {
 private extension ChatAttachmentTrayView {
     func makeImageCard(_ image: UIImage, id: UUID) -> UIView {
         let card = UIView()
-        card.backgroundColor = AppStyle.paleBlue
+        card.backgroundColor = ChatDetailPalette.brandSoft
         card.layer.cornerRadius = 16
         card.layer.borderWidth = 1
-        card.layer.borderColor = AppStyle.line.cgColor
+        card.layer.borderColor = ChatDetailPalette.border.cgColor
         let preview = UIImageView(image: image)
         preview.contentMode = .scaleAspectFill
         preview.clipsToBounds = true
@@ -297,7 +299,7 @@ private extension ChatAttachmentTrayView {
         hitArea.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(hitArea)
         let remove = UIButton(type: .system)
-        remove.backgroundColor = AppStyle.ink
+        remove.backgroundColor = ChatDetailPalette.ink
         remove.layer.cornerRadius = 10
         remove.setImage(UIImage(systemName: "xmark"), for: .normal)
         remove.tintColor = .white
