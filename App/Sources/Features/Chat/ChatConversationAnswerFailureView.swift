@@ -3,14 +3,18 @@ import UIKit
 @MainActor
 extension ChatConversationViewController {
     func addAnswerFailure() {
+        let danger = UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
         let card = UIView()
-        let alertIcon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
-        alertIcon.tintColor = UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1)
+        let alertIcon = UIImageView(image: UIImage(named: "ChatAnswerFailureAlert")?.withRenderingMode(.alwaysOriginal))
         alertIcon.contentMode = .scaleAspectFit
         alertIcon.widthAnchor.constraint(equalToConstant: 20).isActive = true
         alertIcon.heightAnchor.constraint(equalToConstant: 20).isActive = true
-        let heading = AppStyle.label("답변을 만들지 못했어요", size: 15, weight: .semibold, color: UIColor(red: 0.94,
-            green: 0.27, blue: 0.35, alpha: 1))
+        let heading = AppStyle.label("답변을 만들지 못했어요", size: 15, weight: .medium, color: danger)
+        heading.attributedText = NSAttributedString(string: "답변을 만들지 못했어요", attributes: [
+            .font: UIFont.systemFont(ofSize: 15, weight: .medium),
+            .foregroundColor: danger,
+            .kern: -0.1
+        ])
         let headline = UIStackView(arrangedSubviews: [alertIcon, heading])
         headline.axis = .horizontal
         headline.alignment = .center
@@ -20,9 +24,11 @@ extension ChatConversationViewController {
             color: AppStyle.muted)
         detail.heightAnchor.constraint(equalToConstant: 20).isActive = true
         let retry = UIButton(type: .system)
-        retry.setTitle("다시 시도", for: .normal)
-        retry.setTitleColor(AppStyle.muted, for: .normal)
-        retry.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        retry.setAttributedTitle(NSAttributedString(string: "다시 시도", attributes: [
+            .font: UIFont.systemFont(ofSize: 14, weight: .medium),
+            .foregroundColor: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1),
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]), for: .normal)
         retry.heightAnchor.constraint(equalToConstant: 20).isActive = true
         retry.contentHorizontalAlignment = .leading
         retry.addAction(UIAction { [weak self] _ in
