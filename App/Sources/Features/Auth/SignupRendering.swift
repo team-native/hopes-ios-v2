@@ -280,12 +280,15 @@ extension SignupViewController {
             row.axis = .horizontal
             row.alignment = .center
             row.spacing = 6
-            let image = UIImageView(image: UIImage(systemName: "checkmark"))
-            image.tintColor = isValid ? Palette.blue : Palette.placeholder
+            let showsRequirementError = passwordError != nil && !isValid
+            let imageName = showsRequirementError ? "xmark" : "checkmark"
+            let image = UIImageView(image: UIImage(systemName: imageName))
+            image.tintColor = isValid ? Palette.blue : (showsRequirementError ? Palette.error : Palette.placeholder)
             image.widthAnchor.constraint(equalToConstant: 14).isActive = true
             image.heightAnchor.constraint(equalToConstant: 14).isActive = true
             row.addArrangedSubview(image)
-            row.addArrangedSubview(makeLabel(text, size: 12, color: isValid ? Palette.blue : Palette.muted))
+            let textColor = isValid ? Palette.blue : (showsRequirementError ? Palette.error : Palette.muted)
+            row.addArrangedSubview(makeLabel(text, size: 12, color: textColor))
             requirements.addArrangedSubview(row)
         }
         contentStack.addArrangedSubview(requirements)
