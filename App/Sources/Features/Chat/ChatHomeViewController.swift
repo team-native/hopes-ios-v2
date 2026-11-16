@@ -28,7 +28,8 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
     var selectedDepartment: String?
     var selectedMajor: String?
     var recommendationState: ChatHomeRecommendationState = .ready
-    private var questionSetIndex = 0
+    var questionSetIndex = 0
+    var recommendationRequestID = 0
 
     private let questionSets: [[(String, String)]] = [
         [
@@ -235,12 +236,6 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         }
         questionSetIndex = (questionSetIndex + 1) % questionSets.count
         renderQuestions()
-    }
-
-    @objc func retryRecommendations() {
-        recommendationState = .ready
-        questionSetIndex = 0
-        updateRecommendationTitle()
     }
 
     func showRecommendationState(_ state: ChatHomeRecommendationState) {
