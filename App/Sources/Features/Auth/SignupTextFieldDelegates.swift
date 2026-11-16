@@ -46,6 +46,9 @@ extension SignupViewController {
             let updated = current.replacingCharacters(in: swiftRange, with: string)
             return updated.count <= 6 && updated.allSatisfy(\.isNumber)
         }
+        if textField === passwordField || textField === confirmField {
+            return AuthPasswordPolicy.allowsChange(in: textField.text, range: range, replacement: string)
+        }
         return true
     }
 
