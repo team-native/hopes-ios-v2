@@ -4,6 +4,7 @@ import UIKit
 enum ChatAttachmentDocumentCardFactory {
     static func make(
         _ attachment: ChatAttachmentItem,
+        cardHeight: CGFloat = 72,
         onRemove: @escaping (UUID) -> Void
     ) -> (view: UIView, widthConstraint: NSLayoutConstraint) {
         let card = UIView()
@@ -12,7 +13,7 @@ enum ChatAttachmentDocumentCardFactory {
         card.layer.borderWidth = 1
         card.layer.borderColor = ChatDetailPalette.border.cgColor
         card.translatesAutoresizingMaskIntoConstraints = false
-        card.heightAnchor.constraint(equalToConstant: 72).isActive = true
+        card.heightAnchor.constraint(equalToConstant: cardHeight).isActive = true
         let widthConstraint = card.widthAnchor.constraint(equalToConstant: 192)
         widthConstraint.isActive = true
 

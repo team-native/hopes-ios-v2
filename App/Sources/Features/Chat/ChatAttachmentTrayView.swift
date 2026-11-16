@@ -43,6 +43,7 @@ final class ChatAttachmentTrayView: UIView {
     }
 
     private let countLabel = AppStyle.label("첨부 0개", size: 14, weight: .medium, color: ChatDetailPalette.muted)
+    private let contentStack = UIStackView()
     private let attachmentsStack = UIStackView()
     private let inputField = UITextField()
     private let sendButton = UIButton(type: .system)
@@ -51,6 +52,7 @@ final class ChatAttachmentTrayView: UIView {
         "", size: 12, color: UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
     )
     private weak var attachmentsScrollView: UIScrollView?
+    private var attachmentsScrollHeightConstraint: NSLayoutConstraint?
     private var documentCardWidthConstraints: [NSLayoutConstraint] = []
     private var homeIndicatorSpacerHeightConstraint: NSLayoutConstraint?
     private var preferredTrayHeight: CGFloat = 225
@@ -73,9 +75,12 @@ final class ChatAttachmentTrayView: UIView {
         let spacerHeightConstraint = homeIndicatorSpacer.heightAnchor.constraint(equalToConstant: 21)
         spacerHeightConstraint.isActive = true
         homeIndicatorSpacerHeightConstraint = spacerHeightConstraint
-        let content = UIStackView(arrangedSubviews: [
-            unsupportedFormatBanner, countLabel, attachmentsScroll, inputRow, homeIndicatorSpacer
-        ])
+        contentStack.addArrangedSubview(unsupportedFormatBanner)
+        contentStack.addArrangedSubview(countLabel)
+        contentStack.addArrangedSubview(attachmentsScroll)
+        contentStack.addArrangedSubview(inputRow)
+        contentStack.addArrangedSubview(homeIndicatorSpacer)
+        let content = contentStack
         content.axis = .vertical
         content.spacing = 12
         content.isLayoutMarginsRelativeArrangement = true
@@ -120,7 +125,9 @@ final class ChatAttachmentTrayView: UIView {
                 constant: -6
             )
         ])
-        attachmentsScroll.heightAnchor.constraint(equalToConstant: 78).isActive = true
+        let heightConstraint = attachmentsScroll.heightAnchor.constraint(equalToConstant: 78)
+        heightConstraint.isActive = true
+        attachmentsScrollHeightConstraint = heightConstraint
         return attachmentsScroll
     }
 
@@ -205,11 +212,18 @@ final class ChatAttachmentTrayView: UIView {
         guard isKeyboardVisible != visible else { return }
         isKeyboardVisible = visible
         homeIndicatorSpacerHeightConstraint?.constant = visible ? 0 : 21
-        updatePreferredHeight()
+        contentStack.directionalLayoutMargins = NSDirectionalEdgeInsets(
+            top: visible ? 12 : 16,
+            leading: visible ? 20 : 21,
+            bottom: 0,
+            trailing: visible ? 20 : 21
+        )
+        attachmentsScrollHeightConstraint?.constant = visible ? 70 : 78
+        updateAttachments()
     }
 
     private func updatePreferredHeight() {
-        onPreferredHeightChange?(preferredTrayHeight - (isKeyboardVisible ? 21 : 0))
+        onPreferredHeightChange?(preferredTrayHeight - (isKeyboardVisible ? 29 : 0))
     }
 
     override func layoutSubviews() {
@@ -219,11 +233,12 @@ final class ChatAttachmentTrayView: UIView {
 
     private func makeAttachmentCard(_ attachment: ChatAttachmentItem) -> UIView {
         if let image = attachment.image {
-            return makeImageCard(image, id: attachment.id)
+            return makeImageCard(image, id: attachment.id, height: isKeyboardVisible ? 64 : 72)
         }
-        let documentCard = ChatAttachmentDocumentCardFactory.make(attachment) { [weak self] id in
-            self?.onRemove?(id)
-        }
+        let documentCard = ChatAttachmentDocumentCardFactory.make(
+            attachment,
+            cardHeight: isKeyboardVisible ? 64 : 72
+        ) { [weak self] id in self?.onRemove?(id) }
         documentCardWidthConstraints.append(documentCard.widthConstraint)
         return documentCard.view
     }
@@ -232,7 +247,7 @@ final class ChatAttachmentTrayView: UIView {
 
 @MainActor
 private extension ChatAttachmentTrayView {
-    func makeImageCard(_ image: UIImage, id: UUID) -> UIView {
+    func makeImageCard(_ image: UIImage, id: UUID, height: CGFloat) -> UIView {
         let card = UIView()
         card.backgroundColor = ChatDetailPalette.brandSoft
         card.layer.cornerRadius = 16
@@ -246,8 +261,8 @@ private extension ChatAttachmentTrayView {
         card.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(preview)
         NSLayoutConstraint.activate([
-            card.widthAnchor.constraint(equalToConstant: 72),
-            card.heightAnchor.constraint(equalToConstant: 72),
+            card.widthAnchor.constraint(equalToConstant: height),
+            card.heightAnchor.constraint(equalToConstant: height),
             preview.topAnchor.constraint(equalTo: card.topAnchor),
             preview.leadingAnchor.constraint(equalTo: card.leadingAnchor),
             preview.trailingAnchor.constraint(equalTo: card.trailingAnchor),
