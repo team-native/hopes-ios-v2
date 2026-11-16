@@ -19,6 +19,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         static let placeholder = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
         static let error = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1)
         static let paleBlue = UIColor(red: 242 / 255, green: 247 / 255, blue: 255 / 255, alpha: 1)
+        static let softSurface = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
     }
 
     let topBar = UIView()
@@ -33,6 +34,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
     let timerLabel = UILabel()
     let newPasswordField = UITextField()
     let confirmPasswordField = UITextField()
+    var completionContentView: UIView?
     var step: Step = .email
     var email = UserProfileStore.shared.email
     var emailError: String?
@@ -177,8 +179,8 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
             codeField.topAnchor.constraint(equalTo: codeDigits.topAnchor),
             codeField.bottomAnchor.constraint(equalTo: codeDigits.bottomAnchor)
         ])
-        timerLabel.font = .systemFont(ofSize: 12)
-        timerLabel.textColor = Palette.muted
+        timerLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        timerLabel.textColor = Palette.blue
     }
 
     func configureTextField(

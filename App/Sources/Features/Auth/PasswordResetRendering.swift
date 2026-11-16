@@ -4,6 +4,8 @@ import UIKit
 extension PasswordResetViewController {
     func render() {
         contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
+        completionContentView?.removeFromSuperview()
+        completionContentView = nil
         switch step {
         case .email, .unregistered:
             renderEmailStep()
@@ -37,17 +39,51 @@ extension PasswordResetViewController {
 
     func renderVerificationStep() {
         addStepper(current: 1)
-        addHeading(lines: ["메일로 받은", "인증번호를 입력해 주세요"])
+        addHeading(lines: ["메일로 받은", "인증번호를 입력해 주세요"], accent: "인증번호")
         addEmailSummary()
         addSpacer(14)
+        contentStack.addArrangedSubview(makeCodeInputGroup())
+        if let codeError { addInlineError(codeError) } else { addSpacer(10) }
+
+        let timerRow = UIStackView()
+        timerRow.axis = .horizontal
+        timerRow.alignment = .center
+        timerRow.spacing = 6
+        timerLabel.text = formattedCountdown
+        let timerIcon = UIImageView(image: UIImage(named: "PasswordResetClock"))
+        timerIcon.translatesAutoresizingMaskIntoConstraints = false
+        timerIcon.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        timerIcon.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        timerRow.addArrangedSubview(timerIcon)
+        timerRow.addArrangedSubview(timerLabel)
+        timerRow.addArrangedSubview(UIView())
+        let resend = UIButton(type: .system)
+        resend.setTitle("인증번호 다시 받기", for: .normal)
+        resend.setTitleColor(Palette.muted, for: .normal)
+        resend.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        resend.addTarget(self, action: #selector(resendCode), for: .touchUpInside)
+        timerRow.addArrangedSubview(resend)
+        contentStack.addArrangedSubview(timerRow)
+        timerRow.translatesAutoresizingMaskIntoConstraints = false
+        timerRow.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        addSpacer(18)
+    }
+
+    func makeCodeInputGroup() -> UIStackView {
+        let codeLabel = makeLabel("인증번호 6자리", size: 14, weight: .medium, color: Palette.muted)
         codeDigits.arrangedSubviews.forEach { codeDigits.removeArrangedSubview($0); $0.removeFromSuperview() }
         for index in 0..<6 {
             let box = UIView()
             box.backgroundColor = .white
-            box.layer.cornerRadius = 10
+            box.layer.cornerRadius = 16
             box.layer.borderWidth = 1
-            box.layer.borderColor = codeError == nil ? Palette.line.cgColor : Palette.error.cgColor
-            let digit = makeLabel(character(at: index), size: 20, weight: .semibold, color: Palette.ink)
+            box.layer.borderColor = codeError == nil ? Palette.fieldLine.cgColor : Palette.error.cgColor
+            let digit = makeLabel(character(at: index), size: 22, weight: .bold, color: Palette.ink)
+            digit.attributedText = NSAttributedString(string: character(at: index), attributes: [
+                .font: UIFont.systemFont(ofSize: 22, weight: .bold),
+                .foregroundColor: Palette.ink,
+                .kern: -0.3
+            ])
             digit.textAlignment = .center
             digit.translatesAutoresizingMaskIntoConstraints = false
             box.addSubview(digit)
@@ -57,27 +93,14 @@ extension PasswordResetViewController {
             ])
             codeDigits.addArrangedSubview(box)
         }
-        contentStack.addArrangedSubview(codeDigits)
+        let codeGroup = UIStackView(arrangedSubviews: [codeLabel, codeDigits])
+        codeGroup.axis = .vertical
+        codeGroup.spacing = 8
+        codeGroup.isLayoutMarginsRelativeArrangement = true
+        codeGroup.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         codeDigits.translatesAutoresizingMaskIntoConstraints = false
         codeDigits.heightAnchor.constraint(equalToConstant: 56).isActive = true
-        if let codeError { addInlineError(codeError) } else { addSpacer(10) }
-
-        let timerRow = UIStackView()
-        timerRow.axis = .horizontal
-        timerRow.alignment = .center
-        timerLabel.text = formattedCountdown
-        timerRow.addArrangedSubview(timerLabel)
-        timerRow.addArrangedSubview(UIView())
-        let resend = UIButton(type: .system)
-        resend.setTitle("인증번호 다시 받기", for: .normal)
-        resend.setTitleColor(Palette.blue, for: .normal)
-        resend.titleLabel?.font = .systemFont(ofSize: 12)
-        resend.addTarget(self, action: #selector(resendCode), for: .touchUpInside)
-        timerRow.addArrangedSubview(resend)
-        contentStack.addArrangedSubview(timerRow)
-        timerRow.translatesAutoresizingMaskIntoConstraints = false
-        timerRow.heightAnchor.constraint(equalToConstant: 20).isActive = true
-        addSpacer(18)
+        return codeGroup
     }
 
     func renderNewPasswordStep() {
@@ -91,31 +114,56 @@ extension PasswordResetViewController {
     }
 
     func renderCompleteStep() {
-        let spacer = UIView()
-        spacer.heightAnchor.constraint(equalToConstant: 160).isActive = true
-        contentStack.addArrangedSubview(spacer)
-
         let content = UIStackView()
         content.axis = .vertical
         content.alignment = .center
         content.spacing = 12
-        let lock = UIImageView(image: UIImage(systemName: "lock"))
-        lock.tintColor = Palette.blue
-        lock.backgroundColor = Palette.paleBlue
-        lock.layer.cornerRadius = 36
+        let iconContainer = UIView()
+        iconContainer.backgroundColor = .white
+        iconContainer.layer.cornerRadius = 44
+        iconContainer.layer.borderWidth = 1
+        iconContainer.layer.borderColor = Palette.fieldLine.cgColor
+        iconContainer.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
+        iconContainer.layer.shadowOpacity = 0.13
+        iconContainer.layer.shadowOffset = CGSize(width: 0, height: 8)
+        iconContainer.layer.shadowRadius = 14
+        let lock = UIImageView(image: UIImage(named: "PasswordResetLock"))
         lock.contentMode = .center
-        lock.widthAnchor.constraint(equalToConstant: 72).isActive = true
-        lock.heightAnchor.constraint(equalToConstant: 72).isActive = true
-        content.addArrangedSubview(lock)
-        content.addArrangedSubview(makeLabel("비밀번호를 바꿨어요", size: 21, weight: .bold, color: Palette.ink,
-            alignment: .center))
-        content.addArrangedSubview(makeLabel("새 비밀번호로 다시 로그인해 주세요.", size: 13, color: Palette.muted,
-            alignment: .center))
-        contentStack.addArrangedSubview(content)
-
-        let bottom = UIView()
-        bottom.heightAnchor.constraint(equalToConstant: 160).isActive = true
-        contentStack.addArrangedSubview(bottom)
+        lock.translatesAutoresizingMaskIntoConstraints = false
+        iconContainer.addSubview(lock)
+        NSLayoutConstraint.activate([
+            iconContainer.widthAnchor.constraint(equalToConstant: 88),
+            iconContainer.heightAnchor.constraint(equalToConstant: 88),
+            lock.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
+            lock.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
+            lock.widthAnchor.constraint(equalToConstant: 38),
+            lock.heightAnchor.constraint(equalToConstant: 38)
+        ])
+        content.addArrangedSubview(iconContainer)
+        let title = makeLabel("비밀번호를 바꿨어요", size: 22, weight: .bold, color: Palette.ink, alignment: .center)
+        let titleText = NSMutableAttributedString(string: "비밀번호를 바꿨어요", attributes: [
+            .font: UIFont.systemFont(ofSize: 22, weight: .bold),
+            .foregroundColor: Palette.ink,
+            .kern: -0.3
+        ])
+        titleText.addAttribute(.foregroundColor, value: Palette.blue,
+                               range: NSRange(location: 0, length: ("비밀번호" as NSString).length))
+        let titleParagraph = NSMutableParagraphStyle()
+        titleParagraph.minimumLineHeight = 30
+        titleParagraph.maximumLineHeight = 30
+        titleText.addAttribute(.paragraphStyle, value: titleParagraph,
+                               range: NSRange(location: 0, length: titleText.length))
+        title.attributedText = titleText
+        content.addArrangedSubview(title)
+        content.addArrangedSubview(makeLabel("새 비밀번호로 다시 로그인해 주세요.", size: 14, weight: .medium,
+                                              color: Palette.muted, alignment: .center))
+        content.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(content)
+        completionContentView = content
+        NSLayoutConstraint.activate([
+            content.centerXAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerXAnchor),
+            content.centerYAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerYAnchor)
+        ])
     }
 
     func addStepper(current: Int) {
@@ -247,26 +295,28 @@ extension PasswordResetViewController {
         section.spacing = 6
         section.isLayoutMarginsRelativeArrangement = true
         section.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        section.addArrangedSubview(makeLabel("학교 이메일", size: 12, weight: .medium, color: Palette.muted))
+        section.addArrangedSubview(makeLabel("학교 이메일", size: 14, weight: .medium, color: Palette.muted))
 
         let row = UIStackView()
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 8
-        row.backgroundColor = Palette.paleBlue
-        row.layer.cornerRadius = 10
+        row.backgroundColor = Palette.softSurface
+        row.layer.cornerRadius = 16
+        row.layer.borderWidth = 1
+        row.layer.borderColor = Palette.fieldLine.cgColor
         row.isLayoutMarginsRelativeArrangement = true
-        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 12)
-        row.addArrangedSubview(makeLabel(email, size: 13, color: Palette.ink))
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+        row.addArrangedSubview(makeLabel(email, size: 15, color: Palette.ink))
         row.addArrangedSubview(UIView())
         let change = UIButton(type: .system)
         change.setTitle("변경", for: .normal)
         change.setTitleColor(Palette.blue, for: .normal)
-        change.titleLabel?.font = .systemFont(ofSize: 12)
+        change.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         change.addTarget(self, action: #selector(changeEmail), for: .touchUpInside)
         row.addArrangedSubview(change)
         section.addArrangedSubview(row)
-        row.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        row.heightAnchor.constraint(equalToConstant: 52).isActive = true
         section.translatesAutoresizingMaskIntoConstraints = false
         row.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(section)
