@@ -229,8 +229,15 @@ extension LoginViewController {
         signupRow.axis = .horizontal
         signupRow.alignment = .center
         signupRow.spacing = 8
+        let leadingSpacer = UIView()
+        let trailingSpacer = UIView()
+        signupRow.addArrangedSubview(leadingSpacer)
         signupRow.addArrangedSubview(prompt)
         signupRow.addArrangedSubview(signupButton)
+        signupRow.addArrangedSubview(trailingSpacer)
+        leadingSpacer.widthAnchor.constraint(equalTo: trailingSpacer.widthAnchor).isActive = true
+        prompt.setContentHuggingPriority(.required, for: .horizontal)
+        signupButton.setContentHuggingPriority(.required, for: .horizontal)
         signupRow.translatesAutoresizingMaskIntoConstraints = false
         signupRow.heightAnchor.constraint(equalToConstant: 20).isActive = true
         sheetStack.addArrangedSubview(makeSpacer(height: 14))
