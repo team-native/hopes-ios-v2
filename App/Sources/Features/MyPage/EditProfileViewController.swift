@@ -8,6 +8,8 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
     let showsSaveError = ProcessInfo.processInfo.arguments.contains("--profile-save-error")
     var accountCard: UIView?
+    var errorBanner: UIView?
+    var isSaving = false
     var profileSectionHeading: UILabel?
     var saveButton: UIButton?
     var saveButtonBottomConstraint: NSLayoutConstraint?
@@ -103,7 +105,8 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         contentTopConstraint?.constant = showsSaveError ? 10 : 12
     }
 
-    private func addErrorBanner() {
+    func addErrorBanner() {
+        guard errorBanner == nil else { return }
         let icon = UIImageView(image: UIImage(named: "ProfileSaveError")?.withRenderingMode(.alwaysOriginal))
         let errorColor = UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
         icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
@@ -117,7 +120,11 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         banner.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
         banner.backgroundColor = UIColor(red: 1, green: 0.945, blue: 0.949, alpha: 1)
         banner.layer.cornerRadius = 14
-        contentStack.addArrangedSubview(banner)
+        banner.accessibilityIdentifier = "profile-save-error"
+        errorBanner = banner
+        contentStack.insertArrangedSubview(banner, at: 0)
+        contentStack.spacing = 14
+        contentTopConstraint?.constant = 10
     }
 
     private func addAccountCard() {
@@ -340,18 +347,22 @@ extension EditProfileViewController {
     }
 
     private func save() {
+        guard !isSaving else { return }
         let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !name.isEmpty else {
             showMessage("이름을 입력해주세요")
             return
         }
         let introduction = introductionView.text ?? ""
+        view.endEditing(true)
+        isSaving = true
+        saveButton?.isEnabled = false
         Task { [weak self] in
             if AccessTokenStore.shared.hasToken {
                 do {
                     try await AccountAPI.updateProfile(username: name, profileInfo: introduction)
                 } catch {
-                    self?.showMessage((error as? APIError)?.message ?? "프로필을 저장하지 못했어요.")
+                    self?.handleSaveFailure()
                     return
                 }
             }
@@ -364,5 +375,12 @@ extension EditProfileViewController {
             UserProfileStore.shared.markProfileSaved()
             self?.navigationController?.popViewController(animated: true)
         }
+    }
+
+    private func handleSaveFailure() {
+        isSaving = false
+        saveButton?.isEnabled = true
+        addErrorBanner()
+        scrollView.setContentOffset(CGPoint(x: 0, y: -scrollView.adjustedContentInset.top), animated: true)
     }
 }
