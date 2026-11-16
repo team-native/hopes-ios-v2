@@ -8,6 +8,7 @@ final class CommunityWriteKeyboardLayout {
     private var keyboardObserver: NSObjectProtocol?
     private var isKeyboardVisible = false
     private var hasBodyValidationError = false
+    private var hasRegistrationFailure = false
 
     init(
         view: UIView,
@@ -48,6 +49,11 @@ final class CommunityWriteKeyboardLayout {
         updateBodyHeight()
     }
 
+    func setRegistrationFailure(_ isError: Bool) {
+        hasRegistrationFailure = isError
+        updateBodyHeight()
+    }
+
     private func observeKeyboard() {
         keyboardObserver = NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillChangeFrameNotification,
@@ -78,7 +84,7 @@ final class CommunityWriteKeyboardLayout {
         if isKeyboardVisible {
             bodyHeightConstraint.constant = 120
         } else {
-            bodyHeightConstraint.constant = hasBodyValidationError ? 300 : 511
+            bodyHeightConstraint.constant = hasBodyValidationError || hasRegistrationFailure ? 300 : 511
         }
     }
 }

@@ -327,6 +327,8 @@ extension CommunityWriteViewController {
 extension CommunityWriteViewController {
     func publish() {
         view.endEditing(true)
+        registrationErrorBanner?.isHidden = true
+        keyboardLayout?.setRegistrationFailure(false)
         let titleText = titleField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let bodyText = bodyView.text == bodyPlaceholder
             ? ""
@@ -341,9 +343,9 @@ extension CommunityWriteViewController {
             // The prototype has no post API yet; keep the draft and reproduce one temporary registration failure.
             shouldSimulateRegistrationFailure = false
             registrationErrorBanner?.isHidden = false
+            keyboardLayout?.setRegistrationFailure(true)
             return
         }
-        registrationErrorBanner?.isHidden = true
         CommunityPostStore.shared.add(title: titleText, body: bodyText, category: "질문", grade: selectedBoard)
         CommunityPostStore.shared.markPostPublished()
         navigationController?.popViewController(animated: true)
