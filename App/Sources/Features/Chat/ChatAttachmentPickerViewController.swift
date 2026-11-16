@@ -1,31 +1,7 @@
 import AVFoundation
 import PhotosUI
-import PDFKit
 import UIKit
 import UniformTypeIdentifiers
-
-private struct ValidatedChatDocument: Sendable {
-    let fileName: String
-    let url: URL
-    let state: ChatAttachmentValidationState
-    let pageCount: Int?
-}
-
-private func validateChatDocument(at url: URL) -> ValidatedChatDocument {
-    let state: ChatAttachmentValidationState
-    let pageCount: Int?
-    if UTType(filenameExtension: url.pathExtension)?.conforms(to: .pdf) != true {
-        state = .unsupportedFormat
-        pageCount = nil
-    } else if let document = PDFDocument(url: url), !document.isLocked, document.pageCount > 0 {
-        state = .supported
-        pageCount = document.pageCount
-    } else {
-        state = .unreadablePDF
-        pageCount = nil
-    }
-    return ValidatedChatDocument(fileName: url.lastPathComponent, url: url, state: state, pageCount: pageCount)
-}
 
 @MainActor
 final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewControllerDelegate,
@@ -138,10 +114,13 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
             let fileName = provider.suggestedName ?? "사진 \(index + 1)"
             group.enter()
             provider.loadObject(ofClass: UIImage.self) { object, _ in
+                let image = object as? UIImage
+                let validationState = Self.imageValidationState(image)
                 lock.lock()
                 attachments[index] = ChatAttachmentItem(
                     fileName: fileName,
-                    image: object as? UIImage
+                    image: image,
+                    validationState: validationState
                 )
                 lock.unlock()
                 group.leave()
@@ -189,7 +168,10 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
         _ picker: UIImagePickerController,
         didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
     ) {
-        finishSelection([ChatAttachmentItem(fileName: "촬영한 사진", image: info[.originalImage] as? UIImage)])
+        let image = info[.originalImage] as? UIImage
+        finishSelection([ChatAttachmentItem(
+            fileName: "촬영한 사진", image: image, validationState: Self.imageValidationState(image)
+        )])
     }
 
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
