@@ -2,6 +2,9 @@ import UIKit
 
 @MainActor
 final class PrivacyPolicyViewController: AppPageViewController {
+    private let primaryTextColor = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    private let secondaryTextColor = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+
     private let sections = [
         ("1. 수집하는 정보", "학교 이메일, 이름, 과, 기수, 자기소개, 대화 내용"),
         ("2. 이용 목적", "AI 답변 제공과 개인화, 커뮤니티 운영"),
@@ -36,10 +39,10 @@ final class PrivacyPolicyViewController: AppPageViewController {
     }
 
     private func addHeader() {
-        let title = AppStyle.label("개인정보 처리방침", size: 18, weight: .medium)
+        let title = AppStyle.label("개인정보 처리방침", size: 18, weight: .medium, color: primaryTextColor)
+        title.heightAnchor.constraint(equalToConstant: 26).isActive = true
         let back = UIButton(type: .system)
-        back.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        back.tintColor = UIColor(red: 54 / 255, green: 66 / 255, blue: 85 / 255, alpha: 1)
+        back.setImage(UIImage(named: "inquiry-chevron-left")?.withRenderingMode(.alwaysOriginal), for: .normal)
         back.addAction(UIAction { [weak self] _ in
             self?.navigationController?.popViewController(animated: true)
         }, for: .touchUpInside)
@@ -61,11 +64,23 @@ final class PrivacyPolicyViewController: AppPageViewController {
             size: 12,
             color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
         )
+        draftNotice.heightAnchor.constraint(equalToConstant: 16).isActive = true
         content.addArrangedSubview(draftNotice)
         for section in sections {
-            content.addArrangedSubview(AppStyle.label(section.0, size: 15, weight: .medium))
-            content.addArrangedSubview(AppStyle.label(section.1, size: 14, weight: .medium, color: AppStyle.muted))
+            let title = AppStyle.label(section.0, size: 15, weight: .medium, color: primaryTextColor)
+            title.heightAnchor.constraint(equalToConstant: 24).isActive = true
+            let description = AppStyle.label(section.1, size: 14, weight: .medium, color: secondaryTextColor)
+            description.heightAnchor.constraint(equalToConstant: 20).isActive = true
+            content.addArrangedSubview(title)
+            content.addArrangedSubview(description)
         }
+
+        let cardShadow = UIView()
+        cardShadow.layer.cornerRadius = 24
+        cardShadow.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.03).cgColor
+        cardShadow.layer.shadowOpacity = 1
+        cardShadow.layer.shadowRadius = 1.5
+        cardShadow.layer.shadowOffset = CGSize(width: 0, height: 1)
 
         let card = UIView()
         card.backgroundColor = .white
@@ -76,14 +91,20 @@ final class PrivacyPolicyViewController: AppPageViewController {
         card.layer.shadowOpacity = 1
         card.layer.shadowRadius = 8
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
+        card.translatesAutoresizingMaskIntoConstraints = false
+        cardShadow.addSubview(card)
         content.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(content)
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
             content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
             content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
+            card.topAnchor.constraint(equalTo: cardShadow.topAnchor),
+            card.leadingAnchor.constraint(equalTo: cardShadow.leadingAnchor),
+            card.trailingAnchor.constraint(equalTo: cardShadow.trailingAnchor),
+            card.bottomAnchor.constraint(equalTo: cardShadow.bottomAnchor)
         ])
-        contentStack.addArrangedSubview(card)
+        contentStack.addArrangedSubview(cardShadow)
     }
 }
