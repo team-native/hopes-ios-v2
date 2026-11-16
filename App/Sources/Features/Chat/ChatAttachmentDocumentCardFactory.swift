@@ -12,7 +12,7 @@ enum ChatAttachmentDocumentCardFactory {
         card.layer.borderWidth = 1
         card.layer.borderColor = ChatDetailPalette.border.cgColor
         card.translatesAutoresizingMaskIntoConstraints = false
-        card.heightAnchor.constraint(equalToConstant: 72).isActive = true
+        card.heightAnchor.constraint(equalToConstant: 64).isActive = true
         let widthConstraint = card.widthAnchor.constraint(equalToConstant: 192)
         widthConstraint.isActive = true
 

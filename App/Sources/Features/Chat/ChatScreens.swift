@@ -312,7 +312,7 @@ private extension ChatConversationViewController {
         view.keyboardLayoutGuide.usesBottomSafeArea = true
         view.keyboardLayoutGuide.followsUndockedKeyboard = false
 
-        let trayHeightConstraint = tray.heightAnchor.constraint(equalToConstant: 225)
+        let trayHeightConstraint = tray.heightAnchor.constraint(equalToConstant: 217)
         attachmentTrayHeightConstraint = trayHeightConstraint
         let trayScreenBottom = tray.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         let trayKeyboardBottom = tray.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)

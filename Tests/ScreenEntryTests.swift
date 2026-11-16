@@ -177,6 +177,34 @@ final class ScreenEntryTests: XCTestCase {
             XCTAssertEqual($0 as? ChatAttachmentLimitError, .imageTooLarge)
         }
     }
+
+    func testAttachmentTrayMatchesFigmaKeyboardHeight() {
+        let tray = ChatAttachmentTrayView()
+        var heights: [CGFloat] = []
+        tray.onPreferredHeightChange = { heights.append($0) }
+        tray.attachments = [
+            ChatAttachmentItem(fileName: "첫번째.pdf", image: nil, url: URL(fileURLWithPath: "/tmp/first.pdf")),
+            ChatAttachmentItem(fileName: "두번째.pdf", image: nil, url: URL(fileURLWithPath: "/tmp/second.pdf"))
+        ]
+
+        tray.setKeyboardVisible(true)
+        XCTAssertEqual(heights.last ?? 0, 196, accuracy: 0.5)
+        tray.setKeyboardVisible(false)
+        XCTAssertEqual(heights.last ?? 0, 217, accuracy: 0.5)
+    }
+
+    func testAttachmentQuestionInputUsesFigmaFocusBorder() {
+        let tray = ChatAttachmentTrayView()
+        guard let input = tray.findView(identifier: "chat-attachment-question-input") as? UITextField,
+              let inputContainer = input.superview else {
+            return XCTFail("첨부 질문 입력창이 트레이에 있어야 합니다")
+        }
+
+        tray.textFieldDidBeginEditing(input)
+        XCTAssertEqual(inputContainer.layer.borderColor, ChatDetailPalette.brandBorder.cgColor)
+        tray.textFieldDidEndEditing(input)
+        XCTAssertEqual(inputContainer.layer.borderColor, ChatDetailPalette.border.cgColor)
+    }
 }
 
 private extension UIView {
