@@ -57,10 +57,10 @@ extension InquiryViewController {
         fields.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(fields)
         NSLayoutConstraint.activate([
-            fields.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            fields.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            fields.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            fields.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            fields.topAnchor.constraint(equalTo: card.topAnchor, constant: 17),
+            fields.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 17),
+            fields.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -17),
+            fields.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -17)
         ])
         return card
     }
@@ -137,7 +137,6 @@ extension InquiryViewController {
         let group = UIStackView(arrangedSubviews: [label, field, errorRow])
         group.axis = .vertical
         group.spacing = 6
-        group.setCustomSpacing(4, after: field)
         return group
     }
 
@@ -182,7 +181,7 @@ extension InquiryViewController {
         emailField.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
         emailField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
         emailField.leftViewMode = .always
-        emailHeightConstraint = emailField.heightAnchor.constraint(equalToConstant: 56)
+        emailHeightConstraint = emailField.heightAnchor.constraint(equalToConstant: 54)
         emailHeightConstraint.isActive = true
         emailField.addTarget(self, action: #selector(emailDidChange), for: .editingChanged)
     }
