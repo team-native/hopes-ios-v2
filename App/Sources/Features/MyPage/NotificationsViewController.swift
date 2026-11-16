@@ -157,6 +157,7 @@ final class NotificationsViewController: AppPageViewController {
             let secondaryLine = skeletonLine(width: 140, height: 10, radius: 5)
             let lines = UIStackView(arrangedSubviews: [primaryLine, secondaryLine])
             lines.axis = .vertical
+            lines.alignment = .leading
             lines.spacing = 8
 
             let row = UIStackView(arrangedSubviews: [icon, lines])
@@ -200,8 +201,10 @@ extension NotificationsViewController {
 
         let title = AppStyle.label("새 알림이 없어요", size: 18, weight: .medium)
         title.textAlignment = .center
+        title.heightAnchor.constraint(equalToConstant: 26).isActive = true
         let subtitle = AppStyle.label("새 답변과 공지가 여기에 쌓여요.", size: 14, color: AppStyle.muted)
         subtitle.textAlignment = .center
+        subtitle.heightAnchor.constraint(equalToConstant: 20).isActive = true
 
         let content = UIStackView(arrangedSubviews: [illustration, title, subtitle])
         content.axis = .vertical
@@ -216,7 +219,7 @@ extension NotificationsViewController {
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
         ])
         contentStack.addArrangedSubview(container)
-        container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.9)
+        container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -71)
             .isActive = true
     }
 

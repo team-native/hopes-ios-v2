@@ -45,6 +45,23 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "기록"
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        if let topConstraint = scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .top
+        }) {
+            topConstraint.constant = 8
+        }
+        scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .bottom
+        })?.constant = -16
+        contentStack.heightAnchor.constraint(
+            greaterThanOrEqualTo: view.safeAreaLayoutGuide.heightAnchor, constant: -24
+        ).isActive = true
+        let preferredHeight = contentStack.heightAnchor.constraint(
+            equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -24
+        )
+        preferredHeight.priority = .defaultLow - 1
+        preferredHeight.isActive = true
         view.backgroundColor = UIColor(red: 0.965, green: 0.976, blue: 0.988, alpha: 1)
         contentStack.spacing = 16
         buildContent()
@@ -53,9 +70,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     func buildContent() {
         contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         conversationRows.removeAll()
-        contentStack.setCustomSpacing(24, after: resultsStack)
         if conversations.isEmpty {
-            navigationController?.setNavigationBarHidden(true, animated: false)
             addHistoryHeading()
             addEmptyHistoryState()
             return
@@ -70,6 +85,9 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         resultsStack.axis = .vertical
         resultsStack.spacing = 16
         contentStack.addArrangedSubview(resultsStack)
+        let spacer = UIView()
+        spacer.setContentHuggingPriority(UILayoutPriority(1), for: .vertical)
+        contentStack.addArrangedSubview(spacer)
         addNewConversationButton()
         renderConversations()
         if showsSearchPreview {
@@ -82,7 +100,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        navigationController?.setNavigationBarHidden(conversations.isEmpty, animated: animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
         loadConversations()
     }
 
@@ -135,7 +153,7 @@ extension HistoryViewController {
         container.layer.shadowOffset = CGSize(width: 0, height: 3)
         container.addSubview(fieldRow)
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalToConstant: 48),
+            container.heightAnchor.constraint(equalToConstant: 50),
             fieldRow.topAnchor.constraint(equalTo: container.topAnchor),
             fieldRow.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             fieldRow.trailingAnchor.constraint(equalTo: container.trailingAnchor),
@@ -172,6 +190,8 @@ extension HistoryViewController {
         isSearchingResults = isSearching
         conversationRows.removeAll()
         clearSearchButton.isHidden = !isSearching
+        resultsStack.spacing = isSearching ? 14 : 16
+        if let searchContainer { contentStack.setCustomSpacing(isSearching ? 14 : 16, after: searchContainer) }
         newConversationButton?.isHidden = isSearching
 
         let filtered = conversations.filter { query.isEmpty || $0.title.localizedCaseInsensitiveContains(query) }
@@ -203,56 +223,14 @@ extension HistoryViewController {
         addConversationSection("이전", conversations: filtered.filter(\.olderThanWeek), query: query)
     }
 
-    func makeNoSearchResultsState() -> UIView {
-        let illustration = UIView()
-        illustration.backgroundColor = .white
-        illustration.layer.cornerRadius = 44
-        illustration.layer.borderWidth = 1
-        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
-        illustration.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.10).cgColor
-        illustration.layer.shadowOpacity = 1
-        illustration.layer.shadowRadius = 14
-        illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
-        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
-        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
-
-        let icon = UIImageView(image: image(named: "history-search-empty"))
-        icon.contentMode = .scaleAspectFit
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        illustration.addSubview(icon)
-        NSLayoutConstraint.activate([
-            icon.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 36),
-            icon.heightAnchor.constraint(equalToConstant: 36)
-        ])
-
-        let title = AppStyle.label("검색 결과가 없어요", size: 18, weight: .medium)
-        title.textAlignment = .center
-        let subtitle = AppStyle.label("다른 단어로 검색해 보세요.", size: 14, color: AppStyle.muted)
-        subtitle.textAlignment = .center
-        let content = UIStackView(arrangedSubviews: [illustration, title, subtitle])
-        content.axis = .vertical
-        content.alignment = .center
-        content.spacing = 12
-
-        let container = UIView()
-        container.addSubview(content)
-        content.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
-        ])
-        return container
-    }
-
     func addConversationSection(_ title: String, conversations: [Conversation], query: String) {
         guard !conversations.isEmpty else { return }
         let section = UIStackView()
         section.axis = .vertical
-        section.spacing = 8
+        section.spacing = 16
         let heading = AppStyle.label(title, size: 14, weight: .medium, color: UIColor(red: 0.42, green: 0.47,
             blue: 0.56, alpha: 1))
+        heading.heightAnchor.constraint(equalToConstant: 20).isActive = true
         section.addArrangedSubview(heading)
         section.addArrangedSubview(makeConversationCard(conversations, query: query))
         resultsStack.addArrangedSubview(section)
@@ -279,10 +257,10 @@ extension HistoryViewController {
         rows.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(rows)
         NSLayoutConstraint.activate([
-            rows.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            rows.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 17),
-            rows.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -17),
-            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            rows.topAnchor.constraint(equalTo: card.topAnchor, constant: 15),
+            rows.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 18),
+            rows.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -18),
+            rows.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -15)
         ])
 
         for (index, conversation) in conversations.enumerated() {
@@ -331,21 +309,31 @@ extension HistoryViewController {
         row.onDelete = { [weak self, weak row] in
             self?.confirmDeletion(of: conversation, from: row)
         }
-        row.onBeginSwipe = { [weak self, weak row] in
-            guard let self, let row, self.revealedRow !== row else { return }
-            self.revealedRow?.setRevealed(false, animated: true)
-            self.revealedRow = row
-            self.conversationRows.forEach { $0.setMetadataVisible(true) }
-        }
-        row.onSwipeEnded = { [weak self, weak row] isRevealed in
-            guard let self, let row, !isRevealed, self.revealedRow === row else { return }
-            self.revealedRow = nil
-            self.conversationRows.forEach { $0.setMetadataVisible(self.isSearchingResults) }
-        }
+        configureSwipe(for: row)
         let trashImage = UIImage(named: "HistorySwipeTrash")?.withRenderingMode(.alwaysOriginal)
         row.configure(content: content, trashImage: trashImage, metadataLabel: metadata)
         conversationRows.append(row)
         return row
+    }
+
+    func configureSwipe(for row: ConversationRowView) {
+        row.onBeginSwipe = { [weak self, weak row] in
+            guard let self, let row, self.revealedRow !== row else { return }
+            self.revealedRow?.setRevealed(false, animated: true)
+            self.revealedRow = row
+            self.conversationRows.forEach {
+                $0.setMetadataVisible(true)
+                $0.setSwipeLayout(true)
+            }
+        }
+        row.onSwipeEnded = { [weak self, weak row] isRevealed in
+            guard let self, let row, !isRevealed, self.revealedRow === row else { return }
+            self.revealedRow = nil
+            self.conversationRows.forEach {
+                $0.setMetadataVisible(self.isSearchingResults)
+                $0.setSwipeLayout(false)
+            }
+        }
     }
 
     func confirmDeletion(of conversation: Conversation, from row: ConversationRowView?) {

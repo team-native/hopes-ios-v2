@@ -13,6 +13,7 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
     private var startOffset: CGFloat = 0
     private var offset: CGFloat = 0
     private weak var metadataLabel: UILabel?
+    private var contentInsetConstraints: [NSLayoutConstraint] = []
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -27,12 +28,13 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
         self.metadataLabel = metadataLabel
         content.translatesAutoresizingMaskIntoConstraints = false
         contentButton.addSubview(content)
-        NSLayoutConstraint.activate([
+        contentInsetConstraints = [
             content.topAnchor.constraint(equalTo: contentButton.topAnchor, constant: 12),
-            content.leadingAnchor.constraint(equalTo: contentButton.leadingAnchor, constant: 16),
-            content.trailingAnchor.constraint(equalTo: contentButton.trailingAnchor, constant: -16),
+            content.leadingAnchor.constraint(equalTo: contentButton.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: contentButton.trailingAnchor),
             content.bottomAnchor.constraint(equalTo: contentButton.bottomAnchor, constant: -12)
-        ])
+        ]
+        NSLayoutConstraint.activate(contentInsetConstraints)
         var configuration = UIButton.Configuration.plain()
         configuration.image = trashImage
         configuration.imagePlacement = .top
@@ -58,6 +60,15 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
         } else {
             changes()
         }
+    }
+
+    func setSwipeLayout(_ isSwiping: Bool) {
+        let horizontal: CGFloat = isSwiping ? 16 : 0
+        let vertical: CGFloat = isSwiping ? 14 : 12
+        contentInsetConstraints[0].constant = vertical
+        contentInsetConstraints[1].constant = horizontal
+        contentInsetConstraints[2].constant = -horizontal
+        contentInsetConstraints[3].constant = -vertical
     }
 
     func setMetadataVisible(_ visible: Bool) {

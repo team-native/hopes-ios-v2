@@ -37,7 +37,7 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
 
     private func configureLayout() {
         let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(named: "map-back"), for: .normal)
+        backButton.setImage(UIImage(named: "map-back")?.withRenderingMode(.alwaysOriginal), for: .normal)
         backButton.tintColor = LocationMapStyle.ink
         backButton.accessibilityLabel = "뒤로"
         backButton.addAction(UIAction { [weak self] _ in
@@ -167,7 +167,7 @@ final class ChatLocationViewController: UIViewController, @preconcurrency CLLoca
 
     private func makeRefreshButton() -> UIButton {
         let refresh = UIButton(type: .system)
-        refresh.setImage(UIImage(named: "map-refresh"), for: .normal)
+        refresh.setImage(UIImage(named: "map-refresh")?.withRenderingMode(.alwaysOriginal), for: .normal)
         refresh.tintColor = LocationMapStyle.secondary
         refresh.accessibilityLabel = "위치 다시 측정"
         refresh.addAction(UIAction { [weak self] _ in self?.refreshLocation() }, for: .touchUpInside)
