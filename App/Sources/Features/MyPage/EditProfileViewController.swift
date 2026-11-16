@@ -129,9 +129,25 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         card.layer.shadowOpacity = 0.05
         card.layer.shadowRadius = 4
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
-        let heading = AppStyle.label(showsSaveError ? "계정 정보 (수정 불가)" : "계정 정보",
-            size: showsSaveError ? 14 : 15, weight: .medium,
-            color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let heading = AppStyle.label(
+            showsSaveError ? "계정 정보 (수정 불가)" : "계정 정보",
+            size: showsSaveError ? 14 : 15,
+            weight: .medium,
+            color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+        )
+        heading.heightAnchor.constraint(equalToConstant: showsSaveError ? 20 : 24).isActive = true
+        var headerItems: [UIView] = [heading]
+        if !showsSaveError {
+            let caption = AppStyle.label("수정할 수 없는 정보예요.", size: 12, color: AppStyle.muted)
+            caption.heightAnchor.constraint(equalToConstant: 16).isActive = true
+            headerItems.append(caption)
+        }
+        let header = UIStackView(arrangedSubviews: headerItems)
+        header.axis = .vertical
+        header.spacing = 0
+        if !showsSaveError {
+            header.setCustomSpacing(2, after: heading)
+        }
         let rows: [UIView] = [
             accountInfoRow(title: "이메일", value: UserProfileStore.shared.email),
             accountInfoRow(
@@ -141,16 +157,16 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
                     : UserProfileStore.shared.department
             )
         ]
-        let stack = UIStackView(arrangedSubviews: [heading] + rows)
+        let stack = UIStackView(arrangedSubviews: [header] + rows)
         stack.axis = .vertical
         stack.spacing = showsSaveError ? 8 : 12
         stack.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(stack)
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 17),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 17),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -17),
+            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -17)
         ])
         contentStack.addArrangedSubview(card)
     }
@@ -165,6 +181,9 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         let row = UIStackView(arrangedSubviews: [key, spacer, text])
         row.axis = .horizontal
         row.alignment = .center
+        key.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        text.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        row.heightAnchor.constraint(equalToConstant: 20).isActive = true
         return row
     }
 
@@ -182,9 +201,11 @@ extension EditProfileViewController {
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
         let heading = AppStyle.label("프로필", size: 15, weight: .medium, color: UIColor(red: 20 / 255,
             green: 27 / 255, blue: 43 / 255, alpha: 1))
+        heading.heightAnchor.constraint(equalToConstant: 24).isActive = true
         profileSectionHeading = heading
         let nameLabel = AppStyle.label("이름", size: 14, weight: .medium, color: UIColor(red: 107 / 255,
             green: 120 / 255, blue: 144 / 255, alpha: 1))
+        nameLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
         configureNameField()
         let introductionLabel = configureIntroductionField()
         let nameFieldGroup = makeLabeledField(label: nameLabel, field: nameField)
@@ -198,10 +219,10 @@ extension EditProfileViewController {
         fields.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(fields)
         NSLayoutConstraint.activate([
-            fields.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            fields.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            fields.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            fields.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            fields.topAnchor.constraint(equalTo: card.topAnchor, constant: 17),
+            fields.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 17),
+            fields.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -17),
+            fields.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -17)
         ])
         contentStack.addArrangedSubview(card)
     }
@@ -224,6 +245,7 @@ extension EditProfileViewController {
     private func configureIntroductionField() -> UILabel {
         let label = AppStyle.label("자기소개 (AI 응답 개인화에 활용돼요)", size: 14, weight: .medium,
             color: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1))
+        label.heightAnchor.constraint(equalToConstant: 20).isActive = true
         introductionView.text = UserProfileStore.shared.introduction
         introductionView.font = .systemFont(ofSize: 15)
         introductionView.textColor = AppStyle.ink
