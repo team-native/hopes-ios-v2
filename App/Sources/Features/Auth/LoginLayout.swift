@@ -90,12 +90,16 @@ extension LoginViewController {
 
     func configureFields() {
         configureField(emailField, placeholder: "이메일")
+        emailFieldHeightConstraint = emailField.heightAnchor.constraint(equalToConstant: 54)
+        emailFieldHeightConstraint.isActive = true
         emailField.keyboardType = .emailAddress
         emailField.textContentType = .username
         emailField.returnKeyType = .next
         emailField.delegate = self
 
         configureField(passwordField, placeholder: "비밀번호")
+        passwordFieldHeightConstraint = passwordField.heightAnchor.constraint(equalToConstant: 54)
+        passwordFieldHeightConstraint.isActive = true
         passwordField.isSecureTextEntry = true
         passwordField.textContentType = .password
         passwordField.returnKeyType = .go
@@ -141,7 +145,6 @@ extension LoginViewController {
         field.autocapitalizationType = .none
         field.autocorrectionType = .no
         field.translatesAutoresizingMaskIntoConstraints = false
-        field.heightAnchor.constraint(equalToConstant: 56).isActive = true
     }
 
     func makeFieldLabel(_ title: String) -> UILabel {

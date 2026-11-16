@@ -40,6 +40,8 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     var keyboardBottomConstraint: NSLayoutConstraint!
     var sheetStackTopConstraint: NSLayoutConstraint!
     var passwordGroupHeightConstraint: NSLayoutConstraint!
+    var emailFieldHeightConstraint: NSLayoutConstraint!
+    var passwordFieldHeightConstraint: NSLayoutConstraint!
     var titleGroupHeightConstraint: NSLayoutConstraint!
     var titleTopSpacerHeightConstraint: NSLayoutConstraint!
     var feedback: Feedback = .none
@@ -186,6 +188,10 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         errorRow.isHidden = true
         let focused = UIColor(red: 142 / 255, green: 193 / 255, blue: 255 / 255, alpha: 1).cgColor
         let normal = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
+        emailFieldHeightConstraint.constant = textField === emailField ? 55 : 54
+        passwordFieldHeightConstraint.constant = textField === passwordField ? 55 : 54
+        emailField.layer.borderWidth = textField === emailField ? 1.5 : 1
+        passwordField.layer.borderWidth = textField === passwordField ? 1.5 : 1
         emailField.layer.borderColor = textField === emailField ? focused : normal
         passwordField.layer.borderColor = textField === passwordField ? focused : normal
         setLayoutMode(.keyboard)
