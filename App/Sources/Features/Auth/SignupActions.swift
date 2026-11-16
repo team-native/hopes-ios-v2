@@ -363,13 +363,6 @@ extension SignupViewController {
         }
     }
 
-    @objc func showGenerationPicker() {
-        presentPicker(title: "기수 선택", options: ["8기", "9기", "10기", "11기"], selected: generation) { [weak self] value in
-            self?.generation = value
-            self?.generationError = false
-        }
-    }
-
     @objc func dismissPicker() {
         sheetView?.removeFromSuperview()
         sheetView = nil
