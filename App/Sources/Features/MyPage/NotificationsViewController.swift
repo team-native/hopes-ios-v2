@@ -187,8 +187,7 @@ extension NotificationsViewController {
         illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
         illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
 
-        let bell = UIImageView(image: UIImage(systemName: "bell"))
-        bell.tintColor = AppStyle.blue
+        let bell = UIImageView(image: UIImage(named: "NotificationsEmptyBell")?.withRenderingMode(.alwaysOriginal))
         bell.contentMode = .scaleAspectFit
         bell.translatesAutoresizingMaskIntoConstraints = false
         illustration.addSubview(bell)

@@ -19,8 +19,7 @@ final class AnnouncementDetailViewController: AppPageViewController {
 
     private func addHeader() {
         let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        backButton.tintColor = AppStyle.ink
+        backButton.setImage(UIImage(named: "NotificationsDetailBack")?.withRenderingMode(.alwaysOriginal), for: .normal)
         backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.addAction(UIAction { [weak self] _ in
