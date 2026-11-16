@@ -15,6 +15,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         static let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
         static let muted = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
         static let line = UIColor(red: 226 / 255, green: 234 / 255, blue: 246 / 255, alpha: 1)
+        static let fieldLine = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
         static let placeholder = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
         static let error = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1)
         static let paleBlue = UIColor(red: 242 / 255, green: 247 / 255, blue: 255 / 255, alpha: 1)
@@ -66,7 +67,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         topBar.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(topBar)
 
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        backButton.setImage(UIImage(named: "SettingsBack"), for: .normal)
         backButton.tintColor = Palette.ink
         backButton.accessibilityLabel = "뒤로 가기"
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
@@ -74,9 +75,9 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         topBar.addSubview(backButton)
 
         titleLabel.text = "비밀번호 찾기"
-        titleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        titleLabel.font = .systemFont(ofSize: 18, weight: .medium)
         titleLabel.textColor = Palette.ink
-        titleLabel.textAlignment = .center
+        titleLabel.textAlignment = .left
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         topBar.addSubview(titleLabel)
 
@@ -84,12 +85,13 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
             topBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             topBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            topBar.heightAnchor.constraint(equalToConstant: 56),
+            topBar.heightAnchor.constraint(equalToConstant: 44),
             backButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 20),
             backButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 44),
             backButton.heightAnchor.constraint(equalToConstant: 44),
-            titleLabel.centerXAnchor.constraint(equalTo: topBar.centerXAnchor),
+            titleLabel.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: topBar.trailingAnchor, constant: -20),
             titleLabel.centerYAnchor.constraint(equalTo: topBar.centerYAnchor)
         ])
     }
@@ -129,12 +131,12 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
             actionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             actionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             actionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            actionButton.heightAnchor.constraint(equalToConstant: 44)
+            actionButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
 
     func configureFields() {
-        configureTextField(emailField, placeholder: "학교 이메일(@gsm.hs.kr)")
+        configureTextField(emailField, placeholder: "학교 이메일(@gsm.hs.kr)", height: 55)
         emailField.text = email
         emailField.keyboardType = .emailAddress
         emailField.textContentType = .emailAddress
@@ -153,12 +155,12 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         codeField.delegate = self
         codeField.addTarget(self, action: #selector(codeChanged), for: .editingChanged)
 
-        configureTextField(newPasswordField, placeholder: "새 비밀번호")
+        configureTextField(newPasswordField, placeholder: "새 비밀번호", height: 55)
         newPasswordField.isSecureTextEntry = true
         newPasswordField.textContentType = .newPassword
         newPasswordField.addTarget(self, action: #selector(passwordChanged), for: .editingChanged)
 
-        configureTextField(confirmPasswordField, placeholder: "새 비밀번호 확인")
+        configureTextField(confirmPasswordField, placeholder: "새 비밀번호 확인", height: 55)
         confirmPasswordField.isSecureTextEntry = true
         confirmPasswordField.textContentType = .newPassword
         confirmPasswordField.addTarget(self, action: #selector(passwordChanged), for: .editingChanged)
@@ -189,10 +191,10 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         field.font = .systemFont(ofSize: 15)
         field.textColor = Palette.ink
         field.backgroundColor = .white
-        field.layer.cornerRadius = 12
+        field.layer.cornerRadius = 16
         field.layer.borderWidth = 1
-        field.layer.borderColor = Palette.line.cgColor
-        field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 14, height: 1))
+        field.layer.borderColor = Palette.fieldLine.cgColor
+        field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
         field.leftViewMode = .always
         field.autocapitalizationType = .none
         field.autocorrectionType = .no
@@ -230,6 +232,6 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         let hasError = (textField === emailField && emailError != nil)
             || (textField === newPasswordField && passwordError != nil)
             || (textField === confirmPasswordField && confirmError != nil)
-        textField.layer.borderColor = (hasError ? Palette.error : Palette.line).cgColor
+        textField.layer.borderColor = (hasError ? Palette.error : Palette.fieldLine).cgColor
     }
 }
