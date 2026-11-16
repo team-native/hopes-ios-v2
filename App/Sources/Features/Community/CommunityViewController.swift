@@ -325,14 +325,14 @@ extension CommunityViewController {
         }
         if showingLoadError {
             writeButton?.isHidden = true
-            postStack.addArrangedSubview(makeLoadErrorState())
+            addPlaceholder(makeLoadErrorState())
             selectFilterAppearance()
             return
         }
         let visiblePosts = CommunityPostStore.shared.posts.filter { selectedBoard == "전체" || $0.grade == selectedBoard }
         if visiblePosts.isEmpty {
             writeButton?.isHidden = true
-            postStack.addArrangedSubview(makeEmptyState())
+            addPlaceholder(makeEmptyState())
         } else {
             writeButton?.isHidden = false
             visiblePosts.forEach { post in postStack.addArrangedSubview(makePostCard(post)) }
@@ -343,6 +343,12 @@ extension CommunityViewController {
     func showLoadError() {
         showingLoadError = true
         renderPosts()
+    }
+
+    private func addPlaceholder(_ placeholder: UIView) {
+        postStack.addArrangedSubview(placeholder)
+        placeholder.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -138)
+            .isActive = true
     }
 
 }

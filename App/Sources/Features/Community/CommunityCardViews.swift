@@ -8,7 +8,6 @@ extension CommunityViewController {
         container.addSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -138),
             content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             content.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
@@ -312,7 +311,6 @@ extension CommunityViewController {
         container.addSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -138),
             content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             content.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
