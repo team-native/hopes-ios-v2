@@ -288,8 +288,8 @@ extension HistoryViewController {
             self.revealedRow = nil
             self.conversationRows.forEach { $0.setMetadataVisible(self.isSearchingResults) }
         }
-        row.configure(content: content,
-            trashImage: UIImage(named: "HistorySwipeTrash")?.withRenderingMode(.alwaysOriginal), metadataLabel: metadata)
+        let trashImage = UIImage(named: "HistorySwipeTrash")?.withRenderingMode(.alwaysOriginal)
+        row.configure(content: content, trashImage: trashImage, metadataLabel: metadata)
         conversationRows.append(row)
         return row
     }
