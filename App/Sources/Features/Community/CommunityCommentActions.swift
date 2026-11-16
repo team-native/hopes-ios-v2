@@ -2,7 +2,7 @@ import UIKit
 
 @MainActor
 extension CommunityPostDetailViewController {
-    func addComment(author: String, time: String, text: String) {
+    func addComment(author: String, time: String, text: String, commentID: Int64? = nil) {
         let isOwnComment = author == "나" || author.contains("(나)")
         let authorLabel = AppStyle.label(author, size: 14, weight: .medium,
             color: isOwnComment ? AppStyle.blue : AppStyle.ink)
@@ -23,7 +23,7 @@ extension CommunityPostDetailViewController {
             if isOwnComment {
                 self.showOwnCommentActions(text: textLabel.text ?? "", label: textLabel)
             } else {
-                self.showCommentReportActions()
+                self.showCommentReportActions(commentID: commentID)
             }
         }, for: .touchUpInside)
         header.addArrangedSubview(more)
@@ -135,8 +135,16 @@ extension CommunityPostDetailViewController {
         present(sheet, animated: false)
     }
 
-    func showCommentReportActions() {
-        presentReportFlow()
+    func showCommentReportActions(commentID: Int64?) {
+        let store = CommunityPostStore.shared
+        if let commentID, store.reportedCommentIDs.contains(commentID) {
+            showDuplicateReportToast()
+            return
+        }
+        presentReportFlow { reasonCode in
+            guard let commentID else { return }
+            store.markCommentReported(id: commentID, reasonCode: reasonCode)
+        }
     }
 
     func confirmCommentDeletion(text: String, label: UILabel) {
@@ -303,13 +311,13 @@ extension CommunityPostDetailViewController {
             showDuplicateReportToast()
             return
         }
-        presentReportFlow { [weak self] in
+        presentReportFlow { [weak self] reasonCode in
             guard let self else { return }
-            CommunityPostStore.shared.markReported(self.post)
+            CommunityPostStore.shared.markReported(self.post, reasonCode: reasonCode)
         }
     }
 
-    private func presentReportFlow(onSubmit: @escaping () -> Void = {}) {
+    private func presentReportFlow(onSubmit: @escaping (String) -> Void = { _ in }) {
         guard presentedViewController == nil else { return }
         present(CommunityReportFlowViewController(onSubmit: onSubmit), animated: false)
     }

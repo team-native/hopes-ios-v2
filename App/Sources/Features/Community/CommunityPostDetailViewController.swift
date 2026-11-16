@@ -114,7 +114,8 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
                     self.addComment(
                         author: comment.isMine ? "익명 (나)" : "익명",
                         time: CommunityAPI.relativeTime(comment.createdAt),
-                        text: comment.content
+                        text: comment.content,
+                        commentID: comment.id
                     )
                 }
             }
