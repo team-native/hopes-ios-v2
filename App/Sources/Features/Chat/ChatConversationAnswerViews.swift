@@ -153,8 +153,7 @@ extension ChatConversationViewController {
         codeCard.heightAnchor.constraint(equalToConstant: 98).isActive = true
         let language = AppStyle.label("html", size: 12, color: AppStyle.muted)
         let copy = UIButton(type: .system)
-        copy.setImage(UIImage(systemName: "doc.on.doc"), for: .normal)
-        copy.tintColor = AppStyle.muted
+        copy.setImage(UIImage(named: "ChatAnswerCopy")?.withRenderingMode(.alwaysOriginal), for: .normal)
         copy.accessibilityLabel = "코드 복사"
         copy.addAction(UIAction { [weak self] _ in
             UIPasteboard.general.string = "<button class=\"primary\">\n  질문하기\n</button>"
@@ -329,16 +328,14 @@ extension ChatConversationViewController {
         row.alignment = .center
         row.spacing = 12
 
-        let check = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
-        check.tintColor = ChatDetailPalette.brand
+        let check = UIImageView(image: UIImage(named: "ChatRelatedCheck")?.withRenderingMode(.alwaysOriginal))
         check.contentMode = .scaleAspectFit
         check.widthAnchor.constraint(equalToConstant: 18).isActive = true
         check.heightAnchor.constraint(equalToConstant: 18).isActive = true
 
         let title = AppStyle.label(question, size: 15, color: ChatDetailPalette.ink)
         applyLineHeight(title, lineHeight: 24, height: 24)
-        let chevron = UIImageView(image: UIImage(systemName: "chevron.right"))
-        chevron.tintColor = ChatDetailPalette.muted
+        let chevron = UIImageView(image: UIImage(named: "ChatRelatedChevron")?.withRenderingMode(.alwaysOriginal))
         chevron.contentMode = .scaleAspectFit
         chevron.widthAnchor.constraint(equalToConstant: 20).isActive = true
         chevron.heightAnchor.constraint(equalToConstant: 20).isActive = true
