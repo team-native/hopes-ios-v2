@@ -11,12 +11,16 @@ final class MyPageViewController: AppPageViewController {
     }
 
     private let canvas = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
-    private let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+    let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
     private let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
-    private let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
-    private let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+    let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
     private let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
-    private let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+    let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+    var profileAvatarLabel: UILabel?
+    var profileNameLabel: UILabel?
+    var profileDepartmentLabel: UILabel?
+    var profileSummaryLabel: UILabel?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,6 +44,13 @@ final class MyPageViewController: AppPageViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
+        refreshProfileSummary()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard UserProfileStore.shared.consumeProfileSaveToast() else { return }
+        showProfileSaveToast()
     }
 
     private func addHeader() {
@@ -101,6 +112,7 @@ extension MyPageViewController {
         profile.spacing = 14
 
         let avatar = UILabel()
+        profileAvatarLabel = avatar
         avatar.text = String(UserProfileStore.shared.name.prefix(1))
         avatar.textAlignment = .center
         avatar.font = .systemFont(ofSize: 22, weight: .bold)
@@ -114,13 +126,15 @@ extension MyPageViewController {
             avatar.heightAnchor.constraint(equalToConstant: 56)
         ])
 
-        let profileText = UIStackView(arrangedSubviews: [
-            styledLabel(UserProfileStore.shared.name, size: 18, weight: .medium, color: ink, lineHeight: 26,
-                kern: -0.2),
-            styledLabel("\(UserProfileStore.shared.department) · \(UserProfileStore.shared.generation)", size: 14,
-                weight: .medium, color: secondary, lineHeight: 20),
-            styledLabel(UserProfileStore.shared.email, size: 12, color: tertiary, lineHeight: 16)
-        ])
+        let name = styledLabel(UserProfileStore.shared.name, size: 18, weight: .medium, color: ink, lineHeight: 26,
+            kern: -0.2)
+        let department = styledLabel("\(UserProfileStore.shared.department) · \(UserProfileStore.shared.generation)",
+            size: 14, weight: .medium, color: secondary, lineHeight: 20)
+        let summary = styledLabel(profileSummaryText, size: 12, color: tertiary, lineHeight: 16)
+        profileNameLabel = name
+        profileDepartmentLabel = department
+        profileSummaryLabel = summary
+        let profileText = UIStackView(arrangedSubviews: [name, department, summary])
         profileText.axis = .vertical
         profileText.spacing = 2
         profile.addArrangedSubview(avatar)
