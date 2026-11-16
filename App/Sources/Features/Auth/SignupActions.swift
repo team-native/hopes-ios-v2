@@ -266,39 +266,6 @@ extension SignupViewController {
         }
     }
 
-    private func submitEmail() {
-        email = (emailField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard isValidSchoolEmail else {
-            emailError = "학교 이메일(@gsm.hs.kr)만 사용할 수 있어요."
-            render(focusField: false)
-            return
-        }
-        guard !UserProfileStore.shared.isRegistered(email: email) else {
-            showAlreadyRegisteredNotice()
-            return
-        }
-        emailError = nil
-        step = .verification
-        codeField.text = ""
-        codeError = nil
-        render()
-        startCountdown()
-    }
-
-    private func verifyCode() {
-        guard (codeField.text ?? "").count == 6, countdown > 0 else {
-            codeError = countdown == 0
-                ? "인증 시간이 지났어요. 인증번호를 다시 받아 주세요."
-                : "인증번호 6자리를 입력해 주세요."
-            render(focusField: false)
-            return
-        }
-        step = .verified
-        codeError = nil
-        countdownTimer?.invalidate()
-        render()
-    }
-
     private func validatePassword() {
         passwordError = passwordRequirementsMet ? nil : "비밀번호 조건을 모두 맞춰 주세요."
         confirmError = passwordField.text == confirmField.text ? nil : "비밀번호가 일치하지 않아요."
@@ -320,16 +287,33 @@ extension SignupViewController {
         }
         guard termsAccepted else { return }
         let name = nameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        UserProfileStore.shared.update(
-            name: name,
-            department: selectedDepartment,
+        let payload = SignupPayload(
             email: email,
-            generation: generation
+            username: name,
+            password: passwordField.text ?? "",
+            passwordConfirm: confirmField.text ?? "",
+            verificationCode: codeField.text ?? "",
+            major: selectedDepartment,
+            cohort: generation.flatMap { Int($0.filter(\.isNumber)) }
         )
-        UserProfileStore.shared.markRegistered(email: email)
-        step = .complete
-        countdownTimer?.invalidate()
-        render()
+        runRequest {
+            try await AuthAPI.signup(payload)
+            UserProfileStore.shared.update(
+                name: name,
+                department: self.selectedDepartment,
+                email: self.email,
+                generation: self.generation
+            )
+            self.step = .complete
+            self.countdownTimer?.invalidate()
+            self.render()
+        } onError: { error in
+            if error.status == 409 {
+                self.showAlreadyRegisteredNotice()
+            } else {
+                self.showRequestError(error)
+            }
+        }
     }
 
     @objc func passwordChanged() {
@@ -354,13 +338,6 @@ extension SignupViewController {
         render()
     }
 
-    @objc func resendCode() {
-        codeField.text = ""
-        codeError = nil
-        render()
-        startCountdown()
-    }
-
     @objc func showDepartmentPicker() {
         presentPicker(title: "과 선택", options: ["소프트웨어과", "인공지능과", "게임과", "스마트IoT과"],
             selected: selectedDepartment) { [weak self] value in
@@ -381,12 +358,6 @@ extension SignupViewController {
 
     @objc func profileNameChanged() {
         updateActionButton()
-    }
-
-    func showAlreadyRegisteredNotice() {
-        let alert = UIAlertController(title: "이미 가입된 이메일이에요", message: "이미 가입된 계정이 있어요.", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
     }
 
 }

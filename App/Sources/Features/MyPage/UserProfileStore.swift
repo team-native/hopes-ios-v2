@@ -43,18 +43,4 @@ final class UserProfileStore {
         if let generation { defaults.set(generation, forKey: "profile.generation") }
         if let introduction { defaults.set(introduction, forKey: "profile.introduction") }
     }
-
-    func isRegistered(email: String) -> Bool {
-        registeredEmails.contains(email.lowercased())
-    }
-
-    func markRegistered(email: String) {
-        var emails = registeredEmails
-        emails.insert(email.lowercased())
-        defaults.set(Array(emails).sorted(), forKey: "auth.registeredEmails")
-    }
-
-    private var registeredEmails: Set<String> {
-        Set(defaults.stringArray(forKey: "auth.registeredEmails") ?? [])
-    }
 }
