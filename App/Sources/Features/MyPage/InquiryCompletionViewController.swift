@@ -35,6 +35,7 @@ final class InquiryCompletionViewController: UIViewController {
 
         let title = AppStyle.label("문의하기", size: 18, weight: .medium, color: UIColor(red: 20 / 255, green: 27 / 255,
             blue: 43 / 255, alpha: 1))
+        title.heightAnchor.constraint(equalToConstant: 26).isActive = true
         let header = UIStackView(arrangedSubviews: [backButton, title])
         header.axis = .horizontal
         header.alignment = .center
@@ -133,10 +134,14 @@ final class InquiryCompletionViewController: UIViewController {
         guard let shadow = content.arrangedSubviews.first,
               let badge = shadow.subviews.first,
               let mailIcon = badge.subviews.first as? UIImageView else { return }
+        let contentRegion = UILayoutGuide()
+        view.addLayoutGuide(contentRegion)
         NSLayoutConstraint.activate([
             header.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             header.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             header.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            contentRegion.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 16),
+            contentRegion.bottomAnchor.constraint(equalTo: confirm.topAnchor, constant: -16),
             shadow.widthAnchor.constraint(equalToConstant: 88),
             shadow.heightAnchor.constraint(equalToConstant: 88),
             badge.leadingAnchor.constraint(equalTo: shadow.leadingAnchor),
@@ -148,7 +153,7 @@ final class InquiryCompletionViewController: UIViewController {
             mailIcon.widthAnchor.constraint(equalToConstant: 36),
             mailIcon.heightAnchor.constraint(equalToConstant: 36),
             content.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            content.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            content.centerYAnchor.constraint(equalTo: contentRegion.centerYAnchor),
             content.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
             content.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
             confirm.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
