@@ -7,6 +7,7 @@ enum ChatAttachmentDocumentCardFactory {
         onRemove: @escaping (UUID) -> Void
     ) -> (view: UIView, widthConstraint: NSLayoutConstraint) {
         let card = UIView()
+        card.accessibilityIdentifier = "chat-attachment-document-card"
         card.backgroundColor = .white
         card.layer.cornerRadius = 16
         card.layer.borderWidth = 1

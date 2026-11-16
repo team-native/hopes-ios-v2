@@ -183,12 +183,26 @@ final class ScreenEntryTests: XCTestCase {
         var heights: [CGFloat] = []
         tray.onPreferredHeightChange = { heights.append($0) }
         tray.attachments = [
-            ChatAttachmentItem(fileName: "첫번째.pdf", image: nil, url: URL(fileURLWithPath: "/tmp/first.pdf")),
-            ChatAttachmentItem(fileName: "두번째.pdf", image: nil, url: URL(fileURLWithPath: "/tmp/second.pdf"))
+            ChatAttachmentItem(fileName: "사진.png", image: UIImage()),
+            ChatAttachmentItem(fileName: "첫번째.pdf", image: nil, url: URL(fileURLWithPath: "/tmp/first.pdf"))
         ]
 
         tray.setKeyboardVisible(true)
         XCTAssertEqual(heights.last ?? 0, 196, accuracy: 0.5)
+        tray.frame = CGRect(x: 0, y: 0, width: 402, height: 196)
+        tray.layoutIfNeeded()
+
+        let attachmentScroll = tray.findView(identifier: "chat-attachment-scroll")
+        let imageCard = tray.findView(identifier: "chat-attachment-image-card")
+        let documentCard = tray.findView(identifier: "chat-attachment-document-card")
+        let questionInputContainer = tray.findView(identifier: "chat-attachment-question-container")
+        XCTAssertEqual(attachmentScroll?.frame.height ?? 0, 70, accuracy: 0.5)
+        XCTAssertEqual(imageCard?.frame.width ?? 0, 64, accuracy: 0.5)
+        XCTAssertEqual(imageCard?.frame.height ?? 0, 64, accuracy: 0.5)
+        XCTAssertEqual(documentCard?.frame.height ?? 0, 64, accuracy: 0.5)
+        XCTAssertEqual(documentCard?.frame.width ?? 0, 284, accuracy: 0.5)
+        XCTAssertEqual(questionInputContainer?.frame.height ?? 0, 52, accuracy: 0.5)
+
         tray.setKeyboardVisible(false)
         XCTAssertEqual(heights.last ?? 0, 217, accuracy: 0.5)
     }

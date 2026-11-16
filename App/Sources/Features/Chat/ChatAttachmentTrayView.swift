@@ -94,6 +94,7 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
     private func configureLayout() {
         configureAppearance()
         let attachmentsScroll = makeAttachmentsScrollView()
+        attachmentsScroll.accessibilityIdentifier = "chat-attachment-scroll"
         attachmentsScrollView = attachmentsScroll
         let inputRow = makeQuestionInputRow()
         configureUnsupportedFormatBanner()
@@ -108,6 +109,7 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
         content.spacing = 12
         content.isLayoutMarginsRelativeArrangement = true
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 21, bottom: 0, trailing: 21)
+        countLabel.accessibilityIdentifier = "chat-attachment-count"
         countLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
         content.translatesAutoresizingMaskIntoConstraints = false
         addSubview(content)
@@ -173,6 +175,7 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
         inputField.accessibilityIdentifier = "chat-attachment-question-input"
         inputField.delegate = self
 
+        inputContainer.accessibilityIdentifier = "chat-attachment-question-container"
         inputContainer.backgroundColor = ChatDetailPalette.canvas
         inputContainer.layer.cornerRadius = 24
         inputContainer.layer.borderWidth = 1
@@ -259,7 +262,9 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
 
     private func makeAttachmentCard(_ attachment: ChatAttachmentItem) -> UIView {
         if let image = attachment.image {
-            return makeImageCard(image, id: attachment.id)
+            let card = makeImageCard(image, id: attachment.id)
+            card.accessibilityIdentifier = "chat-attachment-image-card"
+            return card
         }
         let documentCard = ChatAttachmentDocumentCardFactory.make(attachment) { [weak self] id in
             self?.onRemove?(id)
