@@ -65,7 +65,7 @@ extension HistoryViewController {
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
         ])
         contentStack.addArrangedSubview(container)
-        container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.72)
+        container.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, multiplier: 0.72)
             .isActive = true
     }
 
