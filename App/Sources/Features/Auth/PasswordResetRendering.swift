@@ -37,7 +37,7 @@ extension PasswordResetViewController {
         addStepper(current: 0)
         addHeading(lines: ["가입한 학교 이메일을", "입력해 주세요"], accent: "학교 이메일")
         addField(label: "학교 이메일", field: emailField, error: emailError)
-        addSpacer(16)
+        addSpacer(14)
     }
 
     func renderVerificationStep() {
@@ -46,14 +46,20 @@ extension PasswordResetViewController {
         addEmailSummary()
         addSpacer(14)
         contentStack.addArrangedSubview(makeCodeInputGroup())
-        if let codeError { addInlineError(codeError) } else { addSpacer(10) }
+        if let codeError {
+            addSpacer(6)
+            addInlineError(codeError)
+        }
+        addSpacer(14)
 
         let timerRow = UIStackView()
         timerRow.axis = .horizontal
         timerRow.alignment = .center
         timerRow.spacing = 6
         timerLabel.text = formattedCountdown
-        let timerIcon = UIImageView(image: UIImage(named: "PasswordResetClock"))
+        let timerIcon = UIImageView(image: UIImage(named: "PasswordResetClock")?.withRenderingMode(.alwaysTemplate))
+        timerIcon.tintColor = countdown == 0 ? Palette.error : Palette.blue
+        timerLabel.textColor = countdown == 0 ? Palette.error : Palette.blue
         timerIcon.translatesAutoresizingMaskIntoConstraints = false
         timerIcon.widthAnchor.constraint(equalToConstant: 14).isActive = true
         timerIcon.heightAnchor.constraint(equalToConstant: 14).isActive = true
@@ -69,11 +75,12 @@ extension PasswordResetViewController {
         contentStack.addArrangedSubview(timerRow)
         timerRow.translatesAutoresizingMaskIntoConstraints = false
         timerRow.heightAnchor.constraint(equalToConstant: 20).isActive = true
-        addSpacer(16)
+        addSpacer(14)
     }
 
     func makeCodeInputGroup() -> UIStackView {
         let codeLabel = makeLabel("인증번호 6자리", size: 14, weight: .medium, color: Palette.muted)
+        codeLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
         codeDigits.arrangedSubviews.forEach { codeDigits.removeArrangedSubview($0); $0.removeFromSuperview() }
         for index in 0..<6 {
             let box = UIView()
@@ -99,8 +106,6 @@ extension PasswordResetViewController {
         let codeGroup = UIStackView(arrangedSubviews: [codeLabel, codeDigits])
         codeGroup.axis = .vertical
         codeGroup.spacing = 8
-        codeGroup.isLayoutMarginsRelativeArrangement = true
-        codeGroup.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         codeDigits.translatesAutoresizingMaskIntoConstraints = false
         codeDigits.heightAnchor.constraint(equalToConstant: 56).isActive = true
         return codeGroup
@@ -110,9 +115,10 @@ extension PasswordResetViewController {
         addStepper(current: 2)
         addHeading(lines: ["새 비밀번호를", "만들어 주세요"], accent: "새 비밀번호",
                    subtitle: "이전에 쓰던 비밀번호와 다르게 만들어 주세요.")
-        addField(label: "새 비밀번호", field: newPasswordField, error: passwordError, visibility: true)
+        addField(label: "새 비밀번호", field: newPasswordField, error: passwordError)
+        addSpacer(14)
         addPasswordRequirements()
-        addField(label: "새 비밀번호 확인", field: confirmPasswordField, error: confirmError, visibility: true)
+        addField(label: "새 비밀번호 확인", field: confirmPasswordField, error: confirmError)
         addSpacer(28)
     }
 
@@ -165,7 +171,7 @@ extension PasswordResetViewController {
         completionContentView = content
         NSLayoutConstraint.activate([
             content.centerXAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerXAnchor),
-            content.centerYAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerYAnchor)
+            content.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
         ])
     }
 
@@ -173,11 +179,10 @@ extension PasswordResetViewController {
         let wrapper = UIStackView()
         wrapper.axis = .vertical
         wrapper.spacing = 8
-        wrapper.isLayoutMarginsRelativeArrangement = true
-        wrapper.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 20, bottom: 0, trailing: 20)
         let bars = UIStackView()
         bars.axis = .horizontal
         bars.spacing = 6
+        bars.distribution = .fillEqually
         for index in 0..<3 {
             let bar = UIView()
             bar.backgroundColor = index <= current ? Palette.blue : Palette.fieldLine
@@ -188,18 +193,17 @@ extension PasswordResetViewController {
         wrapper.addArrangedSubview(bars)
         let stepTitle = ["1 / 3 · 이메일 인증", "2 / 3 · 인증번호 확인", "3 / 3 · 새 비밀번호"][current]
         wrapper.addArrangedSubview(makeLabel(stepTitle, size: 12, color: Palette.blue))
+        addSpacer(8)
         contentStack.addArrangedSubview(wrapper)
         wrapper.translatesAutoresizingMaskIntoConstraints = false
-        wrapper.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        wrapper.heightAnchor.constraint(equalToConstant: 28).isActive = true
         addSpacer(14)
     }
 
     func addHeading(lines: [String], accent: String? = nil, subtitle: String? = nil) {
         let stack = UIStackView()
         stack.axis = .vertical
-        stack.spacing = 6
-        stack.isLayoutMarginsRelativeArrangement = true
-        stack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
+        stack.spacing = subtitle == nil ? 6 : 14
         let heading = makeLabel(lines.joined(separator: "\n"), size: 22, weight: .bold, color: Palette.ink)
         let attributed = NSMutableAttributedString(string: lines.joined(separator: "\n"), attributes: [
             .font: UIFont.systemFont(ofSize: 22, weight: .bold),
@@ -218,30 +222,34 @@ extension PasswordResetViewController {
         heading.attributedText = attributed
         stack.addArrangedSubview(heading)
         if let subtitle {
-            stack.addArrangedSubview(makeLabel(subtitle, size: 14, weight: .medium, color: Palette.muted))
+            let subtitleLabel = makeLabel(subtitle, size: 14, weight: .medium, color: Palette.muted)
+            subtitleLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+            stack.addArrangedSubview(subtitleLabel)
         }
         contentStack.addArrangedSubview(stack)
         stack.translatesAutoresizingMaskIntoConstraints = false
-        addSpacer(16)
+        addSpacer(14)
     }
 
     func addField(label: String, field: UITextField, error: String? = nil, visibility: Bool = false) {
         let group = UIStackView()
         group.axis = .vertical
         group.spacing = 6
-        group.isLayoutMarginsRelativeArrangement = true
-        group.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        group.addArrangedSubview(makeLabel(label, size: 14, weight: .medium, color: Palette.muted))
+        let fieldLabel = makeLabel(label, size: 14, weight: .medium, color: Palette.muted)
+        fieldLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        group.addArrangedSubview(fieldLabel)
         field.layer.borderWidth = error == nil ? 1 : 1.5
         field.layer.borderColor = (error == nil ? Palette.fieldLine : Palette.error).cgColor
         if visibility {
-            let eye = UIButton(type: .system)
+            var eyeConfig = UIButton.Configuration.plain()
+            eyeConfig.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 16)
+            let eye = UIButton(configuration: eyeConfig)
             let eyeImage = field.isSecureTextEntry
                 ? UIImage(named: "SignupPasswordEye")
                 : UIImage(systemName: "eye.slash")
             eye.setImage(eyeImage, for: .normal)
             eye.tintColor = Palette.muted
-            eye.frame = CGRect(x: 0, y: 0, width: 50, height: 55)
+            eye.frame = CGRect(x: 0, y: 0, width: 42, height: 44)
             eye.addAction(UIAction { [weak field] _ in
                 field?.isSecureTextEntry.toggle()
                 (field?.rightView as? UIButton)?.setImage(
@@ -293,9 +301,9 @@ extension PasswordResetViewController {
         let section = UIStackView()
         section.axis = .vertical
         section.spacing = 6
-        section.isLayoutMarginsRelativeArrangement = true
-        section.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
-        section.addArrangedSubview(makeLabel("학교 이메일", size: 14, weight: .medium, color: Palette.muted))
+        let emailLabel = makeLabel("학교 이메일", size: 14, weight: .medium, color: Palette.muted)
+        emailLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        section.addArrangedSubview(emailLabel)
 
         let row = UIStackView()
         row.axis = .horizontal
@@ -316,7 +324,7 @@ extension PasswordResetViewController {
         change.addTarget(self, action: #selector(changeEmail), for: .touchUpInside)
         row.addArrangedSubview(change)
         section.addArrangedSubview(row)
-        row.heightAnchor.constraint(equalToConstant: 52).isActive = true
+        row.heightAnchor.constraint(equalToConstant: 54).isActive = true
         section.translatesAutoresizingMaskIntoConstraints = false
         row.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(section)
@@ -338,10 +346,7 @@ extension PasswordResetViewController {
 
     func addInlineError(_ text: String) {
         let row = makeInlineError(text)
-        row.isLayoutMarginsRelativeArrangement = true
-        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         contentStack.addArrangedSubview(row)
-        addSpacer(4)
     }
 
     func makeLabel(

@@ -37,7 +37,7 @@ extension PasswordResetViewController {
             enabled = false
         case .verification:
             title = "확인"
-            enabled = (codeField.text?.count ?? 0) == 6 && countdown > 0
+            enabled = true
         case .newPassword:
             title = "비밀번호 변경"
             enabled = passwordRequirementsMet
@@ -172,12 +172,23 @@ extension PasswordResetViewController {
         if codeField.text != digits { codeField.text = digits }
         let labels = codeDigits.arrangedSubviews.compactMap { $0.subviews.first as? UILabel }
         for index in labels.indices { labels[index].text = character(at: index) }
+        updateCodeDigitFocus()
         if codeError != nil {
             codeError = nil
             render()
             DispatchQueue.main.async { [weak self] in self?.codeField.becomeFirstResponder() }
         }
         updateActionButton()
+    }
+
+    func updateCodeDigitFocus() {
+        let activeIndex = (codeField.text ?? "").count
+        for (index, box) in codeDigits.arrangedSubviews.enumerated() {
+            let isActive = codeError == nil && codeField.isFirstResponder && index == activeIndex
+            box.layer.borderColor = (codeError != nil ? Palette.error : (isActive ? Palette.focus : Palette.fieldLine))
+                .cgColor
+            box.layer.borderWidth = codeError != nil || isActive ? 1.5 : 1
+        }
     }
 
     func updatePasswordRequirementRows() {

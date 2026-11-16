@@ -105,7 +105,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
             topBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             topBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            topBar.heightAnchor.constraint(equalToConstant: 44),
+            topBar.heightAnchor.constraint(equalToConstant: 56),
             backButton.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 20),
             backButton.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 44),
@@ -125,6 +125,8 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         contentStack.axis = .vertical
         contentStack.alignment = .fill
         contentStack.spacing = 0
+        contentStack.isLayoutMarginsRelativeArrangement = true
+        contentStack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
@@ -147,11 +149,11 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         actionButton.addTarget(self, action: #selector(performPrimaryAction), for: .touchUpInside)
         actionButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(actionButton)
+        actionButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         actionButtonConstraints = [
             actionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             actionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            actionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            actionButton.heightAnchor.constraint(equalToConstant: 50)
+            actionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
         ]
         NSLayoutConstraint.activate(actionButtonConstraints)
     }
@@ -244,6 +246,10 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
     }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
+        if textField === codeField {
+            updateCodeDigitFocus()
+            return
+        }
         let hasError = (textField === emailField && emailError != nil)
             || (textField === newPasswordField && passwordError != nil)
             || (textField === confirmPasswordField && confirmError != nil)
@@ -252,6 +258,10 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
+        if textField === codeField {
+            updateCodeDigitFocus()
+            return
+        }
         let hasError = (textField === emailField && emailError != nil)
             || (textField === newPasswordField && passwordError != nil)
             || (textField === confirmPasswordField && confirmError != nil)
