@@ -60,7 +60,9 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     var actionTopSpacerHeightConstraint: NSLayoutConstraint?
     var confirmFieldHeightConstraint: NSLayoutConstraint?
     lazy var scrollTopToBarConstraint = scrollView.topAnchor.constraint(equalTo: topBar.bottomAnchor)
-    lazy var scrollTopToSafeAreaConstraint = scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
+    lazy var scrollTopToSafeAreaConstraint = scrollView.topAnchor.constraint(
+        equalTo: view.safeAreaLayoutGuide.topAnchor
+    )
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
