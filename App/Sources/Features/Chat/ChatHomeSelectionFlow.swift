@@ -26,11 +26,25 @@ extension ChatHomeViewController {
         present(picker, animated: false)
     }
 
+    @objc func refreshQuestions() {
+        guard recommendationState != .loading else { return }
+        if recommendationState == .failed {
+            retryRecommendations()
+            return
+        }
+        if AccessTokenStore.shared.hasToken {
+            loadRecommendations(refresh: true)
+            return
+        }
+        questionSetIndex = (questionSetIndex + 1) % questionSets.count
+        renderQuestions()
+    }
+
     @objc func retryRecommendations() {
         loadRecommendations()
     }
 
-    func loadRecommendations() {
+    func loadRecommendations(refresh: Bool = false) {
         recommendationRequestID += 1
         let requestID = recommendationRequestID
         questionSetIndex = 0
@@ -40,6 +54,10 @@ extension ChatHomeViewController {
         }
         recommendationState = .loading
         updateRecommendationTitle()
+        if AccessTokenStore.shared.hasToken {
+            loadServerRecommendations(requestID: requestID, refresh: refresh)
+            return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
             guard let self, self.recommendationRequestID == requestID,
                   self.recommendationState == .loading else { return }
@@ -48,7 +66,41 @@ extension ChatHomeViewController {
         }
     }
 
+    private func loadServerRecommendations(requestID: Int, refresh: Bool) {
+        let icons = ["chat-question-bed-icon", "chat-question-file-icon", "chat-question-code-icon",
+                     "chat-question-heart-icon"]
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let result = try await CatalogAPI.recommendations(
+                    department: self.selectedDepartment,
+                    specialty: self.selectedMajor,
+                    refreshToken: refresh ? self.recommendationRefreshToken : nil,
+                    excludeIDs: refresh ? self.shownRecommendationIDs : []
+                )
+                guard self.recommendationRequestID == requestID else { return }
+                self.recommendationRefreshToken = result.nextRefreshToken
+                self.shownRecommendationIDs = result.items.map(\.id)
+                if !result.items.isEmpty {
+                    self.questionSets = [result.items.indices.map { index in
+                        (icons[index % icons.count], result.items[index].content)
+                    }]
+                }
+                self.recommendationState = .ready
+            } catch {
+                guard self.recommendationRequestID == requestID else { return }
+                self.recommendationState = .failed
+            }
+            self.updateRecommendationTitle()
+        }
+    }
+
     private func applyContextSelection(didChange: Bool) {
+        if didChange {
+            let department = selectedDepartment
+            let specialty = selectedMajor
+            Task { await CatalogAPI.savePreferences(department: department, specialty: specialty) }
+        }
         updateContextChipTitles()
         if didChange, selectedDepartment != nil, selectedMajor != nil {
             loadRecommendations()
