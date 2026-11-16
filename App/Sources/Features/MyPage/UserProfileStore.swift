@@ -26,6 +26,15 @@ final class UserProfileStore {
         return shouldShow
     }
 
+    func clearLocalData() {
+        let keys = [
+            "profile.name", "profile.department", "profile.email", "profile.generation",
+            "profile.introduction", "profile.saveToastPending", "answerStyle.systemPrompt",
+            "chat.selectedDepartment", "chat.selectedMajor", "auth.keepSignedIn"
+        ]
+        keys.forEach(defaults.removeObject(forKey:))
+    }
+
     func markProfileSaved() {
         defaults.set(true, forKey: "profile.saveToastPending")
     }
