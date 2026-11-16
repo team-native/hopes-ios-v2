@@ -2,6 +2,29 @@ import UIKit
 
 @MainActor
 extension PasswordResetViewController {
+    func setActionButtonInline(_ inline: Bool) {
+        let isInDesiredContainer = inline
+            ? actionButton.superview === contentStack
+            : actionButton.superview === view
+        guard !isInDesiredContainer || isActionButtonInline != inline else { return }
+
+        if inline {
+            NSLayoutConstraint.deactivate(actionButtonConstraints)
+            actionButton.removeFromSuperview()
+            contentStack.addArrangedSubview(actionButton)
+        } else {
+            if actionButton.superview === contentStack {
+                contentStack.removeArrangedSubview(actionButton)
+                actionButton.removeFromSuperview()
+            }
+            if actionButton.superview !== view {
+                view.addSubview(actionButton)
+                NSLayoutConstraint.activate(actionButtonConstraints)
+            }
+        }
+        isActionButtonInline = inline
+    }
+
     func updateActionButton() {
         let title: String
         let enabled: Bool

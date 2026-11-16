@@ -83,6 +83,18 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         titleLabel.font = .systemFont(ofSize: 18, weight: .medium)
         titleLabel.textColor = Palette.ink
         titleLabel.textAlignment = .left
+        let titleAttributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 18, weight: .medium),
+            .foregroundColor: Palette.ink,
+            .kern: -0.2
+        ]
+        let titleText = NSMutableAttributedString(string: "비밀번호 찾기", attributes: titleAttributes)
+        let titleParagraph = NSMutableParagraphStyle()
+        titleParagraph.minimumLineHeight = 26
+        titleParagraph.maximumLineHeight = 26
+        titleText.addAttribute(.paragraphStyle, value: titleParagraph,
+                               range: NSRange(location: 0, length: titleText.length))
+        titleLabel.attributedText = titleText
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         topBar.addSubview(titleLabel)
 
@@ -127,7 +139,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
     }
 
     func configureActionButton() {
-        actionButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        actionButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
         actionButton.layer.cornerRadius = 12
         actionButton.addTarget(self, action: #selector(performPrimaryAction), for: .touchUpInside)
         actionButton.translatesAutoresizingMaskIntoConstraints = false
@@ -195,6 +207,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         field.attributedPlaceholder = NSAttributedString(string: placeholder,
             attributes: [.foregroundColor: Palette.placeholder])
         field.font = .systemFont(ofSize: 15)
+        field.defaultTextAttributes[.kern] = -0.1
         field.textColor = Palette.ink
         field.backgroundColor = .white
         field.layer.cornerRadius = 16
@@ -206,29 +219,6 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         field.autocorrectionType = .no
         field.translatesAutoresizingMaskIntoConstraints = false
         field.heightAnchor.constraint(equalToConstant: height).isActive = true
-    }
-
-    func setActionButtonInline(_ inline: Bool) {
-        let isInDesiredContainer = inline
-            ? actionButton.superview === contentStack
-            : actionButton.superview === view
-        guard !isInDesiredContainer || isActionButtonInline != inline else { return }
-
-        if inline {
-            NSLayoutConstraint.deactivate(actionButtonConstraints)
-            actionButton.removeFromSuperview()
-            contentStack.addArrangedSubview(actionButton)
-        } else {
-            if actionButton.superview === contentStack {
-                contentStack.removeArrangedSubview(actionButton)
-                actionButton.removeFromSuperview()
-            }
-            if actionButton.superview !== view {
-                view.addSubview(actionButton)
-                NSLayoutConstraint.activate(actionButtonConstraints)
-            }
-        }
-        isActionButtonInline = inline
     }
 
     func textField(
