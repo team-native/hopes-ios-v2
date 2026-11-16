@@ -79,14 +79,19 @@ struct AttachmentDTO: Decodable {
 
 enum AttachmentAPI {
     static func upload(
-        data: Data, fileName: String, mimeType: String, clientRequestId: String
+        data: Data,
+        fileName: String,
+        mimeType: String,
+        clientRequestId: String,
+        onProgress: @escaping @Sendable (Int64, Int64) -> Void = { _, _ in }
     ) async throws -> AttachmentDTO {
         try await APIClient.shared.upload(
             "/api/attachments",
             fileData: data,
             fileName: fileName,
             mimeType: mimeType,
-            clientRequestId: clientRequestId
+            clientRequestId: clientRequestId,
+            onProgress: onProgress
         )
     }
 
