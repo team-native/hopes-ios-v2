@@ -11,6 +11,7 @@ final class AppTabBarController: UITabBarController {
     private let customBar = UIView()
     private var tabButtons: [UIButton] = []
     private let tabRowHeight: CGFloat = 56
+    private let tabBarBorder = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     private var requestedSelectedIndex = 0
 
     override var selectedIndex: Int {
@@ -72,19 +73,27 @@ final class AppTabBarController: UITabBarController {
         customBar.translatesAutoresizingMaskIntoConstraints = false
         guard let parent = tabBar.superview else { return }
         parent.insertSubview(customBar, aboveSubview: tabBar)
+        let separator = UIView()
+        separator.backgroundColor = tabBarBorder
+        separator.translatesAutoresizingMaskIntoConstraints = false
+        customBar.addSubview(separator)
         NSLayoutConstraint.activate([
             customBar.leadingAnchor.constraint(equalTo: tabBar.leadingAnchor),
             customBar.trailingAnchor.constraint(equalTo: tabBar.trailingAnchor),
             customBar.topAnchor.constraint(equalTo: tabBar.topAnchor),
-            customBar.bottomAnchor.constraint(equalTo: tabBar.bottomAnchor)
+            customBar.bottomAnchor.constraint(equalTo: tabBar.bottomAnchor),
+            separator.topAnchor.constraint(equalTo: customBar.topAnchor),
+            separator.leadingAnchor.constraint(equalTo: customBar.leadingAnchor),
+            separator.trailingAnchor.constraint(equalTo: customBar.trailingAnchor),
+            separator.heightAnchor.constraint(equalToConstant: 1)
         ])
 
         let row = makeTabRow(for: tabs)
         customBar.addSubview(row)
         NSLayoutConstraint.activate([
-            row.leadingAnchor.constraint(equalTo: customBar.leadingAnchor, constant: 12),
-            row.trailingAnchor.constraint(equalTo: customBar.trailingAnchor, constant: -12),
-            row.topAnchor.constraint(equalTo: customBar.topAnchor, constant: 4),
+            row.leadingAnchor.constraint(equalTo: customBar.leadingAnchor, constant: 8),
+            row.trailingAnchor.constraint(equalTo: customBar.trailingAnchor, constant: -8),
+            row.topAnchor.constraint(equalTo: customBar.topAnchor, constant: 8),
             row.heightAnchor.constraint(equalToConstant: tabRowHeight)
         ])
     }
