@@ -15,6 +15,11 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     let locationManager = CLLocationManager()
     var isLiked = false
     var generationTimer: DispatchWorkItem?
+    var conversationID: Int64?
+    var answerTask: Task<Void, Never>?
+    var serverAnswer: String?
+    var pendingQuestion: String?
+    var lastAnswerText: String?
     var pendingAnswerCard: UIView?
     let attachmentResponseState = ChatAttachmentResponseState()
     var answerFailureCard: UIView?
@@ -47,6 +52,12 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         super.init(nibName: nil, bundle: nil)
     }
 
+    init(conversationID: Int64) {
+        initialQuestion = nil
+        self.conversationID = conversationID
+        super.init(nibName: nil, bundle: nil)
+    }
+
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
@@ -63,8 +74,11 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
                 beginLocationMeasurement(question: initialQuestion)
             } else {
                 addUserMessage(initialQuestion)
-                beginAnswerGeneration()
+                beginAnswerGeneration(question: initialQuestion)
             }
+        } else if let conversationID {
+            addConversationHeader()
+            loadConversation(id: conversationID)
         } else {
             addConversationHeader()
             addMessage("학교생활에 대해 궁금한 점을 편하게 물어보세요", outgoing: false)
@@ -236,7 +250,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     }
 
     func shareAnswer() {
-        let answer = "Frontend 시작 순서\nHTML·CSS로 간단한 페이지 만들기 → JavaScript 기초 문법 익히기 → React로 작은 프로젝트 완성하기"
+        let answer = lastAnswerText
+            ?? "Frontend 시작 순서\nHTML·CSS로 간단한 페이지 만들기 → JavaScript 기초 문법 익히기 → React로 작은 프로젝트 완성하기"
         let activity = UIActivityViewController(activityItems: [answer], applicationActivities: nil)
         present(activity, animated: true)
     }

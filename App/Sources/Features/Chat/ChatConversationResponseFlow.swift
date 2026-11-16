@@ -19,9 +19,11 @@ extension ChatConversationViewController {
             inputField.isEnabled = false
             messageSendButton?.isEnabled = false
             messageSendButton?.backgroundColor = LocationMapStyle.brand.withAlphaComponent(0.55)
-            if generationTimer != nil {
+            if generationTimer != nil || answerTask != nil {
                 generationTimer?.cancel()
                 generationTimer = nil
+                answerTask?.cancel()
+                answerTask = nil
                 if let pendingAnswerCard {
                     messagesStack.removeArrangedSubview(pendingAnswerCard)
                     pendingAnswerCard.removeFromSuperview()
@@ -98,10 +100,11 @@ extension ChatConversationViewController {
             return
         }
         addMessage(text, outgoing: true)
-        beginAnswerGeneration()
+        beginAnswerGeneration(question: text)
     }
 
-    func beginAnswerGeneration() {
+    func beginAnswerGeneration(question: String? = nil) {
+        if let question { pendingQuestion = question }
         if isOffline {
             retryWhenOnline = true
             showPendingStatus()
@@ -114,8 +117,8 @@ extension ChatConversationViewController {
         card.layer.shadowRadius = 14
         card.layer.shadowOffset = CGSize(width: 0, height: 6)
 
-        let title = AppStyle.label("Frontend 시작 순서", size: 18, weight: .semibold)
-        let partial = AppStyle.label("처음에는 화면을 직접 만들어 보는 것부터 시작하는 걸 추천해요. HTML·CSS로 간단한 페이지를", size: 15)
+        let title = AppStyle.label("답변을 만드는 중이에요", size: 18, weight: .semibold)
+        let partial = AppStyle.label("선배들의 경험을 모아 질문에 맞게 정리하고 있어요.", size: 15)
         let cursor = UIView()
         cursor.backgroundColor = AppStyle.blue
         cursor.widthAnchor.constraint(equalToConstant: 2).isActive = true
@@ -139,9 +142,7 @@ extension ChatConversationViewController {
         inputField.placeholder = "답변을 만드는 중이에요…"
         inputField.isEnabled = false
 
-        let work = DispatchWorkItem { [weak self] in self?.finishAnswerGeneration() }
-        generationTimer = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
+        requestServerAnswer(question: pendingQuestion ?? "")
     }
 
     func beginAttachmentAnalysis(attachments: [ChatAttachmentItem]) {
@@ -307,6 +308,9 @@ extension ChatConversationViewController {
         if isAttachmentResponse {
             resizeSentAttachmentThumbnails(to: 56)
             addAttachmentFormattedAnswer(sourceFileName: attachmentSourceFileName)
+        } else if let serverAnswer {
+            self.serverAnswer = nil
+            addMarkdownAnswer(serverAnswer)
         } else {
             addFormattedAnswer()
         }
@@ -315,6 +319,8 @@ extension ChatConversationViewController {
     func stopAnswerGeneration() {
         generationTimer?.cancel()
         generationTimer = nil
+        answerTask?.cancel()
+        answerTask = nil
         removePendingAttachmentAnalysisCard()
         attachmentResponseState.failureCard?.removeFromSuperview()
         attachmentResponseState.failureCard = nil
