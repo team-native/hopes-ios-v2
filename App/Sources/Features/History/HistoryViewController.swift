@@ -23,6 +23,8 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     let clearSearchButton = UIButton(type: .system)
     var newConversationButton: UIView?
     weak var revealedRow: ConversationRowView?
+    private var conversationRows: [ConversationRowView] = []
+    private var isSearchingResults = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,21 +34,12 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         contentStack.setCustomSpacing(24, after: resultsStack)
         if conversations.isEmpty {
             navigationController?.setNavigationBarHidden(true, animated: false)
+            addHistoryHeading()
             addEmptyHistoryState()
             return
         }
 
-        addHeading("지난 대화", subtitle: "이전 대화를 이어서 볼 수 있어요.")
-        if let heading = contentStack.arrangedSubviews.first as? UIStackView,
-           let title = heading.arrangedSubviews.first as? UILabel {
-            title.font = .systemFont(ofSize: 28, weight: .bold)
-            title.textColor = AppStyle.ink
-        }
-        if let heading = contentStack.arrangedSubviews.first as? UIStackView,
-           heading.arrangedSubviews.count > 1,
-           let subtitle = heading.arrangedSubviews[1] as? UILabel {
-            subtitle.font = .systemFont(ofSize: 14, weight: .medium)
-        }
+        addHistoryHeading()
         addSearchField()
 
         resultsStack.axis = .vertical
@@ -54,21 +47,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         contentStack.addArrangedSubview(resultsStack)
         renderConversations()
 
-        let newConversation = AppStyle.button("새 대화 시작", primary: true) { [weak self] in
-            self?.tabBarController?.selectedIndex = 1
-        }
-        var buttonConfiguration = UIButton.Configuration.filled()
-        buttonConfiguration.title = "새 대화 시작"
-        buttonConfiguration.baseBackgroundColor = AppStyle.blue
-        buttonConfiguration.baseForegroundColor = .white
-        buttonConfiguration.contentInsets = NSDirectionalEdgeInsets(top: 13, leading: 20, bottom: 13, trailing: 20)
-        newConversation.configuration = buttonConfiguration
-        newConversation.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
-        newConversation.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        newConversation.layer.cornerRadius = 12
-        newConversation.clipsToBounds = true
-        newConversationButton = newConversation
-        contentStack.addArrangedSubview(newConversation)
+        addNewConversationButton()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -80,68 +59,11 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
 
 @MainActor
 extension HistoryViewController {
-    func addEmptyHistoryState() {
-        let illustration = UIView()
-        illustration.backgroundColor = .white
-        illustration.layer.cornerRadius = 44
-        illustration.layer.borderWidth = 1
-        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
-        illustration.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.10).cgColor
-        illustration.layer.shadowOpacity = 1
-        illustration.layer.shadowRadius = 14
-        illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
-        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
-        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
-
-        let icon = UIImageView(image: image(named: "history-empty-chat"))
-        icon.contentMode = .scaleAspectFit
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        illustration.addSubview(icon)
-        NSLayoutConstraint.activate([
-            icon.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 36),
-            icon.heightAnchor.constraint(equalToConstant: 36)
-        ])
-
-        let title = AppStyle.label("아직 대화가 없어요", size: 18, weight: .medium)
-        title.textAlignment = .center
-        let subtitle = AppStyle.label("선배에게 첫 질문을 해보세요.", size: 14, color: AppStyle.muted)
-        subtitle.textAlignment = .center
-        let button = UIButton(type: .system)
-        var configuration = UIButton.Configuration.filled()
-        configuration.title = "채팅 시작하기"
-        configuration.baseBackgroundColor = AppStyle.blue
-        configuration.baseForegroundColor = .white
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
-        button.configuration = configuration
-        button.layer.cornerRadius = 10
-        button.clipsToBounds = true
-        button.addAction(UIAction { [weak self] _ in
-            self?.tabBarController?.selectedIndex = 1
-        }, for: .touchUpInside)
-
-        let content = UIStackView(arrangedSubviews: [illustration, title, subtitle, button])
-        content.axis = .vertical
-        content.alignment = .center
-        content.spacing = 12
-
-        let container = UIView()
-        container.addSubview(content)
-        content.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.72),
-            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
-        ])
-        contentStack.addArrangedSubview(container)
-    }
-
     private func addSearchField() {
         let searchIcon = UIImageView(image: image(named: "history-search"))
         searchIcon.contentMode = .scaleAspectFit
-        searchIcon.widthAnchor.constraint(equalToConstant: 16).isActive = true
-        searchIcon.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        searchIcon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        searchIcon.heightAnchor.constraint(equalToConstant: 18).isActive = true
 
         searchField.placeholder = "지난 대화 검색"
         searchField.borderStyle = .none
@@ -166,9 +88,9 @@ extension HistoryViewController {
         let fieldRow = UIStackView(arrangedSubviews: [searchIcon, searchField, clearSearchButton])
         fieldRow.axis = .horizontal
         fieldRow.alignment = .center
-        fieldRow.spacing = 10
+        fieldRow.spacing = 8
         fieldRow.isLayoutMarginsRelativeArrangement = true
-        fieldRow.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 14)
+        fieldRow.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
         fieldRow.translatesAutoresizingMaskIntoConstraints = false
         let container = UIView()
         container.backgroundColor = .white
@@ -201,6 +123,8 @@ extension HistoryViewController {
         }
         let query = searchField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let isSearching = !query.isEmpty
+        isSearchingResults = isSearching
+        conversationRows.removeAll()
         clearSearchButton.isHidden = !isSearching
         newConversationButton?.isHidden = isSearching
 
@@ -323,11 +247,24 @@ extension HistoryViewController {
         title.attributedText = highlightedTitle(conversation.title, query: query)
         title.numberOfLines = 1
         title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let metadataText = query.isEmpty ? conversation.time : "\(conversation.time) · \(conversation.department)"
+        let metadata = AppStyle.label(metadataText, size: 12, color: UIColor(red: 152 / 255, green: 163 / 255,
+            blue: 184 / 255, alpha: 1))
+        metadata.attributedText = NSAttributedString(string: metadataText, attributes: [
+            .font: UIFont.systemFont(ofSize: 12),
+            .foregroundColor: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1),
+            .paragraphStyle: lineStyle(height: 16)
+        ])
+        metadata.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        metadata.isHidden = query.isEmpty
+        let text = UIStackView(arrangedSubviews: [title, metadata])
+        text.axis = .vertical
+        text.spacing = 2
         let chevron = UIImageView(image: image(named: "history-chevron"))
         chevron.contentMode = .scaleAspectFit
         chevron.widthAnchor.constraint(equalToConstant: 18).isActive = true
         chevron.heightAnchor.constraint(equalToConstant: 18).isActive = true
-        let content = UIStackView(arrangedSubviews: [title, chevron])
+        let content = UIStackView(arrangedSubviews: [text, chevron])
         content.axis = .horizontal
         content.alignment = .center
         content.spacing = 12
@@ -344,8 +281,16 @@ extension HistoryViewController {
             guard let self, let row, self.revealedRow !== row else { return }
             self.revealedRow?.setRevealed(false, animated: true)
             self.revealedRow = row
+            self.conversationRows.forEach { $0.setMetadataVisible(true) }
         }
-        row.configure(content: content, trashImage: UIImage(systemName: "trash"))
+        row.onSwipeEnded = { [weak self, weak row] isRevealed in
+            guard let self, let row, !isRevealed, self.revealedRow === row else { return }
+            self.revealedRow = nil
+            self.conversationRows.forEach { $0.setMetadataVisible(self.isSearchingResults) }
+        }
+        let trashImage = UIImage(named: "HistorySwipeTrash")?.withRenderingMode(.alwaysOriginal)
+        row.configure(content: content, trashImage: trashImage, metadataLabel: metadata)
+        conversationRows.append(row)
         return row
     }
 
@@ -369,8 +314,8 @@ extension HistoryViewController {
 
     func highlightedTitle(_ title: String, query: String) -> NSAttributedString {
         let paragraph = NSMutableParagraphStyle()
-        paragraph.minimumLineHeight = 20
-        paragraph.maximumLineHeight = 20
+        paragraph.minimumLineHeight = 24
+        paragraph.maximumLineHeight = 24
         let result = NSMutableAttributedString(
             string: title,
             attributes: [
