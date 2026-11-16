@@ -3,6 +3,62 @@ import XCTest
 
 @MainActor
 final class ScreenEntryTests: XCTestCase {
+    func testHistoryResponseRebuildsBetweenEmptyAndPopulated() {
+        let controller = HistoryViewController()
+        controller.conversations = []
+        controller.loadViewIfNeeded()
+        for _ in 0..<3 {
+            controller.conversations = [HistoryViewController.Conversation(
+                title: "회귀 테스트", time: "오늘", department: "테스트", olderThanWeek: false
+            )]
+            controller.buildContent()
+            controller.view.layoutIfNeeded()
+            XCTAssertFalse(controller.resultsStack.arrangedSubviews.isEmpty)
+            controller.conversations = []
+            controller.buildContent()
+            controller.view.layoutIfNeeded()
+            XCTAssertFalse(controller.contentStack.arrangedSubviews.isEmpty)
+        }
+    }
+
+    func testNavigationPushPopForAffectedScreens() async {
+        let root = CommunityViewController()
+        let navigation = UINavigationController(rootViewController: root)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = navigation
+        window.makeKeyAndVisible()
+        navigation.loadViewIfNeeded()
+        navigation.view.layoutIfNeeded()
+        let rootDisplayed = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in root.view.window != nil }, object: nil
+        )
+        await fulfillment(of: [rootDisplayed], timeout: 3)
+        defer {
+            window.isHidden = true
+            window.rootViewController = nil
+        }
+        let history = HistoryViewController()
+        history.conversations = []
+        let screens: [UIViewController] = [
+            history, CommunitySearchViewController(), MyActivityViewController(),
+            NotificationsViewController(), SettingsViewController(), ChatConversationViewController(question: nil)
+        ]
+        for screen in screens {
+            navigation.pushViewController(screen, animated: false)
+            navigation.view.layoutIfNeeded()
+            screen.view.layoutIfNeeded()
+            XCTAssertTrue(navigation.topViewController === screen)
+            let displayed = XCTNSPredicateExpectation(
+                predicate: NSPredicate { _, _ in screen.view.window != nil }, object: nil
+            )
+            displayed.expectationDescription = "Display \(type(of: screen))"
+            await fulfillment(of: [displayed], timeout: 3)
+            navigation.popViewController(animated: false)
+            XCTAssertTrue(navigation.topViewController === root)
+            (screen as? ChatConversationViewController)?.networkMonitor.cancel()
+        }
+    }
+
     func testRepeatedTabTransitions() {
         let tabs = AppTabBarController()
         let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
