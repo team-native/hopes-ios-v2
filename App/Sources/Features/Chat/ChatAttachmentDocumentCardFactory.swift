@@ -35,7 +35,7 @@ enum ChatAttachmentDocumentCardFactory {
         iconChip.layer.cornerRadius = 12
         iconChip.translatesAutoresizingMaskIntoConstraints = false
         let icon = UIImageView(image: UIImage(systemName: "doc.text"))
-        icon.tintColor = attachment.validationState == .unreadablePDF ? dangerColor : ChatDetailPalette.brand
+        icon.tintColor = attachment.isSupported ? ChatDetailPalette.brand : dangerColor
         icon.contentMode = .scaleAspectFit
         icon.translatesAutoresizingMaskIntoConstraints = false
         iconChip.addSubview(icon)
