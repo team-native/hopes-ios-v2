@@ -3,6 +3,7 @@ import UIKit
 @MainActor
 final class WelcomeViewController: UIViewController {
     private let contentStack = UIStackView()
+    private let logoTileShadow = UIView()
     private let logoTile = UIView()
     private let logoMask = UIView()
     private let heading = UILabel()
@@ -62,10 +63,19 @@ final class WelcomeViewController: UIViewController {
         topSpacer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         contentStack.addArrangedSubview(topSpacer)
 
+        logoTileShadow.translatesAutoresizingMaskIntoConstraints = false
+        logoTileShadow.widthAnchor.constraint(equalToConstant: 64).isActive = true
+        logoTileShadow.heightAnchor.constraint(equalToConstant: 64).isActive = true
+        contentStack.addArrangedSubview(logoTileShadow)
+
         logoTile.translatesAutoresizingMaskIntoConstraints = false
-        logoTile.widthAnchor.constraint(equalToConstant: 64).isActive = true
-        logoTile.heightAnchor.constraint(equalToConstant: 64).isActive = true
-        contentStack.addArrangedSubview(logoTile)
+        logoTileShadow.addSubview(logoTile)
+        NSLayoutConstraint.activate([
+            logoTile.leadingAnchor.constraint(equalTo: logoTileShadow.leadingAnchor),
+            logoTile.trailingAnchor.constraint(equalTo: logoTileShadow.trailingAnchor),
+            logoTile.topAnchor.constraint(equalTo: logoTileShadow.topAnchor),
+            logoTile.bottomAnchor.constraint(equalTo: logoTileShadow.bottomAnchor)
+        ])
 
         heading.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(heading)
@@ -100,6 +110,12 @@ final class WelcomeViewController: UIViewController {
     }
 
     private func configureLogo() {
+        logoTileShadow.layer.cornerRadius = 14
+        logoTileShadow.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.03).cgColor
+        logoTileShadow.layer.shadowOpacity = 1
+        logoTileShadow.layer.shadowRadius = 1.5
+        logoTileShadow.layer.shadowOffset = CGSize(width: 0, height: 1)
+
         logoTile.backgroundColor = .white
         logoTile.layer.cornerRadius = 14
         logoTile.layer.borderWidth = 1
