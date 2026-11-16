@@ -46,6 +46,7 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
         }) {
             topConstraint.constant = 8
         }
+        addHeader()
         guard isPostAvailable else {
             showDeletedPostState()
             return
@@ -57,7 +58,6 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
         }
         scrollView.contentInsetAdjustmentBehavior = .never
 
-        addHeader()
         contentStack.addArrangedSubview(makePostCard())
 
         configureComments()
@@ -117,7 +117,7 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
     }
 
     private func constrainConversationToComposer() {
-        scrollView.bottomAnchor.constraint(equalTo: composerBar.topAnchor, constant: -16).isActive = true
+        scrollView.bottomAnchor.constraint(equalTo: composerBar.topAnchor).isActive = true
     }
 
     let secondaryText = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
@@ -188,7 +188,7 @@ extension CommunityPostDetailViewController {
         ])
         composerBottomConstraint = composerBar.bottomAnchor.constraint(
             equalTo: view.safeAreaLayoutGuide.bottomAnchor,
-            constant: -8
+            constant: 0
         )
         composerBottomConstraint.isActive = true
         scrollView.keyboardDismissMode = .interactive
@@ -209,7 +209,7 @@ extension CommunityPostDetailViewController {
                       let duration = durationValue as? TimeInterval else { return }
                 let local = self.view.convert(frame, from: nil)
                 let overlap = max(0, self.view.safeAreaLayoutGuide.layoutFrame.maxY - local.minY)
-                self.composerBottomConstraint.constant = -8 - overlap
+                self.composerBottomConstraint.constant = -overlap
                 UIView.animate(withDuration: duration) {
                     self.view.layoutIfNeeded()
                 }
