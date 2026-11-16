@@ -79,6 +79,15 @@ enum ChatAttachmentDocumentCardFactory {
         case .unreadablePDF:
             text = "암호가 걸렸거나 손상된 파일"
             color = dangerColor
+        case .fileTooLarge:
+            text = "파일 용량 초과"
+            color = dangerColor
+        case .tooManyPDFPages:
+            text = "페이지 수 초과"
+            color = dangerColor
+        case .imageTooLarge:
+            text = "이미지 해상도 초과"
+            color = dangerColor
         }
         return AppStyle.label(text, size: 12, color: color)
     }

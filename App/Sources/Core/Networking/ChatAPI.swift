@@ -78,7 +78,19 @@ struct AttachmentDTO: Decodable {
 }
 
 enum AttachmentAPI {
-    static func upload(data: Data, fileName: String, mimeType: String) async throws -> AttachmentDTO {
-        try await APIClient.shared.upload("/api/attachments", fileData: data, fileName: fileName, mimeType: mimeType)
+    static func upload(
+        data: Data, fileName: String, mimeType: String, clientRequestId: String
+    ) async throws -> AttachmentDTO {
+        try await APIClient.shared.upload(
+            "/api/attachments",
+            fileData: data,
+            fileName: fileName,
+            mimeType: mimeType,
+            clientRequestId: clientRequestId
+        )
+    }
+
+    static func delete(id: Int64) async throws {
+        try await APIClient.shared.send("DELETE", "/api/attachments/\(id)", authenticated: true)
     }
 }

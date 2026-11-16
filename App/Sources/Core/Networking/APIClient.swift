@@ -63,7 +63,8 @@ final class APIClient: @unchecked Sendable {
         _ path: String,
         fileData: Data,
         fileName: String,
-        mimeType: String
+        mimeType: String,
+        clientRequestId: String
     ) async throws -> Response {
         let boundary = "Boundary-\(UUID().uuidString)"
         var body = Data()
@@ -73,7 +74,7 @@ final class APIClient: @unchecked Sendable {
         body.append(fileData)
         body.append(Data("\r\n--\(boundary)\r\n".utf8))
         body.append(Data("Content-Disposition: form-data; name=\"clientRequestId\"\r\n\r\n".utf8))
-        body.append(Data("\(UUID().uuidString)\r\n--\(boundary)--\r\n".utf8))
+        body.append(Data("\(clientRequestId)\r\n--\(boundary)--\r\n".utf8))
         let data = try await perform(
             "POST", path, rawBody: body, contentType: "multipart/form-data; boundary=\(boundary)",
             authenticated: true

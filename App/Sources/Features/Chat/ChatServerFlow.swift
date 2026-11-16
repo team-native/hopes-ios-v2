@@ -1,4 +1,12 @@
 import UIKit
+import PDFKit
+
+struct ChatAttachmentUploadPayload: Sendable {
+    let fileName: String
+    let data: Data
+    let mimeType: String
+    let clientRequestId: String
+}
 
 @MainActor
 extension ChatConversationViewController {
@@ -36,39 +44,114 @@ extension ChatConversationViewController {
         }
     }
 
-    func requestAttachmentAnswer(attachments: [ChatAttachmentItem], question: String) {
+    func requestAttachmentAnswer(uploads: [ChatAttachmentUploadPayload], question: String) {
         answerTask?.cancel()
+        let messageClientRequestId = attachmentResponseState.messageClientRequestId ?? UUID().uuidString
+        attachmentResponseState.messageClientRequestId = messageClientRequestId
         answerTask = Task { [weak self] in
+            var attachmentIDs: [Int64] = []
             do {
-                var attachmentIDs: [Int64] = []
-                for attachment in attachments {
-                    guard !Task.isCancelled else { return }
-                    guard let upload = await Self.uploadData(for: attachment) else { throw APIError.decoding }
-                    let result = try await AttachmentAPI.upload(
-                        data: upload.data, fileName: attachment.fileName, mimeType: upload.mimeType
-                    )
-                    attachmentIDs.append(result.id)
+                attachmentIDs = try await Self.uploadAttachments(uploads)
+                guard !Task.isCancelled else {
+                    await Self.deleteUnsentAttachments(attachmentIDs)
+                    return
                 }
-                guard let self else { return }
+                guard let self else {
+                    await Self.deleteUnsentAttachments(attachmentIDs)
+                    return
+                }
                 let chatID = try await self.ensureConversation(title: question)
+                guard !Task.isCancelled else {
+                    await Self.deleteUnsentAttachments(attachmentIDs)
+                    return
+                }
                 let payload = SendMessagePayload(
                     content: question,
                     attachmentIds: attachmentIDs,
                     departmentId: ChatContextStore.departmentID,
                     specialtyId: ChatContextStore.specialtyID,
-                    clientRequestId: UUID().uuidString
+                    clientRequestId: messageClientRequestId
                 )
                 let chat = try await ChatAPI.send(chatID: chatID, payload: payload)
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled else {
+                    await Self.deleteUnsentAttachments(attachmentIDs)
+                    return
+                }
                 self.answerTask = nil
                 self.serverAnswer = chat.messages.last(where: { !$0.isUser })?.content ?? ""
                 self.removePendingAttachmentAnalysisCard()
                 self.finishAnswerGeneration()
             } catch {
+                await Self.deleteUnsentAttachments(attachmentIDs)
                 guard let self, !Task.isCancelled else { return }
                 self.answerTask = nil
                 self.showAttachmentAnalysisFailure()
             }
+        }
+    }
+
+    nonisolated static func prepareAttachmentUploads(
+        for attachments: [ChatAttachmentItem]
+    ) async throws -> [ChatAttachmentUploadPayload] {
+        try ChatAttachmentPolicy.validate(attachments)
+        var totalBytes = 0
+        var uploads: [ChatAttachmentUploadPayload] = []
+        uploads.reserveCapacity(attachments.count)
+
+        for attachment in attachments {
+            guard let upload = await uploadData(for: attachment) else {
+                throw ChatAttachmentLimitError.unreadableFile
+            }
+            try ChatAttachmentPolicy.validateFileSize(upload.data.count)
+            totalBytes += upload.data.count
+            try ChatAttachmentPolicy.validateTotalSize(totalBytes)
+
+            if let image = attachment.image {
+                let width = image.cgImage?.width ?? Int((image.size.width * image.scale).rounded())
+                let height = image.cgImage?.height ?? Int((image.size.height * image.scale).rounded())
+                try ChatAttachmentPolicy.validateImageDimensions(width: width, height: height)
+            } else {
+                guard let document = PDFDocument(data: upload.data), !document.isLocked else {
+                    throw ChatAttachmentLimitError.unreadableFile
+                }
+                try ChatAttachmentPolicy.validatePDFPages(document.pageCount)
+            }
+
+            uploads.append(ChatAttachmentUploadPayload(
+                fileName: attachment.fileName,
+                data: upload.data,
+                mimeType: upload.mimeType,
+                clientRequestId: attachment.id.uuidString
+            ))
+        }
+        return uploads
+    }
+
+    nonisolated static func deleteUnsentAttachments(_ ids: [Int64]) async {
+        await Task.detached {
+            for id in ids {
+                try? await AttachmentAPI.delete(id: id)
+            }
+        }.value
+    }
+
+    nonisolated static func uploadAttachments(_ uploads: [ChatAttachmentUploadPayload]) async throws -> [Int64] {
+        var ids: [Int64] = []
+        do {
+            for upload in uploads {
+                try Task.checkCancellation()
+                let result = try await AttachmentAPI.upload(
+                    data: upload.data,
+                    fileName: upload.fileName,
+                    mimeType: upload.mimeType,
+                    clientRequestId: upload.clientRequestId
+                )
+                ids.append(result.id)
+            }
+            return ids
+        } catch {
+            await deleteUnsentAttachments(ids)
+            throw error
         }
     }
 

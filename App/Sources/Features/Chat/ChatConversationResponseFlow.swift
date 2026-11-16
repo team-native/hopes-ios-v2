@@ -145,7 +145,7 @@ extension ChatConversationViewController {
         requestServerAnswer(question: pendingQuestion ?? "")
     }
 
-    func beginAttachmentAnalysis(attachments: [ChatAttachmentItem]) {
+    func beginAttachmentAnalysis(attachments: [ChatAttachmentItem], uploads: [ChatAttachmentUploadPayload]) {
         attachmentResponseState.isResponse = true
         guard !isOffline else {
             showAttachmentAnalysisFailure()
@@ -166,7 +166,7 @@ extension ChatConversationViewController {
         inputField.placeholder = "자료를 확인하는 중이에요…"
         inputField.isEnabled = false
 
-        requestAttachmentAnswer(attachments: attachments, question: pendingQuestion ?? "첨부한 자료를 설명해줘")
+        requestAttachmentAnswer(uploads: uploads, question: pendingQuestion ?? "첨부한 자료를 설명해줘")
     }
 
     private func makeAttachmentAnalysisCard(countDescription: String) -> UIView {
@@ -276,7 +276,15 @@ extension ChatConversationViewController {
         guard !isOffline, let attachments = attachmentResponseState.lastSentAttachments else { return }
         attachmentResponseState.failureCard?.removeFromSuperview()
         attachmentResponseState.failureCard = nil
-        beginAttachmentAnalysis(attachments: attachments)
+        Task { [weak self] in
+            do {
+                let uploads = try await Self.prepareAttachmentUploads(for: attachments)
+                guard let self else { return }
+                self.beginAttachmentAnalysis(attachments: attachments, uploads: uploads)
+            } catch {
+                self?.showAttachmentAnalysisFailure()
+            }
+        }
     }
 
     func finishAnswerGeneration() {
@@ -290,6 +298,7 @@ extension ChatConversationViewController {
         attachmentResponseState.failureCard?.removeFromSuperview()
         attachmentResponseState.failureCard = nil
         attachmentResponseState.lastSentAttachments = nil
+        attachmentResponseState.messageClientRequestId = nil
         attachmentResponseState.isResponse = false
         if let pendingAnswerCard {
             messagesStack.removeArrangedSubview(pendingAnswerCard)
@@ -324,6 +333,7 @@ extension ChatConversationViewController {
         attachmentResponseState.failureCard?.removeFromSuperview()
         attachmentResponseState.failureCard = nil
         attachmentResponseState.lastSentAttachments = nil
+        attachmentResponseState.messageClientRequestId = nil
         attachmentResponseState.isResponse = false
         stopAnswerButton.isHidden = true
         inputField.isEnabled = true

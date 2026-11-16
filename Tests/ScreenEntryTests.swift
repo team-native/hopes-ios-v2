@@ -152,6 +152,31 @@ final class ScreenEntryTests: XCTestCase {
         XCTAssertGreaterThan(controller.messagesStack.arrangedSubviews.count, 1)
         controller.networkMonitor.cancel()
     }
+
+    func testChatAttachmentLimitsMatchServerDefaults() {
+        XCTAssertNoThrow(try ChatAttachmentPolicy.validateCount(3))
+        XCTAssertThrowsError(try ChatAttachmentPolicy.validateCount(4)) {
+            XCTAssertEqual($0 as? ChatAttachmentLimitError, .tooManyAttachments)
+        }
+
+        XCTAssertNoThrow(try ChatAttachmentPolicy.validateFileSize(5_242_880))
+        XCTAssertThrowsError(try ChatAttachmentPolicy.validateFileSize(5_242_881)) {
+            XCTAssertEqual($0 as? ChatAttachmentLimitError, .fileTooLarge)
+        }
+        XCTAssertNoThrow(try ChatAttachmentPolicy.validateTotalSize(12_582_912))
+        XCTAssertThrowsError(try ChatAttachmentPolicy.validateTotalSize(12_582_913)) {
+            XCTAssertEqual($0 as? ChatAttachmentLimitError, .totalTooLarge)
+        }
+
+        XCTAssertNoThrow(try ChatAttachmentPolicy.validatePDFPages(50))
+        XCTAssertThrowsError(try ChatAttachmentPolicy.validatePDFPages(51)) {
+            XCTAssertEqual($0 as? ChatAttachmentLimitError, .tooManyPDFPages)
+        }
+        XCTAssertNoThrow(try ChatAttachmentPolicy.validateImageDimensions(width: 5_000, height: 5_000))
+        XCTAssertThrowsError(try ChatAttachmentPolicy.validateImageDimensions(width: 5_001, height: 5_000)) {
+            XCTAssertEqual($0 as? ChatAttachmentLimitError, .imageTooLarge)
+        }
+    }
 }
 
 private extension UIView {

@@ -4,6 +4,29 @@ enum ChatAttachmentValidationState: Equatable, Sendable {
     case supported
     case unsupportedFormat
     case unreadablePDF
+    case fileTooLarge
+    case tooManyPDFPages
+    case imageTooLarge
+
+    var limitError: ChatAttachmentLimitError? {
+        switch self {
+        case .supported: nil
+        case .unsupportedFormat: .unsupportedFormat
+        case .unreadablePDF: .unreadableFile
+        case .fileTooLarge: .fileTooLarge
+        case .tooManyPDFPages: .tooManyPDFPages
+        case .imageTooLarge: .imageTooLarge
+        }
+    }
+
+    var validationMessage: String? {
+        switch self {
+        case .supported: nil
+        case .unsupportedFormat: "이미지와 PDF만 첨부할 수 있어요."
+        case .unreadablePDF: "이 PDF는 열 수 없어요. 암호를 풀거나 다른 파일로 다시 첨부해 주세요."
+        case .fileTooLarge, .tooManyPDFPages, .imageTooLarge: limitError?.errorDescription
+        }
+    }
 }
 
 struct ChatAttachmentItem: Identifiable {
@@ -15,7 +38,7 @@ struct ChatAttachmentItem: Identifiable {
     let pageCount: Int?
 
     var isSupported: Bool {
-        image != nil || (url != nil && validationState == .supported)
+        validationState == .supported && (image != nil || url != nil)
     }
 
     init(
@@ -36,8 +59,11 @@ struct ChatAttachmentItem: Identifiable {
 @MainActor
 final class ChatAttachmentTrayView: UIView {
     var onRemove: ((UUID) -> Void)?
-    var onSend: ((String) -> Void)?
+    var onSend: ((String) async -> Bool)?
     var onPreferredHeightChange: ((CGFloat) -> Void)?
+    var validationError: ChatAttachmentLimitError? {
+        didSet { updateAttachments() }
+    }
     var attachments: [ChatAttachmentItem] = [] {
         didSet { updateAttachments() }
     }
@@ -55,6 +81,7 @@ final class ChatAttachmentTrayView: UIView {
     private var homeIndicatorSpacerHeightConstraint: NSLayoutConstraint?
     private var preferredTrayHeight: CGFloat = 225
     private var isKeyboardVisible = false
+    private var isSending = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -175,19 +202,21 @@ final class ChatAttachmentTrayView: UIView {
 
     private func updateAttachments() {
         countLabel.text = "첨부 \(attachments.count)개"
-        let unreadablePDF = attachments.contains { $0.validationState == .unreadablePDF }
-        let hasUnsupportedAttachment = attachments.contains { !$0.isSupported }
-        let hasInvalidAttachment = unreadablePDF || hasUnsupportedAttachment
+        let itemWithError = attachments.first { $0.validationState.limitError != nil }
+        let itemError = itemWithError?.validationState.limitError
+        let error = validationError ?? itemError
+        let hasUnsupportedAttachment = attachments.contains { $0.validationState == .unsupportedFormat }
+        let hasInvalidAttachment = error != nil || hasUnsupportedAttachment
         unsupportedFormatBanner.isHidden = !hasInvalidAttachment
-        bannerMessageLabel.text = unreadablePDF
-            ? "이 PDF는 열 수 없어요. 암호를 풀거나 다른 파일로 다시 첨부해 주세요."
-            : "이미지와 PDF만 첨부할 수 있어요."
+        bannerMessageLabel.text = validationError?.errorDescription
+            ?? itemWithError?.validationState.validationMessage
+            ?? "이미지와 PDF만 첨부할 수 있어요."
         bannerMessageLabel.textColor = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
-        sendButton.isEnabled = !hasInvalidAttachment
+        sendButton.isEnabled = !hasInvalidAttachment && !isSending
         sendButton.backgroundColor = hasInvalidAttachment
             ? ChatDetailPalette.brand.withAlphaComponent(0.4)
             : ChatDetailPalette.brand
-        preferredTrayHeight = unreadablePDF ? 293 : (hasUnsupportedAttachment ? 279 : 225)
+        preferredTrayHeight = error != nil ? 293 : (hasUnsupportedAttachment ? 279 : 225)
         updatePreferredHeight()
         NSLayoutConstraint.deactivate(documentCardWidthConstraints)
         documentCardWidthConstraints.removeAll()
@@ -326,10 +355,25 @@ private extension ChatAttachmentTrayView {
 @MainActor
 private extension ChatAttachmentTrayView {
     func sendQuestion() {
-        guard !attachments.contains(where: { !$0.isSupported }) else { return }
+        guard !isSending, !attachments.contains(where: { !$0.isSupported }) else { return }
         let question = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !question.isEmpty else { return }
-        onSend?(question)
-        inputField.text = "이 자료 요약해줘"
+        isSending = true
+        attachmentsStack.isUserInteractionEnabled = false
+        updateAttachments()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let accepted = await self.onSend?(question) ?? false
+            self.isSending = false
+            self.attachmentsStack.isUserInteractionEnabled = true
+            if accepted {
+                let currentQuestion = self.inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                if currentQuestion == question {
+                    self.inputField.text = "이 자료 요약해줘"
+                }
+                self.validationError = nil
+            }
+            self.updateAttachments()
+        }
     }
 }
