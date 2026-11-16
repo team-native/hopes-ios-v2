@@ -235,8 +235,7 @@ extension ChatConversationViewController {
         warning.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
         warning.backgroundColor = UIColor(red: 1, green: 241 / 255.0, blue: 242 / 255.0, alpha: 1)
         warning.layer.cornerRadius = 16
-        let alertPath = Bundle.main.path(forResource: "location-low-accuracy-alert", ofType: "png")
-        let alertIcon = UIImageView(image: alertPath.flatMap(UIImage.init(contentsOfFile:)))
+        let alertIcon = UIImageView(image: UIImage(named: "location-low-accuracy-alert"))
         alertIcon.contentMode = .scaleAspectFit
         alertIcon.widthAnchor.constraint(equalToConstant: 16).isActive = true
         alertIcon.heightAnchor.constraint(equalToConstant: 16).isActive = true

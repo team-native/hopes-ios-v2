@@ -379,8 +379,7 @@ extension HistoryViewController {
     }
 
     func image(named name: String) -> UIImage? {
-        guard let path = Bundle.main.path(forResource: name, ofType: "png") else { return nil }
-        return UIImage(contentsOfFile: path)
+        UIImage(named: name)
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {

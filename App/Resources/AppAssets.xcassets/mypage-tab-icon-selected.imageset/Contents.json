@@ -1,15 +1,15 @@
 {
-  "images": [
+  "images" : [
     {
-      "filename": "mypage-tab-icon-selected.svg",
-      "idiom": "universal"
+      "filename" : "mypage-tab-icon-selected.pdf",
+      "idiom" : "universal"
     }
   ],
-  "info": {
-    "author": "xcode",
-    "version": 1
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
   },
-  "properties": {
-    "preserves-vector-representation": true
+  "properties" : {
+    "preserves-vector-representation" : true
   }
 }
