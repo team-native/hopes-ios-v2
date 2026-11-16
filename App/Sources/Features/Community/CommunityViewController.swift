@@ -54,6 +54,7 @@ final class CommunityViewController: AppPageViewController {
     var publishToast: UIView?
     var writeButton: UIButton?
     private var writeButtonBottomConstraint: NSLayoutConstraint?
+    private var refreshTask: Task<Void, Never>?
     var showingLoadError = ProcessInfo.processInfo.arguments.contains("--community-load-error")
 
     override func viewDidLoad() {
@@ -90,8 +91,13 @@ final class CommunityViewController: AppPageViewController {
             renderPosts()
             if CommunityPostStore.shared.consumePublishedToast() { showPublishToast() }
         }
-        guard CommunityPostStore.shared.isServerBacked else { return }
-        Task { [weak self] in
+        refreshPosts()
+    }
+
+    func refreshPosts() {
+        guard CommunityPostStore.shared.isServerBacked, refreshTask == nil else { return }
+        refreshTask = Task { [weak self] in
+            defer { self?.refreshTask = nil }
             do {
                 try await CommunityPostStore.shared.refresh()
                 self?.showingLoadError = false
@@ -106,7 +112,10 @@ final class CommunityViewController: AppPageViewController {
         super.viewDidLayoutSubviews()
         guard let tabBar = tabBarController?.tabBar else { return }
         let tabBarFrame = view.convert(tabBar.bounds, from: tabBar)
-        writeButtonBottomConstraint?.constant = -(view.bounds.maxY - tabBarFrame.minY + 26)
+        let bottom = -(view.bounds.maxY - tabBarFrame.minY + 26)
+        if let constraint = writeButtonBottomConstraint, abs(constraint.constant - bottom) > 0.5 {
+            constraint.constant = bottom
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -316,14 +325,14 @@ extension CommunityViewController {
         }
         if showingLoadError {
             writeButton?.isHidden = true
-            postStack.addArrangedSubview(makeLoadErrorState())
+            addPlaceholder(makeLoadErrorState())
             selectFilterAppearance()
             return
         }
         let visiblePosts = CommunityPostStore.shared.posts.filter { selectedBoard == "전체" || $0.grade == selectedBoard }
         if visiblePosts.isEmpty {
             writeButton?.isHidden = true
-            postStack.addArrangedSubview(makeEmptyState())
+            addPlaceholder(makeEmptyState())
         } else {
             writeButton?.isHidden = false
             visiblePosts.forEach { post in postStack.addArrangedSubview(makePostCard(post)) }
@@ -334,6 +343,12 @@ extension CommunityViewController {
     func showLoadError() {
         showingLoadError = true
         renderPosts()
+    }
+
+    private func addPlaceholder(_ placeholder: UIView) {
+        postStack.addArrangedSubview(placeholder)
+        placeholder.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -138)
+            .isActive = true
     }
 
 }
