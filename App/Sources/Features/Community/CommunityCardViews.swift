@@ -266,16 +266,81 @@ extension CommunityViewController {
     }
 
     func makeEmptyState() -> UIView {
-        let label = AppStyle.label("아직 게시글이 없어요", size: 15, color: secondary)
-        label.textAlignment = .center
-        let container = UIView()
-        container.heightAnchor.constraint(equalToConstant: 150).isActive = true
-        container.addSubview(label)
-        label.translatesAutoresizingMaskIntoConstraints = false
+        let illustration = UIView()
+        illustration.backgroundColor = .white
+        illustration.layer.cornerRadius = 44
+        illustration.layer.borderWidth = 1
+        illustration.layer.borderColor = line.cgColor
+        illustration.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
+        illustration.layer.shadowOpacity = 0.09
+        illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
+        illustration.layer.shadowRadius = 14
+        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
+        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
+
+        let icon = UIImageView(image: UIImage(named: "CommunityEmptyChat")?.withRenderingMode(.alwaysOriginal))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        illustration.addSubview(icon)
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+            icon.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 36),
+            icon.heightAnchor.constraint(equalToConstant: 36)
+        ])
+
+        let title = AppStyle.label("아직 게시글이 없어요", size: 18, weight: .medium, color: ink)
+        title.textAlignment = .center
+        title.attributedText = NSAttributedString(string: "아직 게시글이 없어요", attributes: [
+            .font: UIFont.systemFont(ofSize: 18, weight: .medium),
+            .foregroundColor: ink,
+            .kern: -0.2,
+            .paragraphStyle: makeLineStyle(height: 26)
+        ])
+        let subtitle = makeCommunityLabel("이 게시판의 첫 글을 남겨보세요.", size: 14, weight: .medium,
+            color: secondary, lineHeight: 20)
+        let writeButton = makeEmptyWriteButton()
+        let content = UIStackView(arrangedSubviews: [illustration, title, subtitle, writeButton])
+        content.axis = .vertical
+        content.alignment = .center
+        content.spacing = 12
+
+        let container = UIView()
+        container.accessibilityIdentifier = "community-empty-state"
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -138),
+            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            content.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            content.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
+            content.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor)
         ])
         return container
+    }
+
+    private func makeEmptyWriteButton() -> UIButton {
+        let button = UIButton(type: .system)
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = "글쓰기"
+        configuration.baseBackgroundColor = brandBlue
+        configuration.baseForegroundColor = .white
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 14, weight: .medium)
+            return outgoing
+        }
+        button.configuration = configuration
+        button.layer.cornerRadius = 10
+        button.clipsToBounds = true
+        button.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        button.accessibilityLabel = "첫 게시글 작성하기"
+        button.accessibilityIdentifier = "community-empty-write"
+        button.addAction(UIAction { [weak self] _ in
+            self?.push(CommunityWriteViewController())
+        }, for: .touchUpInside)
+        return button
     }
 }

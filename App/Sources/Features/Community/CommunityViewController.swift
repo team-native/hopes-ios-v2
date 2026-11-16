@@ -48,6 +48,7 @@ final class CommunityViewController: AppPageViewController {
     var selectedBoard = "전체"
     var boardFilters: UIStackView?
     var publishToast: UIView?
+    var writeButton: UIButton?
     private var writeButtonBottomConstraint: NSLayoutConstraint?
     var showingLoadError = ProcessInfo.processInfo.arguments.contains("--community-load-error")
 
@@ -206,6 +207,7 @@ final class CommunityViewController: AppPageViewController {
             self?.push(CommunityWriteViewController())
         }, for: .touchUpInside)
         view.addSubview(button)
+        writeButton = button
         NSLayoutConstraint.activate([
             button.widthAnchor.constraint(equalToConstant: 56),
             button.heightAnchor.constraint(equalToConstant: 56),
@@ -299,14 +301,17 @@ extension CommunityViewController {
             view.removeFromSuperview()
         }
         if showingLoadError {
+            writeButton?.isHidden = true
             postStack.addArrangedSubview(makeLoadErrorState())
             selectFilterAppearance()
             return
         }
         let visiblePosts = CommunityPostStore.shared.posts.filter { selectedBoard == "전체" || $0.grade == selectedBoard }
         if visiblePosts.isEmpty {
+            writeButton?.isHidden = true
             postStack.addArrangedSubview(makeEmptyState())
         } else {
+            writeButton?.isHidden = false
             visiblePosts.forEach { post in postStack.addArrangedSubview(makePostCard(post)) }
         }
         selectFilterAppearance()
