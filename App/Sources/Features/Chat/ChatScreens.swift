@@ -31,13 +31,13 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     var measuredLocation: CLLocationCoordinate2D?
     var measuredLocationAccuracy: CLLocationAccuracy = 15
     var hasPendingLocationRequest = false
-    private var selectedAttachments: [ChatAttachmentItem] = []
-    private var composerView: UIStackView?
+    var selectedAttachments: [ChatAttachmentItem] = []
+    var composerView: UIStackView?
     var messageSendButton: UIButton?
-    private var attachmentTrayView: ChatAttachmentTrayView?
+    var attachmentTrayView: ChatAttachmentTrayView?
     private var attachmentTrayHeightConstraint: NSLayoutConstraint?
-    private var composerScrollConstraint: NSLayoutConstraint?
-    private var attachmentTrayScrollConstraint: NSLayoutConstraint?
+    var composerScrollConstraint: NSLayoutConstraint?
+    var attachmentTrayScrollConstraint: NSLayoutConstraint?
     private var attachmentTrayScreenBottomConstraint: NSLayoutConstraint?
     private var attachmentTrayKeyboardBottomConstraint: NSLayoutConstraint?
     var successToastView: UIView?
@@ -288,7 +288,10 @@ private extension ChatConversationViewController {
             self.selectedAttachments.removeAll { $0.id == identifier }
             self.refreshAttachmentTray()
         }
-        tray.onSend = { [weak self] question in self?.sendAttachmentQuestion(question) }
+        tray.onSend = { [weak self] question in
+            guard let self else { return false }
+            return await self.sendAttachmentQuestion(question)
+        }
         tray.onPreferredHeightChange = { [weak self] height in
             guard let self, let heightConstraint = self.attachmentTrayHeightConstraint else { return }
             heightConstraint.constant = height
@@ -341,34 +344,6 @@ private extension ChatConversationViewController {
             name: UIResponder.keyboardWillHideNotification,
             object: nil
         )
-    }
-
-    func addAttachments(_ attachments: [ChatAttachmentItem]) {
-        selectedAttachments.append(contentsOf: attachments)
-        refreshAttachmentTray()
-    }
-
-    func refreshAttachmentTray() {
-        guard let attachmentTrayView, let composerView else { return }
-        let hasAttachments = !selectedAttachments.isEmpty
-        attachmentTrayView.attachments = selectedAttachments
-        attachmentTrayView.isHidden = !hasAttachments
-        composerView.isHidden = hasAttachments
-        composerScrollConstraint?.isActive = !hasAttachments
-        attachmentTrayScrollConstraint?.isActive = hasAttachments
-    }
-
-    func sendAttachmentQuestion(_ question: String) {
-        guard !selectedAttachments.isEmpty,
-              selectedAttachments.allSatisfy(\.isSupported) else { return }
-        let attachments = selectedAttachments
-        attachmentResponseState.lastSentAttachments = attachments
-        addSentAttachments(attachments)
-        addUserMessage(question)
-        selectedAttachments.removeAll()
-        refreshAttachmentTray()
-        pendingQuestion = question
-        beginAttachmentAnalysis(attachments: attachments)
     }
 
     @objc func attachmentKeyboardWillShow(_ notification: Notification) {
