@@ -53,6 +53,16 @@ let project = Project(
                     "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": ""
                 ]
             )
+        ),
+        .target(
+            name: "HopesTests",
+            destinations: .iOS,
+            product: .unitTests,
+            bundleId: "kr.hs.gsm.hopes.tests",
+            deploymentTargets: .iOS("17.0"),
+            infoPlist: .default,
+            sources: ["Tests/**"],
+            dependencies: [.target(name: "Hopes")]
         )
     ]
 )

@@ -174,7 +174,7 @@ final class NotificationsViewController: AppPageViewController {
 
 @MainActor
 extension NotificationsViewController {
-    private func addEmptyState() {
+    func addEmptyState() {
         let illustration = UIView()
         illustration.backgroundColor = .white
         illustration.layer.cornerRadius = 44

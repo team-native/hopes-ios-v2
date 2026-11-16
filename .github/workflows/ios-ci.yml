@@ -46,3 +46,14 @@ jobs:
           -derivedDataPath "$RUNNER_TEMP/DerivedData"
           CODE_SIGNING_ALLOWED=NO
           build
+
+      - name: Run screen entry regression tests
+        run: |
+          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(v["udid"] for k,vs in d["devices"].items() if "iOS" in k for v in vs if "iPhone" in v["name"]))')
+          xcodebuild \
+            -project Hopes.xcodeproj \
+            -scheme Hopes \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
