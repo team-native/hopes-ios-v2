@@ -8,7 +8,7 @@ final class UserProfileStore {
     private init() {}
 
     var name: String { defaults.string(forKey: "profile.name") ?? "Hopes 사용자" }
-    var department: String { defaults.string(forKey: "profile.department") ?? "인공지능소프트웨어과" }
+    var department: String { defaults.string(forKey: "profile.department") ?? "인공지능과" }
     var email: String { defaults.string(forKey: "profile.email") ?? "user@example.invalid" }
     var savedEmail: String? {
         guard let email = defaults.string(forKey: "profile.email"),
