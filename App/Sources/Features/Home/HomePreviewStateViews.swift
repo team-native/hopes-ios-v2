@@ -2,9 +2,10 @@ import UIKit
 
 @MainActor
 enum HomePreviewStateViews {
-    static func notificationButton(action: @escaping () -> Void) -> UIButton {
+    static func notificationButton(showsBadge: Bool = true, action: @escaping () -> Void) -> UIButton {
         let button = UIButton(type: .system)
-        let imageView = UIImageView(image: UIImage(named: "home-notification-icon")?.withRenderingMode(.alwaysOriginal))
+        let assetName = showsBadge ? "home-notification-icon" : "home-notification-icon-plain"
+        let imageView = UIImageView(image: UIImage(named: assetName)?.withRenderingMode(.alwaysOriginal))
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         button.addSubview(imageView)
@@ -32,18 +33,8 @@ enum HomePreviewStateViews {
 
     static func tipsCard(borderColor: UIColor) -> UIView {
         let title = label("질문 잘하는 방법", size: 14, weight: .medium, color: AppStyle.muted, lineHeight: 20)
-        let header = UIView()
-        let headerLabel = title
-        header.addSubview(headerLabel)
-        headerLabel.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            headerLabel.topAnchor.constraint(equalTo: header.topAnchor, constant: 16),
-            headerLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor),
-            headerLabel.trailingAnchor.constraint(equalTo: header.trailingAnchor),
-            headerLabel.heightAnchor.constraint(equalToConstant: 26),
-            headerLabel.bottomAnchor.constraint(equalTo: header.bottomAnchor)
-        ])
-        header.heightAnchor.constraint(equalToConstant: 42).isActive = true
+        let header = title
+        header.heightAnchor.constraint(equalToConstant: 20).isActive = true
 
         let card = UIStackView(arrangedSubviews: [skeletonRow(), skeletonRow()])
         card.axis = .vertical
