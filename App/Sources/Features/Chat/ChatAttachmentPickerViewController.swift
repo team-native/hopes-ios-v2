@@ -280,13 +280,16 @@ private extension ChatAttachmentPickerViewController {
 
     func makeOptionRows() -> UIStackView {
         let rows = UIStackView(arrangedSubviews: [
-            makeOptionRow(title: "사진 보관함", subtitle: "이미지를 여러 장 선택할 수 있어요", symbol: "photo",
+            makeOptionRow(title: "사진 보관함", subtitle: "이미지를 여러 장 선택할 수 있어요",
+                iconName: "ChatAttachmentPhoto",
                 action: #selector(openPhotoLibrary)),
             makeDivider(),
-            makeOptionRow(title: "카메라 촬영", subtitle: "지금 찍어서 바로 질문해요", symbol: "camera",
+            makeOptionRow(title: "카메라 촬영", subtitle: "지금 찍어서 바로 질문해요",
+                iconName: "ChatAttachmentCamera",
                 action: #selector(openCamera)),
             makeDivider(),
-            makeOptionRow(title: "파일에서 PDF 선택", subtitle: "PDF 문서를 첨부해요", symbol: "doc.text",
+            makeOptionRow(title: "파일에서 PDF 선택", subtitle: "PDF 문서를 첨부해요",
+                iconName: "ChatAttachmentFile",
                 action: #selector(openFiles))
         ])
         rows.axis = .vertical
@@ -294,19 +297,18 @@ private extension ChatAttachmentPickerViewController {
         return rows
     }
 
-    func makeOptionRow(title: String, subtitle: String, symbol: String, action: Selector) -> UIView {
+    func makeOptionRow(title: String, subtitle: String, iconName: String, action: Selector) -> UIView {
         let button = UIButton(type: .system)
         button.addTarget(self, action: action, for: .touchUpInside)
         button.accessibilityLabel = "\(title), \(subtitle)"
         button.heightAnchor.constraint(equalToConstant: 68).isActive = true
-        let chip = makeOptionIconChip(symbol: symbol)
+        let chip = makeOptionIconChip(imageName: iconName)
         let heading = AppStyle.label(title, size: 15, weight: .medium, color: ChatDetailPalette.ink)
         let detail = AppStyle.label(subtitle, size: 12, color: ChatDetailPalette.muted)
         let labels = UIStackView(arrangedSubviews: [heading, detail])
         labels.axis = .vertical
         labels.spacing = 2
-        let chevron = UIImageView(image: UIImage(systemName: "chevron.right"))
-        chevron.tintColor = ChatDetailPalette.placeholder
+        let chevron = UIImageView(image: UIImage(named: "ChatAttachmentChevron")?.withRenderingMode(.alwaysOriginal))
         chevron.contentMode = .scaleAspectFit
         chevron.widthAnchor.constraint(equalToConstant: 18).isActive = true
         chevron.heightAnchor.constraint(equalToConstant: 18).isActive = true
@@ -327,13 +329,12 @@ private extension ChatAttachmentPickerViewController {
         return button
     }
 
-    func makeOptionIconChip(symbol: String) -> UIView {
+    func makeOptionIconChip(imageName: String) -> UIView {
         let chip = UIView()
         chip.backgroundColor = ChatDetailPalette.brandSoft
         chip.layer.cornerRadius = 12
         chip.translatesAutoresizingMaskIntoConstraints = false
-        let icon = UIImageView(image: UIImage(systemName: symbol))
-        icon.tintColor = ChatDetailPalette.brand
+        let icon = UIImageView(image: UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal))
         icon.contentMode = .scaleAspectFit
         icon.translatesAutoresizingMaskIntoConstraints = false
         chip.addSubview(icon)
