@@ -17,6 +17,15 @@ let project = Project(
                     "UIAppFonts": ["Inter-Variable.ttf"],
                     "UILaunchScreen": [:],
                     "UIUserInterfaceStyle": "Light",
+                    "HopesAPIBaseURL": "http://service.gsmsv.site:22116",
+                    "NSAppTransportSecurity": [
+                        "NSExceptionDomains": [
+                            "service.gsmsv.site": [
+                                "NSExceptionAllowsInsecureHTTPLoads": true,
+                                "NSIncludesSubdomains": true
+                            ]
+                        ]
+                    ],
                     "UIApplicationSceneManifest": [
                         "UIApplicationSupportsMultipleScenes": false,
                         "UISceneConfigurations": [

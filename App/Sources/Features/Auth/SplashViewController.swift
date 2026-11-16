@@ -36,7 +36,12 @@ final class SplashViewController: UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.15) {
             guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
                   let window = appDelegate.window else { return }
-            window.rootViewController = WelcomeViewController()
+            if AccessTokenStore.shared.hasToken {
+                window.rootViewController = AppTabBarController()
+                Task { await AuthAPI.syncProfile() }
+            } else {
+                window.rootViewController = WelcomeViewController()
+            }
             window.makeKeyAndVisible()
         }
     }

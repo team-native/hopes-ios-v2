@@ -130,18 +130,7 @@ extension PasswordResetViewController {
                 render()
                 return
             }
-            guard UserProfileStore.shared.isRegistered(email: email) else {
-                emailError = "가입되지 않은 이메일이에요. 회원가입을 먼저 진행해 주세요."
-                step = .unregistered
-                render()
-                return
-            }
-            emailError = nil
-            codeError = nil
-            codeField.text = ""
-            step = .verification
-            render()
-            startCountdown()
+            requestResetCode()
         case .verification:
             guard (codeField.text ?? "").count == 6, countdown > 0 else {
                 codeError = countdown > 0 ? "인증번호 6자리를 입력해 주세요." : "인증 시간이 지났어요. 인증번호를 다시 받아 주세요."
@@ -150,7 +139,6 @@ extension PasswordResetViewController {
             }
             step = .newPassword
             codeError = nil
-            countdownTimer?.invalidate()
             render()
         case .newPassword:
             passwordError = passwordRequirementsMet ? nil : "비밀번호 조건을 모두 맞춰 주세요."
@@ -159,9 +147,7 @@ extension PasswordResetViewController {
                 render()
                 return
             }
-            step = .complete
-            countdownTimer?.invalidate()
-            render()
+            submitNewPassword()
         case .complete:
             navigationController?.popToRootViewController(animated: true)
         }
@@ -242,10 +228,66 @@ extension PasswordResetViewController {
     }
 
     @objc func resendCode() {
-        codeField.text = ""
-        codeError = nil
-        render()
-        startCountdown()
+        requestResetCode()
+    }
+
+    func requestResetCode() {
+        runRequest {
+            try await AuthAPI.requestPasswordResetCode(email: self.email)
+            self.emailError = nil
+            self.codeError = nil
+            self.codeField.text = ""
+            self.step = .verification
+            self.render()
+            self.startCountdown()
+        } onError: { error in
+            if self.step == .verification {
+                self.codeError = error.message
+            } else {
+                self.emailError = error.message
+                self.step = .email
+            }
+            self.render()
+        }
+    }
+
+    func submitNewPassword() {
+        let password = newPasswordField.text ?? ""
+        let code = codeField.text ?? ""
+        runRequest {
+            try await AuthAPI.resetPassword(email: self.email, code: code, newPassword: password)
+            self.countdownTimer?.invalidate()
+            self.step = .complete
+            self.render()
+        } onError: { error in
+            switch error.status {
+            case 404:
+                self.emailError = "가입되지 않은 이메일이에요. 회원가입을 진행해 주세요."
+                self.step = .unregistered
+            case 400 where error.message.contains("인증번호"):
+                self.codeError = "인증번호가 맞지 않아요. 다시 확인해 주세요."
+                self.step = .verification
+            default:
+                self.passwordError = error.message
+            }
+            self.render()
+        }
+    }
+
+    func runRequest(
+        _ operation: @escaping @MainActor () async throws -> Void,
+        onError: @escaping @MainActor (APIError) -> Void
+    ) {
+        actionButton.isEnabled = false
+        actionButton.backgroundColor = Palette.blue.withAlphaComponent(0.68)
+        Task { @MainActor in
+            do {
+                try await operation()
+            } catch {
+                onError(error as? APIError ?? .network)
+            }
+            self.updateActionButton()
+        }
     }
 
 }

@@ -173,12 +173,17 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         feedback = .loading
         applyFeedback()
         guard !loginPreviewIsStatic else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-            guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-                  let window = appDelegate.window else { return }
-            let tabs = AppTabBarController()
-            window.rootViewController = tabs
-            window.makeKeyAndVisible()
+        let password = passwordField.text ?? ""
+        Task { [weak self] in
+            do {
+                try await AuthAPI.login(email: email, password: password)
+                await AuthAPI.syncProfile()
+                AuthSessionRouter.showHome()
+            } catch {
+                guard let self else { return }
+                self.feedback = (error as? APIError) == .network ? .offline : .invalidCredentials
+                self.applyFeedback()
+            }
         }
     }
 

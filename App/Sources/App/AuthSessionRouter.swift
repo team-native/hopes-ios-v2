@@ -13,10 +13,16 @@ enum AuthSessionRouter {
     }
 
     static func logOut() {
+        Task { await AuthAPI.logout() }
         replaceRoot(with: WelcomeViewController())
     }
 
+    static func showHome() {
+        replaceRoot(with: AppTabBarController())
+    }
+
     static func showLogin() {
+        AccessTokenStore.shared.clear()
         let welcome = WelcomeViewController()
         welcome.opensLoginOnAppear = true
         replaceRoot(with: welcome)
