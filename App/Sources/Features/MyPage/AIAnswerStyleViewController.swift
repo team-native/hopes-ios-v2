@@ -74,6 +74,8 @@ final class AIAnswerStyleViewController: AppPageViewController {
             green: 27 / 255, blue: 43 / 255, alpha: 1))
         let subtitle = AppStyle.label("AI 답변 스타일을 관리해요.", size: 12, color: UIColor(red: 107 / 255, green: 120 / 255,
             blue: 144 / 255, alpha: 1))
+        title.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        subtitle.heightAnchor.constraint(equalToConstant: 16).isActive = true
         let labels = UIStackView(arrangedSubviews: [title, subtitle])
         labels.axis = .vertical
 
@@ -118,6 +120,8 @@ final class AIAnswerStyleViewController: AppPageViewController {
             green: 27 / 255, blue: 43 / 255, alpha: 1))
         let subtitle = AppStyle.label("AI 응답을 만들 때 반영돼요.", size: 12, color: UIColor(red: 107 / 255,
             green: 120 / 255, blue: 144 / 255, alpha: 1))
+        title.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        subtitle.heightAnchor.constraint(equalToConstant: 16).isActive = true
 
         promptView.text = defaults.string(forKey: "answerStyle.systemPrompt")
             ?? ""
