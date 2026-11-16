@@ -108,6 +108,9 @@ final class AIAnswerStyleViewController: AppPageViewController {
         topSaveButton.translatesAutoresizingMaskIntoConstraints = false
         topSaveButton.heightAnchor.constraint(equalToConstant: 38).isActive = true
         topSaveButton.accessibilityIdentifier = "ai-answer-style-save-top"
+        topSaveButton.setContentHuggingPriority(.required, for: .horizontal)
+        topSaveButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
         let header = UIStackView(arrangedSubviews: [backButton, labels, topSaveButton])
         header.axis = .horizontal
@@ -219,7 +222,7 @@ final class AIAnswerStyleViewController: AppPageViewController {
         saveButtonConstraints = [
             saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            saveButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset)
         ]
         NSLayoutConstraint.activate(saveButtonConstraints)
     }
