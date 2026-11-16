@@ -26,7 +26,7 @@ final class InquiryCompletionViewController: UIViewController {
 
     private func makeHeader() -> UIStackView {
         let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(named: "inquiry-chevron-left"), for: .normal)
+        backButton.setImage(UIImage(named: "inquiry-chevron-left")?.withRenderingMode(.alwaysOriginal), for: .normal)
         backButton.widthAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
         backButton.addAction(UIAction { [weak self] _ in
@@ -158,7 +158,7 @@ final class InquiryCompletionViewController: UIViewController {
             content.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
             confirm.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             confirm.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            confirm.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            confirm.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset),
             confirm.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
