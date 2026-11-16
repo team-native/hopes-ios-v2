@@ -62,6 +62,8 @@ final class CommunityViewController: AppPageViewController {
         title = nil
         view.backgroundColor = canvas
         contentStack.spacing = 16
+        NotificationCenter.default.addObserver(self, selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification, object: nil)
         if let topConstraint = scrollView.constraints.first(where: {
             $0.firstItem === contentStack && $0.firstAttribute == .top
         }) {
@@ -82,6 +84,11 @@ final class CommunityViewController: AppPageViewController {
         addWriteButton()
         renderPosts()
         view.accessibilityIdentifier = "community-home-screen"
+    }
+
+    @objc private func appWillEnterForeground() {
+        guard viewIfLoaded?.window != nil else { return }
+        refreshPosts()
     }
 
     override func viewWillAppear(_ animated: Bool) {

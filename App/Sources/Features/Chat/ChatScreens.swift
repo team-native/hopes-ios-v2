@@ -99,6 +99,20 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         tabBarController?.tabBar.isHidden = false
     }
 
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        guard isMovingFromParent || navigationController?.isBeingDismissed == true else { return }
+        releaseResources()
+    }
+
+    func releaseResources() {
+        networkMonitor.cancel()
+        answerTask?.cancel()
+        answerTask = nil
+        generationTimer?.cancel()
+        locationManager.stopUpdatingLocation()
+    }
+
     func configureMessages() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         messagesStack.axis = .vertical

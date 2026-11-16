@@ -47,6 +47,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     var pendingGeneration: String?
     var termsAccepted = true
     var countdown = 300
+    var countdownDeadline = AuthCountdown.deadline()
     var countdownTimer: Timer?
     var emailError: String?
     var codeError: String?

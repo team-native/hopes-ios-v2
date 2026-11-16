@@ -47,6 +47,11 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.makeKeyAndVisible()
     }
 
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        guard AccessTokenStore.shared.hasToken else { return }
+        Task { await AuthAPI.syncProfile() }
+    }
+
     func sceneDidDisconnect(_ scene: UIScene) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
               appDelegate.window === window else { return }
