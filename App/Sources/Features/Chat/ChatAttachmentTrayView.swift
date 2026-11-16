@@ -69,20 +69,23 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
     }
 
     private let countLabel = AppStyle.label("첨부 0개", size: 14, weight: .medium, color: ChatDetailPalette.muted)
-    private let attachmentsStack = UIStackView()
-    private let inputField = UITextField()
-    private let inputContainer = UIView()
+    let attachmentsStack = UIStackView()
+    let inputField = UITextField()
+    let inputContainer = UIView()
     private let sendButton = UIButton(type: .system)
     private let unsupportedFormatBanner = UIStackView()
     private let bannerMessageLabel = AppStyle.label(
         "", size: 12, color: UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
     )
     private weak var attachmentsScrollView: UIScrollView?
+    private var attachmentsScrollHeightConstraint: NSLayoutConstraint?
     private var documentCardWidthConstraints: [NSLayoutConstraint] = []
+    private var documentCardHeightConstraints: [NSLayoutConstraint] = []
+    private var imageCardSizeConstraints: [(width: NSLayoutConstraint, height: NSLayoutConstraint)] = []
     private var homeIndicatorSpacerHeightConstraint: NSLayoutConstraint?
-    private var preferredTrayHeight: CGFloat = 217
+    private var preferredTrayHeight: CGFloat = 225
     private var isKeyboardVisible = false
-    private var isSending = false
+    var isSending = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -151,7 +154,9 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
                 constant: -6
             )
         ])
-        attachmentsScroll.heightAnchor.constraint(equalToConstant: 70).isActive = true
+        let heightConstraint = attachmentsScroll.heightAnchor.constraint(equalToConstant: 78)
+        heightConstraint.isActive = true
+        attachmentsScrollHeightConstraint = heightConstraint
         return attachmentsScroll
     }
 
@@ -192,14 +197,6 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
         return inputContainer
     }
 
-    func textFieldDidBeginEditing(_ textField: UITextField) {
-        inputContainer.layer.borderColor = ChatDetailPalette.brandBorder.cgColor
-    }
-
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        inputContainer.layer.borderColor = ChatDetailPalette.border.cgColor
-    }
-
     private func makeSendButton() -> UIButton {
         let send = sendButton
         send.backgroundColor = ChatDetailPalette.brand
@@ -214,7 +211,7 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
         return send
     }
 
-    private func updateAttachments() {
+    func updateAttachments() {
         countLabel.text = "첨부 \(attachments.count)개"
         let itemWithError = attachments.first { $0.validationState.limitError != nil }
         let itemError = itemWithError?.validationState.limitError
@@ -230,10 +227,13 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
         sendButton.backgroundColor = hasInvalidAttachment
             ? ChatDetailPalette.brand.withAlphaComponent(0.4)
             : ChatDetailPalette.brand
-        preferredTrayHeight = error != nil ? 285 : (hasUnsupportedAttachment ? 271 : 217)
+        preferredTrayHeight = error != nil ? 293 : (hasUnsupportedAttachment ? 279 : 225)
         updatePreferredHeight()
-        NSLayoutConstraint.deactivate(documentCardWidthConstraints)
+        NSLayoutConstraint.deactivate(documentCardWidthConstraints + documentCardHeightConstraints)
+        NSLayoutConstraint.deactivate(imageCardSizeConstraints.flatMap { [$0.width, $0.height] })
         documentCardWidthConstraints.removeAll()
+        documentCardHeightConstraints.removeAll()
+        imageCardSizeConstraints.removeAll()
         attachmentsStack.arrangedSubviews.forEach { view in
             attachmentsStack.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -248,11 +248,18 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
         guard isKeyboardVisible != visible else { return }
         isKeyboardVisible = visible
         homeIndicatorSpacerHeightConstraint?.constant = visible ? 0 : 21
+        attachmentsScrollHeightConstraint?.constant = visible ? 70 : 78
+        documentCardHeightConstraints.forEach { $0.constant = visible ? 64 : 72 }
+        imageCardSizeConstraints.forEach {
+            $0.width.constant = visible ? 64 : 72
+            $0.height.constant = visible ? 64 : 72
+        }
+        updateDocumentCardWidths()
         updatePreferredHeight()
     }
 
     private func updatePreferredHeight() {
-        onPreferredHeightChange?(preferredTrayHeight - (isKeyboardVisible ? 21 : 0))
+        onPreferredHeightChange?(preferredTrayHeight - (isKeyboardVisible ? 29 : 0))
     }
 
     override func layoutSubviews() {
@@ -266,10 +273,12 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
             card.accessibilityIdentifier = "chat-attachment-image-card"
             return card
         }
-        let documentCard = ChatAttachmentDocumentCardFactory.make(attachment) { [weak self] id in
-            self?.onRemove?(id)
-        }
+        let documentCard = ChatAttachmentDocumentCardFactory.make(
+            attachment,
+            height: isKeyboardVisible ? 64 : 72
+        ) { [weak self] id in self?.onRemove?(id) }
         documentCardWidthConstraints.append(documentCard.widthConstraint)
+        documentCardHeightConstraints.append(documentCard.heightConstraint)
         return documentCard.view
     }
 
@@ -290,14 +299,17 @@ private extension ChatAttachmentTrayView {
         preview.translatesAutoresizingMaskIntoConstraints = false
         card.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(preview)
+        let widthConstraint = card.widthAnchor.constraint(equalToConstant: isKeyboardVisible ? 64 : 72)
+        let heightConstraint = card.heightAnchor.constraint(equalToConstant: isKeyboardVisible ? 64 : 72)
         NSLayoutConstraint.activate([
-            card.widthAnchor.constraint(equalToConstant: 64),
-            card.heightAnchor.constraint(equalToConstant: 64),
+            widthConstraint,
+            heightConstraint,
             preview.topAnchor.constraint(equalTo: card.topAnchor),
             preview.leadingAnchor.constraint(equalTo: card.leadingAnchor),
             preview.trailingAnchor.constraint(equalTo: card.trailingAnchor),
             preview.bottomAnchor.constraint(equalTo: card.bottomAnchor)
         ])
+        imageCardSizeConstraints.append((width: widthConstraint, height: heightConstraint))
         addRemoveButton(to: card, id: id)
         return card
     }
@@ -331,7 +343,7 @@ private extension ChatAttachmentTrayView {
         let imageCount = attachments.filter { $0.image != nil }.count
         let documentCount = documentCardWidthConstraints.count
         let spacing = CGFloat(max(0, attachments.count - 1)) * 12
-        let imageWidth = CGFloat(imageCount) * 64
+        let imageWidth = CGFloat(imageCount) * (isKeyboardVisible ? 64 : 72)
         let remainingWidth = attachmentsScrollView.bounds.width - imageWidth - spacing
         let documentWidth = max(192, remainingWidth / CGFloat(documentCount))
         documentCardWidthConstraints.forEach { constraint in
@@ -366,30 +378,4 @@ private extension ChatAttachmentTrayView {
         ])
     }
 
-}
-
-@MainActor
-private extension ChatAttachmentTrayView {
-    func sendQuestion() {
-        guard !isSending, !attachments.contains(where: { !$0.isSupported }) else { return }
-        let question = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !question.isEmpty else { return }
-        isSending = true
-        attachmentsStack.isUserInteractionEnabled = false
-        updateAttachments()
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            let accepted = await self.onSend?(question) ?? false
-            self.isSending = false
-            self.attachmentsStack.isUserInteractionEnabled = true
-            if accepted {
-                let currentQuestion = self.inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                if currentQuestion == question {
-                    self.inputField.text = "이 자료 요약해줘"
-                }
-                self.validationError = nil
-            }
-            self.updateAttachments()
-        }
-    }
 }
