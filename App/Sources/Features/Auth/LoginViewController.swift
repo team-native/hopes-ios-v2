@@ -39,6 +39,8 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     var sheetBottomConstraint: NSLayoutConstraint!
     var keyboardBottomConstraint: NSLayoutConstraint!
     var sheetStackTopConstraint: NSLayoutConstraint!
+    var sheetStackLeadingConstraint: NSLayoutConstraint!
+    var sheetStackTrailingConstraint: NSLayoutConstraint!
     var passwordGroupHeightConstraint: NSLayoutConstraint!
     var emailFieldHeightConstraint: NSLayoutConstraint!
     var passwordFieldHeightConstraint: NSLayoutConstraint!
@@ -100,6 +102,9 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         fullTopConstraint.isActive = newMode != .sheet
         keyboardBottomConstraint.isActive = newMode == .keyboard
         sheetBottomConstraint.isActive = newMode != .keyboard
+        let horizontalInset: CGFloat = newMode == .sheet ? 24 : 20
+        sheetStackLeadingConstraint.constant = horizontalInset
+        sheetStackTrailingConstraint.constant = -horizontalInset
         keepRow.isHidden = newMode != .sheet
         signupRow.isHidden = newMode == .keyboard
         forgotButton.isHidden = newMode != .sheet
