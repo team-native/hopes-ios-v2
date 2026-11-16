@@ -32,7 +32,7 @@ final class AppInfoViewController: AppPageViewController {
         NSLayoutConstraint.activate([
             footer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             footer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            footer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            footer.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset)
         ])
     }
 
@@ -173,6 +173,7 @@ final class AppInfoViewController: AppPageViewController {
             color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
         )
         valueLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        valueLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         let row = UIStackView(arrangedSubviews: [titleLabel, UIView(), valueLabel])
         row.axis = .horizontal
         row.alignment = .center

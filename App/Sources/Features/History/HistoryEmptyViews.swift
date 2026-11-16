@@ -30,8 +30,10 @@ extension HistoryViewController {
 
         let title = AppStyle.label("아직 대화가 없어요", size: 18, weight: .medium)
         title.textAlignment = .center
+        title.heightAnchor.constraint(equalToConstant: 26).isActive = true
         let subtitle = AppStyle.label("선배에게 첫 질문을 해보세요.", size: 14, color: AppStyle.muted)
         subtitle.textAlignment = .center
+        subtitle.heightAnchor.constraint(equalToConstant: 20).isActive = true
         let button = UIButton(type: .system)
         var configuration = UIButton.Configuration.filled()
         configuration.title = "채팅 시작하기"
@@ -64,8 +66,11 @@ extension HistoryViewController {
             content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
         ])
+        if let heading = contentStack.arrangedSubviews.last {
+            contentStack.setCustomSpacing(14, after: heading)
+        }
         contentStack.addArrangedSubview(container)
-        container.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, multiplier: 0.72)
+        container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -100)
             .isActive = true
     }
 
@@ -110,6 +115,51 @@ extension HistoryViewController {
         newConversation.clipsToBounds = true
         newConversationButton = newConversation
         contentStack.addArrangedSubview(newConversation)
+    }
+
+    func makeNoSearchResultsState() -> UIView {
+        let illustration = UIView()
+        illustration.backgroundColor = .white
+        illustration.layer.cornerRadius = 44
+        illustration.layer.borderWidth = 1
+        illustration.layer.borderColor = UIColor(red: 0.92, green: 0.95, blue: 0.98, alpha: 1).cgColor
+        illustration.layer.shadowColor = AppStyle.blue.withAlphaComponent(0.10).cgColor
+        illustration.layer.shadowOpacity = 1
+        illustration.layer.shadowRadius = 14
+        illustration.layer.shadowOffset = CGSize(width: 0, height: 8)
+        illustration.widthAnchor.constraint(equalToConstant: 88).isActive = true
+        illustration.heightAnchor.constraint(equalToConstant: 88).isActive = true
+
+        let icon = UIImageView(image: image(named: "history-search-empty"))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        illustration.addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.centerXAnchor.constraint(equalTo: illustration.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: illustration.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 36),
+            icon.heightAnchor.constraint(equalToConstant: 36)
+        ])
+
+        let title = AppStyle.label("검색 결과가 없어요", size: 18, weight: .medium)
+        title.textAlignment = .center
+        title.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        let subtitle = AppStyle.label("다른 단어로 검색해 보세요.", size: 14, color: AppStyle.muted)
+        subtitle.textAlignment = .center
+        subtitle.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        let content = UIStackView(arrangedSubviews: [illustration, title, subtitle])
+        content.axis = .vertical
+        content.alignment = .center
+        content.spacing = 12
+
+        let container = UIView()
+        container.addSubview(content)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+        return container
     }
 
     func lineStyle(height: CGFloat) -> NSMutableParagraphStyle {

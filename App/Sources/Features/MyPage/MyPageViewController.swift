@@ -75,7 +75,7 @@ final class MyPageViewController: AppPageViewController {
         settings.layer.shadowOpacity = 1
         settings.layer.shadowRadius = 8
         settings.layer.shadowOffset = CGSize(width: 0, height: 4)
-        settings.setImage(UIImage(named: "mypage-gear-icon"), for: .normal)
+        settings.setImage(UIImage(named: "mypage-gear-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
         settings.accessibilityLabel = "설정"
         settings.accessibilityIdentifier = "mypage-settings"
         settings.addTarget(self, action: #selector(openSettings), for: .touchUpInside)
@@ -107,10 +107,10 @@ extension MyPageViewController {
         content.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(content)
         NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: card.topAnchor, constant: 20),
-            content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
-            content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            content.topAnchor.constraint(equalTo: card.topAnchor, constant: 21),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 21),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -21),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -17)
         ])
         contentStack.addArrangedSubview(card)
     }
@@ -164,7 +164,7 @@ extension MyPageViewController {
         editButton.layer.borderWidth = 1
         editButton.layer.borderColor = line.cgColor
         editButton.addTarget(self, action: #selector(editProfile), for: .touchUpInside)
-        NSLayoutConstraint.activate([editButton.heightAnchor.constraint(equalToConstant: 36)])
+        NSLayoutConstraint.activate([editButton.heightAnchor.constraint(equalToConstant: 38)])
 
         return editButton
     }

@@ -2,12 +2,12 @@ import UIKit
 
 enum AppStyle {
     static let bottomActionInset: CGFloat = 37
-    static let ink = UIColor(red: 0.10, green: 0.13, blue: 0.19, alpha: 1)
-    static let muted = UIColor(red: 0.48, green: 0.52, blue: 0.59, alpha: 1)
-    static let blue = UIColor(red: 0.20, green: 0.42, blue: 0.96, alpha: 1)
-    static let paleBlue = UIColor(red: 0.93, green: 0.96, blue: 1, alpha: 1)
-    static let line = UIColor(red: 0.91, green: 0.92, blue: 0.94, alpha: 1)
-    static let canvas = UIColor(red: 0.975, green: 0.98, blue: 0.99, alpha: 1)
+    static let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    static let muted = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
+    static let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+    static let paleBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+    static let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+    static let canvas = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
 
     static func label(
         _ text: String,

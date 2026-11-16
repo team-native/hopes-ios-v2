@@ -76,7 +76,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         topBar.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(topBar)
 
-        backButton.setImage(UIImage(named: "SettingsBack"), for: .normal)
+        backButton.setImage(UIImage(named: "SettingsBack")?.withRenderingMode(.alwaysOriginal), for: .normal)
         backButton.tintColor = Palette.ink
         backButton.accessibilityLabel = "뒤로 가기"
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)

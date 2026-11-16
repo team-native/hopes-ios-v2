@@ -8,7 +8,6 @@ extension HistoryViewController {
             guard let list = try? await ChatAPI.list(), let self else { return }
             self.conversations = list.chatList.map(Self.conversation(from:))
             self.buildContent()
-            self.navigationController?.setNavigationBarHidden(self.conversations.isEmpty, animated: false)
         }
     }
 
