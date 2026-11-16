@@ -17,6 +17,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     var registrationErrorBanner: UIStackView?
     var shouldSimulateRegistrationFailure = true
     var previousNavigationBarHidden = false
+    private var keyboardLayout: CommunityWriteKeyboardLayout?
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -40,11 +41,17 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         let header = makeHeader()
         let registerButton = makeRegisterButton()
         header.addArrangedSubview(registerButton)
-        contentStack.addArrangedSubview(header)
-
         contentStack.addArrangedSubview(makeRegistrationErrorBanner())
         configureFormFields()
-        contentStack.addArrangedSubview(makePrivacyNotice())
+        let notice = makePrivacyNotice()
+        contentStack.addArrangedSubview(notice)
+        keyboardLayout = CommunityWriteKeyboardLayout(
+            view: view,
+            header: header,
+            scrollView: scrollView,
+            bodyView: bodyView,
+            privacyNotice: notice
+        )
         view.accessibilityIdentifier = "community-write-screen"
     }
 
@@ -206,7 +213,6 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         bodyView.layer.borderWidth = 1
         bodyView.layer.borderColor = fieldBorderColor.cgColor
         bodyView.textContainerInset = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
-        bodyView.heightAnchor.constraint(equalToConstant: 511).isActive = true
         bodyView.delegate = self
     }
 
