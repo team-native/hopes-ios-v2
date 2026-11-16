@@ -106,17 +106,17 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
             rows.addArrangedSubview(makeReasonRow(reason))
             if index < reasons.count - 1 { rows.addArrangedSubview(makeDivider()) }
         }
-        let submit = makeSubmitButton()
+        let submit = makePrimaryButton(title: "신고하기") { [weak self] in self?.showCompletion() }
         submit.accessibilityIdentifier = "community-report-submit"
         let indicator = makeHomeIndicator()
         replaceContent([handle, title, helper, rows, submit, indicator], spacing: 16,
             insets: NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 0, trailing: 20))
     }
 
-    private func makeSubmitButton() -> UIButton {
+    private func makePrimaryButton(title: String, action: @escaping () -> Void) -> UIButton {
         let button = UIButton(type: .system)
         var configuration = UIButton.Configuration.filled()
-        configuration.title = "신고하기"
+        configuration.title = title
         configuration.baseBackgroundColor = brandBlue
         configuration.baseForegroundColor = .white
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 13, leading: 20, bottom: 13, trailing: 20)
@@ -129,7 +129,7 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
         button.layer.cornerRadius = 12
         button.clipsToBounds = true
         button.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        button.addAction(UIAction { [weak self] _ in self?.showCompletion() }, for: .touchUpInside)
+        button.addAction(UIAction { _ in action() }, for: .touchUpInside)
         return button
     }
 
@@ -138,41 +138,15 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
         isComplete = true
         onSubmit()
         let handle = makeHandle()
-        let icon = UIImageView(image: UIImage(named: "CommunityReportDoneCheck")?.withRenderingMode(.alwaysOriginal))
-        icon.contentMode = .scaleAspectFit
-        icon.backgroundColor = AppStyle.paleBlue
-        icon.layer.cornerRadius = 32
-        icon.clipsToBounds = true
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            icon.widthAnchor.constraint(equalToConstant: 64),
-            icon.heightAnchor.constraint(equalToConstant: 64)
-        ])
-
-        let title = AppStyle.label("신고가 접수됐어요", size: 20, weight: .bold)
-        let text = title.text ?? "신고가 접수됐어요"
-        let attributed = NSMutableAttributedString(string: text, attributes: [.foregroundColor: AppStyle.ink])
-        if let range = text.range(of: "접수됐어요") {
-            attributed.addAttribute(.foregroundColor, value: AppStyle.blue, range: NSRange(range, in: text))
-        }
-        title.attributedText = attributed
-        title.textAlignment = .center
-        title.accessibilityIdentifier = "community-report-complete-title"
-        let helper = AppStyle.label(
-            "운영자가 확인한 뒤 조치할게요.\n신고자 정보는 공개되지 않아요.",
-            size: 14,
-            color: AppStyle.muted
-        )
-        helper.textAlignment = .center
-        let close = AppStyle.button("확인", primary: true) { [weak self] in self?.dismissSheet() }
+        let doneContent = makeCompletionContent()
+        let close = makePrimaryButton(title: "확인") { [weak self] in self?.dismissSheet() }
         close.accessibilityIdentifier = "community-report-complete-confirm"
-        close.heightAnchor.constraint(equalToConstant: 52).isActive = true
         let indicator = makeHomeIndicator()
         view.layoutIfNeeded()
         replaceContent(
-            [handle, icon, title, helper, close, indicator],
+            [handle, doneContent, close, indicator],
             spacing: 16,
-            insets: NSDirectionalEdgeInsets(top: 12, leading: 24, bottom: 0, trailing: 24)
+            insets: NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 0, trailing: 20)
         )
         UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseInOut]) {
             self.view.layoutIfNeeded()
@@ -308,5 +282,70 @@ private extension CommunityReportFlowViewController {
         style.minimumLineHeight = height
         style.maximumLineHeight = height
         return style
+    }
+
+    private func makeCompletionContent() -> UIView {
+        let icon = UIImageView(image: UIImage(named: "CommunityReportDoneCheck")?.withRenderingMode(.alwaysOriginal))
+        icon.contentMode = .scaleAspectFit
+        icon.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+        icon.layer.cornerRadius = 32
+        icon.clipsToBounds = true
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        icon.widthAnchor.constraint(equalToConstant: 64).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 64).isActive = true
+
+        let title = makeCompletionTitle()
+        let helper = makeCompletionHelper()
+        let doneContent = UIView()
+        [icon, title, helper].forEach(doneContent.addSubview)
+        doneContent.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            doneContent.heightAnchor.constraint(equalToConstant: 170),
+            icon.topAnchor.constraint(equalTo: doneContent.topAnchor, constant: 8),
+            icon.centerXAnchor.constraint(equalTo: doneContent.centerXAnchor),
+            title.topAnchor.constraint(equalTo: doneContent.topAnchor, constant: 84),
+            title.centerXAnchor.constraint(equalTo: doneContent.centerXAnchor),
+            helper.topAnchor.constraint(equalTo: doneContent.topAnchor, constant: 126),
+            helper.leadingAnchor.constraint(equalTo: doneContent.leadingAnchor),
+            helper.trailingAnchor.constraint(equalTo: doneContent.trailingAnchor)
+        ])
+        return doneContent
+    }
+
+    private func makeCompletionTitle() -> UILabel {
+        let title = AppStyle.label("신고가 접수됐어요", size: 20, weight: .bold, color: primaryText)
+        let text = title.text ?? "신고가 접수됐어요"
+        let attributed = NSMutableAttributedString(string: text, attributes: [
+            .font: UIFont.systemFont(ofSize: 20, weight: .bold),
+            .foregroundColor: primaryText,
+            .paragraphStyle: makeLineStyle(height: 30)
+        ])
+        if let range = text.range(of: "접수됐어요") {
+            attributed.addAttribute(.foregroundColor, value: brandBlue, range: NSRange(range, in: text))
+        }
+        title.attributedText = attributed
+        title.textAlignment = .center
+        title.accessibilityIdentifier = "community-report-complete-title"
+        title.translatesAutoresizingMaskIntoConstraints = false
+        title.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        return title
+    }
+
+    private func makeCompletionHelper() -> UILabel {
+        let helper = AppStyle.label(
+            "운영자가 확인한 뒤 조치할게요.\n신고자 정보는 공개되지 않아요.",
+            size: 14,
+            color: secondaryText
+        )
+        helper.textAlignment = .center
+        let helperText = helper.text ?? ""
+        helper.attributedText = NSAttributedString(string: helperText, attributes: [
+            .font: UIFont.systemFont(ofSize: 14),
+            .foregroundColor: secondaryText,
+            .paragraphStyle: makeLineStyle(height: 20)
+        ])
+        helper.translatesAutoresizingMaskIntoConstraints = false
+        helper.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        return helper
     }
 }
