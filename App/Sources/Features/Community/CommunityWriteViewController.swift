@@ -15,7 +15,6 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     var titleErrorRow: UIStackView?
     var bodyErrorRow: UIStackView?
     var registrationErrorBanner: UIStackView?
-    var shouldSimulateRegistrationFailure = true
     var previousNavigationBarHidden = false
     private var keyboardLayout: CommunityWriteKeyboardLayout?
 
@@ -339,16 +338,29 @@ extension CommunityWriteViewController {
         guard !titleText.isEmpty, !bodyIsEmpty else {
             return
         }
-        if shouldSimulateRegistrationFailure {
-            // The prototype has no post API yet; keep the draft and reproduce one temporary registration failure.
-            shouldSimulateRegistrationFailure = false
-            registrationErrorBanner?.isHidden = false
-            keyboardLayout?.setRegistrationFailure(true)
+        let store = CommunityPostStore.shared
+        guard store.isServerBacked else {
+            store.add(title: titleText, body: bodyText, category: "질문", grade: selectedBoard)
+            store.markPostPublished()
+            navigationController?.popViewController(animated: true)
             return
         }
-        CommunityPostStore.shared.add(title: titleText, body: bodyText, category: "질문", grade: selectedBoard)
-        CommunityPostStore.shared.markPostPublished()
-        navigationController?.popViewController(animated: true)
+        let board = selectedBoard
+        Task { [weak self] in
+            do {
+                if store.boards.isEmpty { try await store.refresh() }
+                guard let boardID = store.boardID(for: board) ?? store.boardID(for: "전체") else {
+                    throw APIError.decoding
+                }
+                try await CommunityAPI.createPost(boardID: boardID, title: titleText, content: bodyText)
+                try? await store.refresh()
+                store.markPostPublished()
+                self?.navigationController?.popViewController(animated: true)
+            } catch {
+                self?.registrationErrorBanner?.isHidden = false
+                self?.keyboardLayout?.setRegistrationFailure(true)
+            }
+        }
     }
 
     private func setTitleError(_ isError: Bool) {

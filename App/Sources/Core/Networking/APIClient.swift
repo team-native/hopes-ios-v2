@@ -59,6 +59,32 @@ final class APIClient: @unchecked Sendable {
         )
     }
 
+    func upload<Response: Decodable>(
+        _ path: String,
+        fileData: Data,
+        fileName: String,
+        mimeType: String
+    ) async throws -> Response {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var body = Data()
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".utf8))
+        body.append(Data("Content-Type: \(mimeType)\r\n\r\n".utf8))
+        body.append(fileData)
+        body.append(Data("\r\n--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"clientRequestId\"\r\n\r\n".utf8))
+        body.append(Data("\(UUID().uuidString)\r\n--\(boundary)--\r\n".utf8))
+        let data = try await perform(
+            "POST", path, rawBody: body, contentType: "multipart/form-data; boundary=\(boundary)",
+            authenticated: true
+        )
+        do {
+            return try decoder.decode(Response.self, from: data)
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
     private func perform(
         _ method: String,
         _ path: String,
@@ -66,14 +92,29 @@ final class APIClient: @unchecked Sendable {
         authenticated: Bool,
         expiresSessionOnUnauthorized: Bool = true
     ) async throws -> Data {
+        let rawBody = try body.map { try encoder.encode($0) }
+        return try await perform(
+            method, path, rawBody: rawBody, contentType: rawBody == nil ? nil : "application/json",
+            authenticated: authenticated, expiresSessionOnUnauthorized: expiresSessionOnUnauthorized
+        )
+    }
+
+    private func perform(
+        _ method: String,
+        _ path: String,
+        rawBody: Data?,
+        contentType: String?,
+        authenticated: Bool,
+        expiresSessionOnUnauthorized: Bool = true
+    ) async throws -> Data {
         guard let url = URL(string: path, relativeTo: baseURL) else { throw APIError.decoding }
         var request = URLRequest(url: url)
         request.httpMethod = method
-        request.timeoutInterval = 20
+        request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let body {
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try encoder.encode(body)
+        if let rawBody, let contentType {
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            request.httpBody = rawBody
         }
         if authenticated {
             guard let token = tokenStore.token else { throw APIError.unauthorized(message: "로그인이 필요합니다") }
@@ -89,8 +130,8 @@ final class APIClient: @unchecked Sendable {
         }
         guard let http = response as? HTTPURLResponse else { throw APIError.decoding }
         guard (200..<300).contains(http.statusCode) else {
-            let body = try? decoder.decode(APIErrorBody.self, from: data)
-            let message = body?.message ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
+            let errorBody = try? decoder.decode(APIErrorBody.self, from: data)
+            let message = errorBody?.message ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
             if http.statusCode == 401, authenticated {
                 tokenStore.clear()
                 if expiresSessionOnUnauthorized {
@@ -100,9 +141,9 @@ final class APIClient: @unchecked Sendable {
             }
             throw APIError.server(
                 status: http.statusCode,
-                code: body?.code ?? "\(http.statusCode)",
+                code: errorBody?.code ?? "\(http.statusCode)",
                 message: message,
-                fieldErrors: body?.errors ?? [:]
+                fieldErrors: errorBody?.errors ?? [:]
             )
         }
         return data

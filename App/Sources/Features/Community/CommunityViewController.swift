@@ -10,6 +10,10 @@ struct CommunityPost {
     let likes: Int
     let category: String
     let authorCohort: String
+    var id: Int64?
+    var boardID: Int64?
+    var isMine = false
+    var likedByMe = false
 
     init(
         grade: String,
@@ -85,6 +89,16 @@ final class CommunityViewController: AppPageViewController {
         if isViewLoaded {
             renderPosts()
             if CommunityPostStore.shared.consumePublishedToast() { showPublishToast() }
+        }
+        guard CommunityPostStore.shared.isServerBacked else { return }
+        Task { [weak self] in
+            do {
+                try await CommunityPostStore.shared.refresh()
+                self?.showingLoadError = false
+            } catch {
+                self?.showingLoadError = true
+            }
+            self?.renderPosts()
         }
     }
 

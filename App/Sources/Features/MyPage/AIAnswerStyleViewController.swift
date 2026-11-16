@@ -56,6 +56,17 @@ final class AIAnswerStyleViewController: AppPageViewController {
         super.viewWillAppear(animated)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)),
             name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        loadServerPrompt()
+    }
+
+    private func loadServerPrompt() {
+        guard AccessTokenStore.shared.hasToken, !promptView.isFirstResponder else { return }
+        Task { [weak self] in
+            guard let setting = try? await AccountAPI.settingMain(), let self,
+                  !self.promptView.isFirstResponder, !setting.customPrompt.isEmpty else { return }
+            self.defaults.set(setting.customPrompt, forKey: "answerStyle.systemPrompt")
+            self.promptView.text = setting.customPrompt
+        }
     }
 
     private func addHeader() {
@@ -188,9 +199,19 @@ final class AIAnswerStyleViewController: AppPageViewController {
             showMessage("시스템 프롬프트를 입력해주세요")
             return
         }
-        defaults.set(prompt, forKey: "answerStyle.systemPrompt")
         promptView.resignFirstResponder()
-        showSavedToast()
+        Task { [weak self] in
+            if AccessTokenStore.shared.hasToken {
+                do {
+                    try await AccountAPI.updateCustomPrompt(prompt)
+                } catch {
+                    self?.showMessage((error as? APIError)?.message ?? "프롬프트를 저장하지 못했어요.")
+                    return
+                }
+            }
+            self?.defaults.set(prompt, forKey: "answerStyle.systemPrompt")
+            self?.showSavedToast()
+        }
     }
 
     func pinSaveButtonToBottom() {

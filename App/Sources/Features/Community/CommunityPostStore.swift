@@ -1,6 +1,8 @@
 import Foundation
 
 struct CommunityComment {
+    var id: Int64?
+    var postID: Int64?
     let board: String
     let postTitle: String
     let text: String
@@ -11,7 +13,7 @@ struct CommunityComment {
 final class CommunityPostStore {
     static let shared = CommunityPostStore()
 
-    private(set) var posts = [
+    var posts = [
         CommunityPost(grade: "10기", title: "기숙사 와이파이 다들 잘 돼?", body: "3층 끝방인데 저녁만 되면 너무 느려져서… 다른 층은 어떤지 궁금해.",
             time: "10분 전", comments: 5, likes: 12, category: "질문",
                 detailBody: "3층 끝방인데 저녁만 되면 와이파이가 너무 느려져서 과제 제출이 힘들어. 다른 층은 어떤지, 해결 방법 아는 사람 있으면 알려줘!"),
@@ -21,14 +23,14 @@ final class CommunityPostStore {
             time: "3시간 전", comments: 14, likes: 21, category: "질문")
     ]
 
-    private(set) var myPosts = [
+    var myPosts = [
         CommunityPost(grade: "10기", title: "기숙사 와이파이 다들 잘 돼?", body: "3층 끝방인데 저녁만 되면 너무 느려져서… 다른 층은 어떤지 궁금해.",
             time: "10분 전", comments: 5, likes: 12, category: "질문"),
         CommunityPost(grade: "10기", title: "기숙사 세탁실 이용 시간 아는 사람?", body: "주말에도 밤 10시까지 쓸 수 있는지 궁금해.", time: "어제",
             comments: 2, likes: 4, category: "질문")
     ]
 
-    private(set) var myComments = [
+    var myComments = [
         CommunityComment(board: "10기", postTitle: "기숙사 와이파이 다들 잘 돼?", text: "오 고마워, 내일 말씀드려 볼게.", time: "방금"),
         CommunityComment(board: "전체", postTitle: "전공 동아리 면접 후기 공유", text: "혹시 포트폴리오도 봤어?", time: "2시간 전"),
         CommunityComment(board: "9기", postTitle: "취업 준비 언제부터 시작했어?", text: "저는 2학년 겨울부터 했어요!", time: "어제"),
@@ -36,7 +38,8 @@ final class CommunityPostStore {
         CommunityComment(board: "10기", postTitle: "전공 프로젝트 준비 팁", text: "작게라도 먼저 만들어보는 걸 추천해요.", time: "지난주")
     ]
     private var shouldShowPublishedToast = false
-    private var reportedPostKeys = Set<String>()
+    var reportedPostKeys = Set<String>()
+    var boards: [BoardDTO] = []
 
     private init() {}
 
@@ -55,6 +58,8 @@ final class CommunityPostStore {
 
     func markReported(_ post: CommunityPost) {
         reportedPostKeys.insert(reportKey(for: post))
+        guard let id = post.id ?? postID(forTitle: post.title) else { return }
+        syncWithServer { try await CommunityAPI.report(postID: id, reasonCode: "OTHER") }
     }
 
     private func reportKey(for post: CommunityPost) -> String {
@@ -77,6 +82,9 @@ final class CommunityPostStore {
     }
 
     func addComment(postTitle: String, text: String) {
+        if let id = postID(forTitle: postTitle) {
+            syncWithServer { try await CommunityAPI.addComment(postID: id, content: text) }
+        }
         let board = posts.first(where: { $0.title == postTitle })?.grade ?? "전체"
         myComments.insert(CommunityComment(board: board, postTitle: postTitle, text: text, time: "방금"), at: 0)
     }
@@ -93,12 +101,18 @@ final class CommunityPostStore {
             detailBody: body == original.body ? original.detailBody : nil,
             authorCohort: original.authorCohort
         )
+        if let id = original.id {
+            syncWithServer { try await CommunityAPI.updatePost(id: id, title: title, content: body) }
+        }
         posts = posts.map { $0.title == original.title && $0.body == original.body ? updated : $0 }
         myPosts = myPosts.map { $0.title == original.title && $0.body == original.body ? updated : $0 }
         return updated
     }
 
     func updateComment(postTitle: String, oldText: String, newText: String) {
+        if let id = commentID(postTitle: postTitle, text: oldText) {
+            syncWithServer { try await CommunityAPI.updateComment(id: id, content: newText) }
+        }
         guard let index = myComments.firstIndex(where: { $0.postTitle == postTitle && $0.text == oldText }) else {
             let board = posts.first(where: { $0.title == postTitle })?.grade ?? "전체"
             myComments.insert(CommunityComment(board: board, postTitle: postTitle, text: newText, time: "방금"), at: 0)
@@ -111,6 +125,9 @@ final class CommunityPostStore {
 
     @discardableResult
     func deleteComment(postTitle: String, text: String) -> Bool {
+        if let id = commentID(postTitle: postTitle, text: text) {
+            syncWithServer { try await CommunityAPI.deleteComment(id: id) }
+        }
         guard let index = myComments.firstIndex(where: {
             $0.postTitle == postTitle && $0.text == text
         }) else { return false }
@@ -131,6 +148,9 @@ final class CommunityPostStore {
     }
 
     func delete(_ post: CommunityPost) {
+        if let id = post.id {
+            syncWithServer { try await CommunityAPI.deletePost(id: id) }
+        }
         posts.removeAll { $0.title == post.title && $0.body == post.body }
         myPosts.removeAll { $0.title == post.title && $0.body == post.body }
         myComments.removeAll { $0.postTitle == post.title }

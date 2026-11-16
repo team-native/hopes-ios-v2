@@ -107,6 +107,19 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
     }
 
     private func addInitialComments() {
+        if let id = post.id, CommunityPostStore.shared.isServerBacked {
+            Task { [weak self] in
+                guard let page = try? await CommunityAPI.comments(postID: id), let self else { return }
+                for comment in page.items {
+                    self.addComment(
+                        author: comment.isMine ? "익명 (나)" : "익명",
+                        time: CommunityAPI.relativeTime(comment.createdAt),
+                        text: comment.content
+                    )
+                }
+            }
+            return
+        }
         let myComment = CommunityPostStore.shared.myComments.first { $0.postTitle == post.title }?.text
         let comments = [
             ("10기", "5분 전", "2층도 저녁엔 느려. 공유기 위치 문제 같아."),

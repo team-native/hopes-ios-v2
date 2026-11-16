@@ -14,6 +14,8 @@ final class MyPageViewController: AppPageViewController {
     let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
     private let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
     let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    weak var statsCardView: UIView?
+    var chatCount = 0
     let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
     private let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
@@ -45,6 +47,14 @@ final class MyPageViewController: AppPageViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
         refreshProfileSummary()
+        guard AccessTokenStore.shared.hasToken else { return }
+        Task { [weak self] in
+            await AuthAPI.syncProfile()
+            self?.refreshProfileSummary()
+            try? await CommunityPostStore.shared.refresh()
+            if let list = try? await ChatAPI.list() { self?.chatCount = list.chatList.count }
+            self?.addStatsCard()
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -174,7 +184,7 @@ extension MyPageViewController {
         [
             ("\(CommunityPostStore.shared.myPosts.count)", "작성글"),
             ("\(CommunityPostStore.shared.myComments.count)", "댓글"),
-            ("12", "대화")
+            ("\(chatCount)", "대화")
         ].enumerated().forEach { index, value in
             if index > 0 {
                 let divider = UIView()
@@ -205,7 +215,14 @@ extension MyPageViewController {
             stats.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8),
             stats.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14)
         ])
-        contentStack.addArrangedSubview(card)
+        if let old = statsCardView, let index = contentStack.arrangedSubviews.firstIndex(of: old) {
+            contentStack.removeArrangedSubview(old)
+            old.removeFromSuperview()
+            contentStack.insertArrangedSubview(card, at: index)
+        } else {
+            contentStack.addArrangedSubview(card)
+        }
+        statsCardView = card
     }
 
     func addMenuCard() {

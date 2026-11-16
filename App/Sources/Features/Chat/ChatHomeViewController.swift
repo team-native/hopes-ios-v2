@@ -30,8 +30,10 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
     var recommendationState: ChatHomeRecommendationState = .ready
     var questionSetIndex = 0
     var recommendationRequestID = 0
+    var recommendationRefreshToken: String?
+    var shownRecommendationIDs: [Int64] = []
 
-    private let questionSets: [[(String, String)]] = [
+    var questionSets: [[(String, String)]] = [
         [
             ("chat-question-bed-icon", "기숙사 하루 일과가 어떻게 돼?"),
             ("chat-question-file-icon", "입학하려면 뭘 준비해야 해?"),
@@ -74,6 +76,12 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         }
         scrollView.bottomAnchor.constraint(equalTo: composerBar.topAnchor, constant: -16).isActive = true
         renderQuestions()
+        if AccessTokenStore.shared.hasToken {
+            Task { [weak self] in
+                await CatalogAPI.refreshCatalogs()
+                self?.loadRecommendations()
+            }
+        }
         view.accessibilityIdentifier = "chat-home-screen"
     }
 
@@ -226,16 +234,6 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         for (iconName, question) in questionSets[questionSetIndex] {
             questionList.addArrangedSubview(makeQuestionCard(iconName: iconName, question: question))
         }
-    }
-
-    @objc private func refreshQuestions() {
-        guard recommendationState != .loading else { return }
-        if recommendationState == .failed {
-            retryRecommendations()
-            return
-        }
-        questionSetIndex = (questionSetIndex + 1) % questionSets.count
-        renderQuestions()
     }
 
     func showRecommendationState(_ state: ChatHomeRecommendationState) {

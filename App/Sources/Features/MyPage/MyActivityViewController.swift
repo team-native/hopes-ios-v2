@@ -59,6 +59,8 @@ final class MyActivityViewController: AppPageViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
         if isViewLoaded { renderItems() }
+        guard CommunityPostStore.shared.isServerBacked else { return }
+        Task { [weak self] in try? await CommunityPostStore.shared.refresh(); self?.renderItems() }
     }
 
     override func viewWillDisappear(_ animated: Bool) {

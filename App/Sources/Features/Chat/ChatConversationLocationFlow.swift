@@ -314,9 +314,22 @@ extension ChatConversationViewController {
         guard let location = locations.last else { return }
         measuredLocation = location.coordinate
         measuredLocationAccuracy = location.horizontalAccuracy
+        guard AccessTokenStore.shared.hasToken else {
+            showLocationOutcome(for: location, serverStatus: nil)
+            return
+        }
+        Task { [weak self] in
+            let status = try? await CampusAPI.checkLocation(location)
+            self?.showLocationOutcome(for: location, serverStatus: status)
+        }
+    }
+
+    func showLocationOutcome(for location: CLLocation, serverStatus: String?) {
         let schoolLocation = CLLocation(latitude: 35.142829306650874, longitude: 126.80021878005266)
         let distanceInMeters = schoolLocation.distance(from: location)
-        if distanceInMeters > 250 {
+        let isOutside = serverStatus.map { $0 == "OUTSIDE" } ?? (distanceInMeters > 250)
+        let isLowAccuracy = serverStatus.map { $0 == "LOW_ACCURACY" } ?? (location.horizontalAccuracy > 100)
+        if isOutside {
             hasPendingLocationRequest = false
             let distanceText = distanceInMeters >= 1_000
                 ? String(format: "%.1fkm", distanceInMeters / 1_000)
@@ -328,7 +341,7 @@ extension ChatConversationViewController {
             scrollToLatestMessage()
             return
         }
-        if location.horizontalAccuracy > 100 {
+        if isLowAccuracy {
             hasPendingLocationRequest = false
             let card = makeLowAccuracyCard(accuracy: location.horizontalAccuracy)
             replaceLocationCard(with: card)
