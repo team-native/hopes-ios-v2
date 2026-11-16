@@ -10,8 +10,8 @@ final class OnboardingViewController: UIViewController {
         super.viewDidLoad()
         navigationController?.setNavigationBarHidden(true, animated: false)
         view.backgroundColor = .white
-        configureContent()
         configureChatButton()
+        configureContent()
         view.accessibilityIdentifier = "onboarding-screen"
     }
 
