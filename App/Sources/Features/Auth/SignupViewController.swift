@@ -44,6 +44,7 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     var email = ""
     var selectedDepartment = UserProfileStore.shared.department
     var generation: String?
+    var pendingGeneration: String?
     var termsAccepted = true
     var countdown = 300
     var countdownTimer: Timer?
