@@ -9,20 +9,35 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         let olderThanWeek: Bool
     }
 
-    var conversations: [Conversation] = ProcessInfo.processInfo.arguments.contains("--empty-history") ? [] : [
-        Conversation(title: "기숙사 하루 일과가 어떻게 돼?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
-        Conversation(title: "전공 선택은 어떻게 하는 게 좋아?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
-        Conversation(title: "동아리는 언제 정해?", time: "지난주", department: "소프트웨어개발과", olderThanWeek: false),
-        Conversation(title: "입학하려면 뭘 준비해야 해?", time: "10월 28일", department: "소프트웨어개발과", olderThanWeek: true),
-        Conversation(title: "과랑 전공이랑 뭐가 달라?", time: "10월 21일", department: "소프트웨어개발과", olderThanWeek: true),
-        Conversation(title: "후배한테 해주고 싶은 조언 있어?", time: "10월 18일", department: "소프트웨어개발과", olderThanWeek: true)
-    ]
+    private let showsSearchPreview = ProcessInfo.processInfo.arguments.contains("--history-search-preview")
+    var conversations: [Conversation] = {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard !arguments.contains("--empty-history") else { return [] }
+        var conversations = [
+            Conversation(title: "기숙사 하루 일과가 어떻게 돼?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
+            Conversation(title: "전공 선택은 어떻게 하는 게 좋아?", time: "2일 전", department: "소프트웨어개발과", olderThanWeek: false),
+            Conversation(title: "동아리는 언제 정해?", time: "5일 전", department: "소프트웨어개발과", olderThanWeek: false),
+            Conversation(title: "입학하려면 뭘 준비해야 해?", time: "10월 28일", department: "소프트웨어개발과", olderThanWeek: true),
+            Conversation(title: "과랑 전공이랑 뭐가 달라?", time: "10월 21일", department: "소프트웨어개발과", olderThanWeek: true),
+            Conversation(title: "후배한테 해주고 싶은 조언 있어?", time: "10월 18일", department: "소프트웨어개발과", olderThanWeek: true)
+        ]
+        if arguments.contains("--history-search-preview") {
+            conversations.append(Conversation(
+                title: "기숙사 방 배정은 어떻게 돼?",
+                time: "3일 전",
+                department: "소프트웨어개발과",
+                olderThanWeek: false
+            ))
+        }
+        return conversations
+    }()
 
     let searchField = UITextField()
     let resultsStack = UIStackView()
     let clearSearchButton = UIButton(type: .system)
     var newConversationButton: UIView?
     weak var revealedRow: ConversationRowView?
+    private var searchContainer: UIView?
     private var conversationRows: [ConversationRowView] = []
     private var isSearchingResults = false
 
@@ -41,13 +56,21 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
 
         addHistoryHeading()
         addSearchField()
+        if showsSearchPreview {
+            searchField.text = "기숙사"
+        }
 
         resultsStack.axis = .vertical
         resultsStack.spacing = 16
         contentStack.addArrangedSubview(resultsStack)
-        renderConversations()
-
         addNewConversationButton()
+        renderConversations()
+        if showsSearchPreview {
+            DispatchQueue.main.async { [weak self] in
+                self?.searchField.becomeFirstResponder()
+            }
+        }
+
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -93,6 +116,7 @@ extension HistoryViewController {
         fieldRow.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
         fieldRow.translatesAutoresizingMaskIntoConstraints = false
         let container = UIView()
+        searchContainer = container
         container.backgroundColor = .white
         container.layer.cornerRadius = 24
         container.layer.borderWidth = 1
@@ -114,6 +138,20 @@ extension HistoryViewController {
 
     @objc private func searchTextDidChange() {
         renderConversations()
+    }
+
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        guard textField === searchField else { return }
+        searchContainer?.layer.borderWidth = 1.5
+        let focusColor = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)
+        searchContainer?.layer.borderColor = focusColor.cgColor
+    }
+
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        guard textField === searchField else { return }
+        searchContainer?.layer.borderWidth = 1
+        let normalColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+        searchContainer?.layer.borderColor = normalColor.cgColor
     }
 
     func renderConversations() {
@@ -138,6 +176,14 @@ extension HistoryViewController {
             return
         }
         if isSearching {
+            let resultCount = AppStyle.label(
+                "검색 결과 \(filtered.count)개",
+                size: 14,
+                weight: .medium,
+                color: AppStyle.muted
+            )
+            resultCount.heightAnchor.constraint(equalToConstant: 20).isActive = true
+            resultsStack.addArrangedSubview(resultCount)
             addConversationCard(filtered, query: query)
             return
         }
