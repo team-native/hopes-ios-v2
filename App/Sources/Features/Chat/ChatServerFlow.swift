@@ -156,6 +156,7 @@ extension ChatConversationViewController {
                         }
                     }
                 )
+                guard result.status == "READY" else { throw APIError.decoding }
                 attachmentResponseState.uploadedAttachmentIDs[upload.clientRequestId] = result.id
                 updateAttachmentUploadCompleted(clientRequestId: upload.clientRequestId)
             } catch {
