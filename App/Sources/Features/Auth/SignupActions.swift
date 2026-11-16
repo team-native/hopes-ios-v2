@@ -212,7 +212,11 @@ extension SignupViewController {
     @objc func goBack() {
         switch step {
         case .email:
-            navigationController?.popViewController(animated: true)
+            if let navigationController, navigationController.viewControllers.count > 1 {
+                navigationController.popViewController(animated: true)
+            } else {
+                dismiss(animated: true)
+            }
         case .verification:
             step = .email
             codeError = nil
