@@ -48,6 +48,13 @@ final class HomeViewController: AppPageViewController {
             renderPopular(showsPopularError ? .failed : .loaded)
         }
         view.accessibilityIdentifier = "home-screen"
+        NotificationCenter.default.addObserver(self, selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    @objc private func appWillEnterForeground() {
+        guard viewIfLoaded?.window != nil else { return }
+        loadPopularPosts()
     }
 
     override func viewWillAppear(_ animated: Bool) {
