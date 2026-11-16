@@ -303,13 +303,13 @@ extension CommunityPostDetailViewController {
             showDuplicateReportToast()
             return
         }
-        presentReportFlow { [weak self] in
+        presentReportFlow { [weak self] reasonCode in
             guard let self else { return }
-            CommunityPostStore.shared.markReported(self.post)
+            CommunityPostStore.shared.markReported(self.post, reasonCode: reasonCode)
         }
     }
 
-    private func presentReportFlow(onSubmit: @escaping () -> Void = {}) {
+    private func presentReportFlow(onSubmit: @escaping (String) -> Void = { _ in }) {
         guard presentedViewController == nil else { return }
         present(CommunityReportFlowViewController(onSubmit: onSubmit), animated: false)
     }

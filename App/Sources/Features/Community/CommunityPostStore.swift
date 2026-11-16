@@ -56,10 +56,10 @@ final class CommunityPostStore {
         reportedPostKeys.contains(reportKey(for: post))
     }
 
-    func markReported(_ post: CommunityPost) {
+    func markReported(_ post: CommunityPost, reasonCode: String = "OTHER") {
         reportedPostKeys.insert(reportKey(for: post))
         guard let id = post.id ?? postID(forTitle: post.title) else { return }
-        syncWithServer { try await CommunityAPI.report(postID: id, reasonCode: "OTHER") }
+        syncWithServer { try await CommunityAPI.report(postID: id, reasonCode: reasonCode) }
     }
 
     private func reportKey(for post: CommunityPost) -> String {

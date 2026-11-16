@@ -7,7 +7,7 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
     private let dimView = UIView()
     private let sheetView = UIView()
     private let contentStack = UIStackView()
-    private let onSubmit: () -> Void
+    private let onSubmit: (String) -> Void
     private let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
     private let primaryText = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
     private let secondaryText = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
@@ -16,7 +16,7 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
     private var bottomConstraint: NSLayoutConstraint?
     private var isComplete = false
 
-    init(onSubmit: @escaping () -> Void = {}) {
+    init(onSubmit: @escaping (String) -> Void = { _ in }) {
         self.onSubmit = onSubmit
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
@@ -136,7 +136,7 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
     private func showCompletion() {
         guard !isComplete else { return }
         isComplete = true
-        onSubmit()
+        onSubmit(Self.reasonCode(for: selectedReason))
         let handle = makeHandle()
         let doneContent = makeCompletionContent()
         let close = makePrimaryButton(title: "확인") { [weak self] in self?.dismissSheet() }
@@ -347,5 +347,14 @@ private extension CommunityReportFlowViewController {
         helper.translatesAutoresizingMaskIntoConstraints = false
         helper.heightAnchor.constraint(equalToConstant: 40).isActive = true
         return helper
+    }
+
+    static func reasonCode(for reason: String) -> String {
+        switch reason {
+        case "욕설·비방": "ABUSE"
+        case "도배·광고": "SPAM"
+        case "개인정보 노출": "PRIVACY"
+        default: "OTHER"
+        }
     }
 }
