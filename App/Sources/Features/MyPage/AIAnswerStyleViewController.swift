@@ -1,19 +1,30 @@
 import UIKit
 
 @MainActor
-final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelegate {
+final class AIAnswerStyleViewController: AppPageViewController {
     private let defaults = UserDefaults.standard
-    private let promptView = UITextView()
-    private let promptPlaceholder = AppStyle.label("예: 답변은 항상 3문장 이내로 짧게 해줘.", size: 15,
+    let promptView = UITextView()
+    let promptPlaceholder = AppStyle.label("예: 답변은 항상 3문장 이내로 짧게 해줘.", size: 15,
         color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
-    private let topSaveButton = UIButton(type: .system)
-    private let saveButton = UIButton(type: .system)
-    private var promptHeightConstraint: NSLayoutConstraint!
-    private var saveButtonBottomConstraint: NSLayoutConstraint?
+    let topSaveButton = UIButton(type: .system)
+    let saveButton = UIButton(type: .system)
+    var headerView: UIStackView?
+    var promptHeightConstraint: NSLayoutConstraint!
+    var scrollTopConstraint: NSLayoutConstraint?
+    var scrollBottomConstraint: NSLayoutConstraint?
+    var saveButtonConstraints: [NSLayoutConstraint] = []
+    var pinnedHeaderConstraints: [NSLayoutConstraint] = []
+    var keyboardLayoutIsActive = false
     private let showsSavedPreview = ProcessInfo.processInfo.arguments.contains("--prompt-save-success")
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        scrollTopConstraint = view.constraints.first(where: {
+            $0.firstItem === scrollView && $0.firstAttribute == .top
+        })
+        scrollBottomConstraint = view.constraints.first(where: {
+            $0.firstItem === scrollView && $0.firstAttribute == .bottom
+        })
         title = nil
         hidesBottomBarWhenPushed = true
         navigationController?.setNavigationBarHidden(true, animated: false)
@@ -89,6 +100,8 @@ final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelega
         header.axis = .horizontal
         header.alignment = .center
         header.spacing = 12
+        header.translatesAutoresizingMaskIntoConstraints = false
+        headerView = header
         contentStack.addArrangedSubview(header)
     }
 
@@ -161,6 +174,7 @@ final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelega
         saveButton.clipsToBounds = true
         saveButton.accessibilityIdentifier = "ai-answer-style-save-bottom"
         saveButton.translatesAutoresizingMaskIntoConstraints = false
+        saveButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         saveButton.addAction(UIAction { [weak self] _ in self?.savePrompt() }, for: .touchUpInside)
     }
 
@@ -172,94 +186,17 @@ final class AIAnswerStyleViewController: AppPageViewController, UITextViewDelega
         }
         defaults.set(prompt, forKey: "answerStyle.systemPrompt")
         promptView.resignFirstResponder()
-        promptView.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
-        promptHeightConstraint.constant = 220
         showSavedToast()
     }
 
-    private func pinSaveButtonToBottom() {
+    func pinSaveButtonToBottom() {
         view.addSubview(saveButton)
-        NSLayoutConstraint.activate([
+        saveButtonConstraints = [
             saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            saveButton.heightAnchor.constraint(equalToConstant: 50)
-        ])
-        let bottomConstraint = saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
-            constant: -16)
-        bottomConstraint.isActive = true
-        saveButtonBottomConstraint = bottomConstraint
+            saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        ]
+        NSLayoutConstraint.activate(saveButtonConstraints)
     }
 
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        textView.layer.borderColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1).cgColor
-    }
-
-    func textViewDidEndEditing(_ textView: UITextView) {
-        textView.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
-    }
-
-    func textViewDidChange(_ textView: UITextView) {
-        promptPlaceholder.isHidden = !textView.text.isEmpty
-    }
-
-    @objc private func keyboardWillChangeFrame(_ notification: Notification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
-        else { return }
-        let frame = view.convert(keyboardFrame, from: nil)
-        let overlap = max(0, view.bounds.maxY - view.safeAreaInsets.bottom - frame.minY)
-        saveButtonBottomConstraint?.constant = -(16 + overlap)
-
-        let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
-        let curveValue = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt ?? 0
-        let options = UIView.AnimationOptions(rawValue: curveValue << 16)
-        UIView.animate(withDuration: duration, delay: 0, options: options) {
-            self.view.layoutIfNeeded()
-        }
-    }
-
-    private func showSavedToast() {
-        let check = UIView()
-        check.backgroundColor = AppStyle.blue
-        check.layer.cornerRadius = 11
-        check.widthAnchor.constraint(equalToConstant: 22).isActive = true
-        check.heightAnchor.constraint(equalToConstant: 22).isActive = true
-        let checkmark = UIImageView(image: UIImage(systemName: "checkmark"))
-        checkmark.tintColor = .white
-        checkmark.contentMode = .scaleAspectFit
-        checkmark.translatesAutoresizingMaskIntoConstraints = false
-        check.addSubview(checkmark)
-        NSLayoutConstraint.activate([
-            checkmark.centerXAnchor.constraint(equalTo: check.centerXAnchor),
-            checkmark.centerYAnchor.constraint(equalTo: check.centerYAnchor),
-            checkmark.widthAnchor.constraint(equalToConstant: 12),
-            checkmark.heightAnchor.constraint(equalToConstant: 12)
-        ])
-
-        let message = AppStyle.label("다음 답변부터 반영돼요", size: 13, weight: .medium, color: .white)
-        let toast = UIStackView(arrangedSubviews: [check, message])
-        toast.axis = .horizontal
-        toast.alignment = .center
-        toast.spacing = 10
-        toast.isLayoutMarginsRelativeArrangement = true
-        toast.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
-        toast.backgroundColor = UIColor(red: 0.13, green: 0.16, blue: 0.22, alpha: 1)
-        toast.layer.cornerRadius = 26
-        toast.layer.shadowColor = UIColor.black.withAlphaComponent(0.18).cgColor
-        toast.layer.shadowOpacity = 1
-        toast.layer.shadowRadius = 12
-        toast.layer.shadowOffset = CGSize(width: 0, height: 5)
-        toast.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(toast)
-        NSLayoutConstraint.activate([
-            toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            toast.bottomAnchor.constraint(equalTo: saveButton.topAnchor, constant: -32)
-        ])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak toast] in
-            UIView.animate(withDuration: 0.2, animations: {
-                toast?.alpha = 0
-            }, completion: { _ in
-                toast?.removeFromSuperview()
-            })
-        }
-    }
 }
