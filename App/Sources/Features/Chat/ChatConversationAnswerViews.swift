@@ -25,13 +25,10 @@ extension ChatConversationViewController {
         let titleStack = UIStackView(arrangedSubviews: [title, context])
         titleStack.axis = .vertical
         titleStack.spacing = 0
-        let location = makeLocationActionButton()
-        locationHeaderActionButton = location
-        let row = UIStackView(arrangedSubviews: [back, titleStack, location])
+        let row = UIStackView(arrangedSubviews: [back, titleStack])
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 12
-        row.setCustomSpacing(0, after: titleStack)
         messagesStack.addArrangedSubview(row)
     }
 
@@ -387,7 +384,6 @@ extension ChatConversationViewController {
     func setLocationConversationHeader(active: Bool) {
         conversationHeaderTitleLabel?.text = active ? "학교 생활" : "전공 공부"
         conversationHeaderSubtitleLabel?.text = active ? "선배 답변 · 위치 안내" : conversationHeaderDefaultSubtitle
-        locationHeaderActionButton?.isHidden = active
         view.backgroundColor = active ? ChatDetailPalette.canvas : AppStyle.canvas
         if let conversationHeaderTitleLabel {
             applyLineHeight(conversationHeaderTitleLabel, lineHeight: 26, height: 26, kern: -0.2)

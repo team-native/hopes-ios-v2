@@ -91,10 +91,14 @@ extension ChatConversationViewController {
     }
 
     func sendMessage() {
-        guard !isOffline,
-              let text = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+        guard let text = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !text.isEmpty else { return }
+        guard !isOffline || isLocationMeasurementRequest(text) else { return }
         inputField.text = nil
+        guard !isLocationMeasurementRequest(text) else {
+            beginLocationMeasurement(question: text)
+            return
+        }
         addMessage(text, outgoing: true)
         beginAnswerGeneration()
     }

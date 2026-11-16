@@ -40,7 +40,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     var conversationHeaderTitleLabel: UILabel?
     var conversationHeaderSubtitleLabel: UILabel?
     var conversationHeaderDefaultSubtitle = ""
-    var locationHeaderActionButton: UIButton?
 
     init(question: String?, attachments: [ChatAttachmentItem] = []) {
         initialQuestion = question
@@ -60,8 +59,12 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
         if let initialQuestion {
             addConversationHeader()
-            addUserMessage(initialQuestion)
-            beginAnswerGeneration()
+            if isLocationMeasurementRequest(initialQuestion) {
+                beginLocationMeasurement(question: initialQuestion)
+            } else {
+                addUserMessage(initialQuestion)
+                beginAnswerGeneration()
+            }
         } else {
             addConversationHeader()
             addMessage("학교생활에 대해 궁금한 점을 편하게 물어보세요", outgoing: false)
