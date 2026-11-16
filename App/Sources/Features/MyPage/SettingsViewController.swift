@@ -2,8 +2,10 @@ import UIKit
 
 @MainActor
 final class SettingsViewController: AppPageViewController {
-    private let darkModeSwitch = UISwitch()
-    private let notificationsSwitch = UISwitch()
+    private let darkModeSwitch = SettingsToggleControl(frame: .zero)
+    private let notificationsSwitch = SettingsToggleControl(frame: .zero)
+    private let primaryTextColor = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
+    private let secondaryTextColor = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,9 +36,10 @@ final class SettingsViewController: AppPageViewController {
     }
 
     private func addHeader() {
-        let title = AppStyle.label("설정", size: 18, weight: .medium)
-        title.textColor = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
-        let subtitle = AppStyle.label("앱 설정과 도움말을 관리해요.", size: 12, color: AppStyle.muted)
+        let title = AppStyle.label("설정", size: 18, weight: .medium, color: primaryTextColor)
+        title.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        let subtitle = AppStyle.label("앱 설정과 도움말을 관리해요.", size: 12, color: secondaryTextColor)
+        subtitle.heightAnchor.constraint(equalToConstant: 16).isActive = true
         let labels = UIStackView(arrangedSubviews: [title, subtitle])
         labels.axis = .vertical
         labels.spacing = 0
@@ -55,7 +58,7 @@ final class SettingsViewController: AppPageViewController {
         rows.addArrangedSubview(makeToggleRow(
             title: "다크 모드",
             subtitle: "시스템 설정에 맞춰 전환",
-            symbol: "moon",
+            iconName: "SettingsMoon",
             toggle: darkModeSwitch,
             key: "settings.darkModeEnabled"
         ))
@@ -63,7 +66,7 @@ final class SettingsViewController: AppPageViewController {
         rows.addArrangedSubview(makeToggleRow(
             title: "알림 받기",
             subtitle: "새 답변 · 공지 알림",
-            symbol: "bell",
+            iconName: "SettingsBell",
             toggle: notificationsSwitch,
             key: "settings.notificationsEnabled",
             defaultValue: true
@@ -75,11 +78,18 @@ final class SettingsViewController: AppPageViewController {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.5"
         let rows = UIStackView()
         rows.axis = .vertical
-        rows.addArrangedSubview(makeNavigationRow(title: "앱 정보", trailing: "v\(version)") { [weak self] in
+        rows.addArrangedSubview(makeNavigationRow(
+            title: "앱 정보",
+            trailing: "v\(version)",
+            iconName: "SettingsInfo"
+        ) { [weak self] in
             self?.push(AppInfoViewController())
         })
         rows.addArrangedSubview(makeDivider())
-        rows.addArrangedSubview(makeNavigationRow(title: "개인정보 처리방침", symbol: "chevron.right") { [weak self] in
+        rows.addArrangedSubview(makeNavigationRow(
+            title: "개인정보 처리방침",
+            iconName: "SettingsInfo"
+        ) { [weak self] in
             self?.push(PrivacyPolicyViewController())
         })
         contentStack.addArrangedSubview(makeCard(rows))
@@ -87,33 +97,58 @@ final class SettingsViewController: AppPageViewController {
 
     private func addLogoutCard() {
         let button = UIButton(type: .system)
-        button.contentHorizontalAlignment = .leading
-        button.setTitle("  로그아웃", for: .normal)
-        button.setTitleColor(UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1), for: .normal)
-        button.setImage(UIImage(systemName: "rectangle.portrait.and.arrow.right"), for: .normal)
-        button.tintColor = UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
-        button.titleLabel?.font = .systemFont(ofSize: 15)
+        button.accessibilityLabel = "로그아웃"
+        button.accessibilityIdentifier = "settings-logout"
+        let icon = UIImageView(image: UIImage(named: "SettingsLogout")?.withRenderingMode(.alwaysOriginal))
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            icon.widthAnchor.constraint(equalToConstant: 22),
+            icon.heightAnchor.constraint(equalToConstant: 22)
+        ])
+        let label = AppStyle.label(
+            "로그아웃",
+            size: 15,
+            color: UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
+        )
+        label.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        let row = UIStackView(arrangedSubviews: [icon, label])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 12
+        row.isLayoutMarginsRelativeArrangement = true
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 0, bottom: 14, trailing: 0)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.topAnchor.constraint(equalTo: button.topAnchor),
+            row.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            row.bottomAnchor.constraint(equalTo: button.bottomAnchor)
+        ])
         button.addAction(UIAction { [weak self] _ in self?.confirmLogout() }, for: .touchUpInside)
-        button.heightAnchor.constraint(equalToConstant: 54).isActive = true
         contentStack.addArrangedSubview(makeCard(button, horizontalInset: 16, verticalInset: 0))
     }
 
     private func makeToggleRow(
         title: String,
         subtitle: String,
-        symbol: String,
-        toggle: UISwitch,
+        iconName: String,
+        toggle: SettingsToggleControl,
         key: String,
         defaultValue: Bool = false
     ) -> UIView {
-        let titleLabel = AppStyle.label(title, size: 15)
-        let subtitleLabel = AppStyle.label(subtitle, size: 12, color: AppStyle.muted)
+        let titleLabel = AppStyle.label(title, size: 15, color: primaryTextColor)
+        titleLabel.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        let subtitleLabel = AppStyle.label(subtitle, size: 12, color: secondaryTextColor)
+        subtitleLabel.heightAnchor.constraint(equalToConstant: 16).isActive = true
         let labels = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         labels.axis = .vertical
         labels.spacing = 2
 
-        let icon = makeIconChip(symbol: symbol)
+        let icon = makeIconChip(iconName: iconName)
         toggle.isOn = UserDefaults.standard.object(forKey: key) as? Bool ?? defaultValue
+        toggle.accessibilityLabel = title
+        toggle.accessibilityIdentifier = key
         toggle.addAction(UIAction { [weak toggle] _ in
             UserDefaults.standard.set(toggle?.isOn ?? defaultValue, forKey: key)
         }, for: .valueChanged)
@@ -130,12 +165,15 @@ final class SettingsViewController: AppPageViewController {
     private func makeNavigationRow(
         title: String,
         trailing: String? = nil,
-        symbol: String? = nil,
+        iconName: String,
         action: @escaping () -> Void
     ) -> UIView {
         let button = UIButton(type: .system)
         button.contentHorizontalAlignment = .fill
-        let titleLabel = AppStyle.label(title, size: 15)
+        button.accessibilityLabel = title
+        let icon = makeIconChip(iconName: iconName)
+        let titleLabel = AppStyle.label(title, size: 15, color: primaryTextColor)
+        titleLabel.heightAnchor.constraint(equalToConstant: 24).isActive = true
         let trailingView: UIView
         if let trailing {
             trailingView = AppStyle.label(
@@ -144,16 +182,18 @@ final class SettingsViewController: AppPageViewController {
                 weight: .medium,
                 color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
             )
+            trailingView.heightAnchor.constraint(equalToConstant: 20).isActive = true
         } else {
-            let chevron = UIImageView(image: UIImage(systemName: symbol ?? "chevron.right"))
-            chevron.tintColor = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+            let chevron = UIImageView(image: UIImage(named: "SettingsRight")?.withRenderingMode(.alwaysOriginal))
             chevron.contentMode = .scaleAspectFit
             chevron.widthAnchor.constraint(equalToConstant: 18).isActive = true
+            chevron.heightAnchor.constraint(equalToConstant: 18).isActive = true
             trailingView = chevron
         }
-        let row = UIStackView(arrangedSubviews: [titleLabel, UIView(), trailingView])
+        let row = UIStackView(arrangedSubviews: [icon, titleLabel, UIView(), trailingView])
         row.axis = .horizontal
         row.alignment = .center
+        row.spacing = 12
         row.isLayoutMarginsRelativeArrangement = true
         row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
         button.addSubview(row)
@@ -168,27 +208,14 @@ final class SettingsViewController: AppPageViewController {
         return button
     }
 
-    private func makeIconChip(symbol: String) -> UIView {
-        let chip = UIView()
-        chip.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
-        chip.layer.cornerRadius = 12
-        let icon = UIImageView(image: UIImage(systemName: symbol))
-        icon.tintColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
-        icon.contentMode = .scaleAspectFit
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        chip.addSubview(icon)
-        NSLayoutConstraint.activate([
-            chip.widthAnchor.constraint(equalToConstant: 36),
-            chip.heightAnchor.constraint(equalToConstant: 36),
-            icon.centerXAnchor.constraint(equalTo: chip.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 18),
-            icon.heightAnchor.constraint(equalToConstant: 18)
-        ])
-        return chip
-    }
-
     private func makeCard(_ content: UIView, horizontalInset: CGFloat = 17, verticalInset: CGFloat = 14) -> UIView {
+        let shadow = UIView()
+        shadow.layer.cornerRadius = 24
+        shadow.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 0.03).cgColor
+        shadow.layer.shadowOpacity = 1
+        shadow.layer.shadowRadius = 1.5
+        shadow.layer.shadowOffset = CGSize(width: 0, height: 1)
+
         let card = UIView()
         card.backgroundColor = .white
         card.layer.cornerRadius = 24
@@ -198,34 +225,21 @@ final class SettingsViewController: AppPageViewController {
         card.layer.shadowOpacity = 1
         card.layer.shadowRadius = 8
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
+        card.translatesAutoresizingMaskIntoConstraints = false
+        shadow.addSubview(card)
         content.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(content)
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: card.topAnchor, constant: verticalInset),
             content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: horizontalInset),
             content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -horizontalInset),
-            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -verticalInset)
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -verticalInset),
+            card.topAnchor.constraint(equalTo: shadow.topAnchor),
+            card.leadingAnchor.constraint(equalTo: shadow.leadingAnchor),
+            card.trailingAnchor.constraint(equalTo: shadow.trailingAnchor),
+            card.bottomAnchor.constraint(equalTo: shadow.bottomAnchor)
         ])
-        return card
-    }
-
-    private func makeDivider() -> UIView {
-        let divider = UIView()
-        divider.backgroundColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
-        divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
-        return divider
-    }
-
-    private func makeBackButton() -> UIButton {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        button.tintColor = UIColor(red: 54 / 255, green: 66 / 255, blue: 85 / 255, alpha: 1)
-        button.addAction(UIAction { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
-        }, for: .touchUpInside)
-        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
-        return button
+        return shadow
     }
 
     private func confirmLogout() {
@@ -242,5 +256,104 @@ final class SettingsViewController: AppPageViewController {
             window.makeKeyAndVisible()
         })
         present(alert, animated: true)
+    }
+}
+
+@MainActor
+private extension SettingsViewController {
+    func makeIconChip(iconName: String) -> UIView {
+        let chip = UIView()
+        chip.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+        chip.layer.cornerRadius = 12
+        let icon = UIImageView(image: UIImage(named: iconName)?.withRenderingMode(.alwaysOriginal))
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        chip.addSubview(icon)
+        NSLayoutConstraint.activate([
+            chip.widthAnchor.constraint(equalToConstant: 36),
+            chip.heightAnchor.constraint(equalToConstant: 36),
+            icon.centerXAnchor.constraint(equalTo: chip.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 18),
+            icon.heightAnchor.constraint(equalToConstant: 18)
+        ])
+        return chip
+    }
+
+    func makeDivider() -> UIView {
+        let divider = UIView()
+        divider.backgroundColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+        divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        return divider
+    }
+
+    func makeBackButton() -> UIButton {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(named: "SettingsBack")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.accessibilityLabel = "뒤로"
+        button.accessibilityIdentifier = "settings-back"
+        button.addAction(UIAction { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        }, for: .touchUpInside)
+        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        return button
+    }
+}
+
+@MainActor
+private final class SettingsToggleControl: UIControl {
+    private let imageView = UIImageView()
+    var isOn = false {
+        didSet {
+            guard oldValue != isOn else { return }
+            updateAppearance()
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configure()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        configure()
+    }
+
+    override func accessibilityActivate() -> Bool {
+        toggle()
+        return true
+    }
+
+    private func configure() {
+        isAccessibilityElement = true
+        accessibilityTraits = .toggleButton
+        accessibilityHint = "두 번 탭하여 상태를 변경합니다."
+        imageView.isAccessibilityElement = false
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(imageView)
+        NSLayoutConstraint.activate([
+            widthAnchor.constraint(equalToConstant: 46),
+            heightAnchor.constraint(equalToConstant: 44),
+            imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            imageView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 46),
+            imageView.heightAnchor.constraint(equalToConstant: 26)
+        ])
+        addTarget(self, action: #selector(toggle), for: .touchUpInside)
+        updateAppearance()
+    }
+
+    @objc private func toggle() {
+        isOn.toggle()
+        sendActions(for: .valueChanged)
+    }
+
+    private func updateAppearance() {
+        let name = isOn ? "SettingsToggleOn" : "SettingsToggleOff"
+        imageView.image = UIImage(named: name)?.withRenderingMode(.alwaysOriginal)
+        accessibilityValue = isOn ? "켜짐" : "꺼짐"
     }
 }
