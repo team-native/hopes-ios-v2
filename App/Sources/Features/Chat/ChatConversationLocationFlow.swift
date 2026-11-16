@@ -4,20 +4,15 @@ import UIKit
 
 @MainActor
 extension ChatConversationViewController {
-    func makeLocationActionButton() -> UIButton {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "ChatConversationLocationPin")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        button.accessibilityLabel = "현재 위치 확인"
-        button.accessibilityIdentifier = "chat-current-location"
-        button.addAction(UIAction { [weak self] _ in self?.beginLocationMeasurement() }, for: .touchUpInside)
-        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
-        return button
+    func isLocationMeasurementRequest(_ question: String) -> Bool {
+        let normalized = question.trimmingCharacters(in: .whitespacesAndNewlines)
+        return ["현재 위치 알려", "현재 위치 확인", "내 위치 알려", "내 위치 확인", "지금 어디"]
+            .contains(where: normalized.contains)
     }
 
-    func beginLocationMeasurement(isRetry: Bool = false) {
+    func beginLocationMeasurement(question: String = "지금 내 위치 알려줘", isRetry: Bool = false) {
         setLocationConversationHeader(active: true)
-        if !isRetry { addUserMessage("지금 내 위치 알려줘", isLocationRequest: true) }
+        if !isRetry { addUserMessage(question, isLocationRequest: true) }
         hasPendingLocationRequest = true
 
         switch locationManager.authorizationStatus {
