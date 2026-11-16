@@ -57,6 +57,7 @@ enum HomePopularRowFactory {
         let title = HomePreviewStateViews.label(text, size: 15, color: AppStyle.ink, lineHeight: 24, kern: -0.1)
         title.numberOfLines = 1
         title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        title.setContentHuggingPriority(.defaultLow, for: .horizontal)
         return title
     }
 
@@ -69,10 +70,12 @@ enum HomePopularRowFactory {
             heart.heightAnchor.constraint(equalToConstant: 14)
         ])
         let count = HomePreviewStateViews.label(likes, size: 12, color: style.tertiary, lineHeight: 16)
+        count.setContentHuggingPriority(.required, for: .horizontal)
         let stats = UIStackView(arrangedSubviews: [heart, count])
         stats.axis = .horizontal
         stats.alignment = .center
         stats.spacing = 4
+        stats.setContentCompressionResistancePriority(.required, for: .horizontal)
         return stats
     }
 
@@ -81,7 +84,7 @@ enum HomePopularRowFactory {
         row.alignment = .center
         row.spacing = 10
         row.isLayoutMarginsRelativeArrangement = true
-        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16)
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 15, leading: 17, bottom: 15, trailing: 17)
         row.backgroundColor = .white
         row.layer.cornerRadius = 20
         row.layer.borderWidth = 1
@@ -97,7 +100,7 @@ enum HomePopularRowFactory {
 enum HomeLoadingHeaderFactory {
     static func make(action: @escaping () -> Void) -> UIView {
         let spacer = UIView()
-        let notification = HomePreviewStateViews.notificationButton(action: action)
+        let notification = HomePreviewStateViews.notificationButton(showsBadge: false, action: action)
         let header = UIStackView(arrangedSubviews: [spacer, notification])
         header.axis = .horizontal
         header.alignment = .center
