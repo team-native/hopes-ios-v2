@@ -23,6 +23,7 @@ final class SettingsViewController: AppPageViewController {
         addPreferenceCard()
         addInfoCard()
         addLogoutCard()
+        addDeleteAccountLink()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -352,5 +353,26 @@ private final class SettingsToggleControl: UIControl {
         let name = isOn ? "SettingsToggleOn" : "SettingsToggleOff"
         imageView.image = UIImage(named: name)?.withRenderingMode(.alwaysOriginal)
         accessibilityValue = isOn ? "켜짐" : "꺼짐"
+    }
+}
+
+@MainActor
+extension SettingsViewController {
+    func addDeleteAccountLink() {
+        var configuration = UIButton.Configuration.plain()
+        configuration.attributedTitle = AttributedString("회원탈퇴", attributes: AttributeContainer([
+            .font: UIFont.systemFont(ofSize: 12),
+            .foregroundColor: AccountDeletionPalette.tertiary,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]))
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 17, bottom: 2, trailing: 0)
+        let button = UIButton(configuration: configuration)
+        button.contentHorizontalAlignment = .leading
+        button.accessibilityIdentifier = "settings-delete-account"
+        button.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        button.addAction(UIAction { [weak self] _ in
+            self?.push(AccountDeletionViewController())
+        }, for: .touchUpInside)
+        contentStack.addArrangedSubview(button)
     }
 }
