@@ -127,27 +127,7 @@ extension PasswordResetViewController {
         content.axis = .vertical
         content.alignment = .center
         content.spacing = 12
-        let iconContainer = UIView()
-        iconContainer.backgroundColor = .white
-        iconContainer.layer.cornerRadius = 44
-        iconContainer.layer.borderWidth = 1
-        iconContainer.layer.borderColor = Palette.fieldLine.cgColor
-        iconContainer.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
-        iconContainer.layer.shadowOpacity = 0.13
-        iconContainer.layer.shadowOffset = CGSize(width: 0, height: 8)
-        iconContainer.layer.shadowRadius = 14
-        let lock = UIImageView(image: UIImage(named: "PasswordResetLock"))
-        lock.contentMode = .center
-        lock.translatesAutoresizingMaskIntoConstraints = false
-        iconContainer.addSubview(lock)
-        NSLayoutConstraint.activate([
-            iconContainer.widthAnchor.constraint(equalToConstant: 88),
-            iconContainer.heightAnchor.constraint(equalToConstant: 88),
-            lock.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
-            lock.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
-            lock.widthAnchor.constraint(equalToConstant: 38),
-            lock.heightAnchor.constraint(equalToConstant: 38)
-        ])
+        let iconContainer = makeCompletionLockIcon()
         content.addArrangedSubview(iconContainer)
         let title = makeLabel("비밀번호를 바꿨어요", size: 22, weight: .bold, color: Palette.ink, alignment: .center)
         let titleText = NSMutableAttributedString(string: "비밀번호를 바꿨어요", attributes: [
@@ -169,10 +149,39 @@ extension PasswordResetViewController {
         content.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(content)
         completionContentView = content
+        let centerGuide = UILayoutGuide()
+        view.addLayoutGuide(centerGuide)
         NSLayoutConstraint.activate([
+            centerGuide.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            centerGuide.bottomAnchor.constraint(equalTo: actionButton.topAnchor),
             content.centerXAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerXAnchor),
-            content.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
+            content.centerYAnchor.constraint(equalTo: centerGuide.centerYAnchor)
         ])
+    }
+
+    private func makeCompletionLockIcon() -> UIView {
+        let iconContainer = UIView()
+        iconContainer.backgroundColor = .white
+        iconContainer.layer.cornerRadius = 44
+        iconContainer.layer.borderWidth = 1
+        iconContainer.layer.borderColor = Palette.fieldLine.cgColor
+        iconContainer.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
+        iconContainer.layer.shadowOpacity = 0.13
+        iconContainer.layer.shadowOffset = CGSize(width: 0, height: 8)
+        iconContainer.layer.shadowRadius = 14
+        let lock = UIImageView(image: UIImage(named: "PasswordResetLock"))
+        lock.contentMode = .center
+        lock.translatesAutoresizingMaskIntoConstraints = false
+        iconContainer.addSubview(lock)
+        NSLayoutConstraint.activate([
+            iconContainer.widthAnchor.constraint(equalToConstant: 88),
+            iconContainer.heightAnchor.constraint(equalToConstant: 88),
+            lock.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
+            lock.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
+            lock.widthAnchor.constraint(equalToConstant: 38),
+            lock.heightAnchor.constraint(equalToConstant: 38)
+        ])
+        return iconContainer
     }
 
     func addStepper(current: Int) {

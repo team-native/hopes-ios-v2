@@ -17,17 +17,13 @@ extension SignupViewController {
             actionTopSpacerHeightConstraint = spacerHeightConstraint
             contentStack.addArrangedSubview(actionTopSpacer)
         }
-        let actionContainer = UIStackView(arrangedSubviews: [actionButton])
-        actionContainer.axis = .vertical
-        contentStack.addArrangedSubview(actionContainer)
-        let actionBottomSpacer = UIView()
-        actionBottomSpacer.heightAnchor.constraint(equalToConstant: 16).isActive = true
-        contentStack.addArrangedSubview(actionBottomSpacer)
-        if step == .complete {
-            let minimumHeight = contentStack.heightAnchor.constraint(
-                greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor
-            )
-            minimumHeight.isActive = true
+        if step != .complete {
+            let actionContainer = UIStackView(arrangedSubviews: [actionButton])
+            actionContainer.axis = .vertical
+            contentStack.addArrangedSubview(actionContainer)
+            let actionBottomSpacer = UIView()
+            actionBottomSpacer.heightAnchor.constraint(equalToConstant: 16).isActive = true
+            contentStack.addArrangedSubview(actionBottomSpacer)
         }
         updateActionButton()
         topBar.isHidden = step == .complete

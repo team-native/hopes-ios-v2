@@ -87,7 +87,7 @@ final class OnboardingViewController: UIViewController {
             chatButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             chatButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             chatButton.heightAnchor.constraint(equalToConstant: 50),
-            chatButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            chatButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset)
         ])
     }
 

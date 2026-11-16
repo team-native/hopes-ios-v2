@@ -300,13 +300,9 @@ extension SignupViewController {
     }
 
     private func validatePassword() {
-        guard passwordRequirementsMet else {
-            passwordError = "비밀번호 조건을 모두 맞춰 주세요."
-            render(focusField: false)
-            return
-        }
-        guard passwordField.text == confirmField.text else {
-            confirmError = "비밀번호가 일치하지 않아요."
+        passwordError = passwordRequirementsMet ? nil : "비밀번호 조건을 모두 맞춰 주세요."
+        confirmError = passwordField.text == confirmField.text ? nil : "비밀번호가 일치하지 않아요."
+        guard passwordError == nil, confirmError == nil else {
             render(focusField: false)
             return
         }
