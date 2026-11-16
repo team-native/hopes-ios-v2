@@ -7,18 +7,16 @@ final class HomeViewController: AppPageViewController {
     private let heroCloud = UIImageView(image: UIImage(named: "home-cloud-soft"))
     private let heroGradient = CAGradientLayer()
 
-    private let popularPosts = [
-        ("전체", "전공 동아리 면접 후기 공유", "34"),
-        ("9기", "취업 준비 언제부터 시작했어?", "21")
-    ]
-    private var popularContent: UIStackView?
-    private weak var popularMoreButton: UIButton?
+    var popularItems: [HomePopularItem] = HomePopularItem.samples
+    let popularSection = UIStackView()
+    weak var tipsSection: UIView?
+    var popularTask: Task<Void, Never>?
 
-    private let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
-    private let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
-    private let canvas = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
-    private let subtleBorder = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
-    private let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+    let brandBlue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+    let softBlue = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+    let canvas = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
+    let subtleBorder = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+    let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,15 +37,24 @@ final class HomeViewController: AppPageViewController {
             contentStack.addArrangedSubview(header)
             contentStack.addArrangedSubview(HomePreviewStateViews.skeletonCard(height: 120))
             contentStack.addArrangedSubview(HomePreviewStateViews.tipsCard(borderColor: subtleBorder))
-            addPopularSection(isLoading: true, hasError: false)
+            installPopularSection()
+            renderPopular(.loading)
         } else {
-            let showsPopularError = ProcessInfo.processInfo.arguments.contains("--home-popular-error")
             addHomeHeader()
             addHeroCard()
-            if !showsPopularError { addTipsSection() }
-            addPopularSection(isLoading: false, hasError: showsPopularError)
+            addTipsSection()
+            installPopularSection()
+            let showsPopularError = ProcessInfo.processInfo.arguments.contains("--home-popular-error")
+            renderPopular(showsPopularError ? .failed : .loaded)
         }
         view.accessibilityIdentifier = "home-screen"
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        let arguments = ProcessInfo.processInfo.arguments
+        guard !arguments.contains("--home-loading"), !arguments.contains("--home-popular-error") else { return }
+        loadPopularPosts()
     }
 
     override func viewDidLayoutSubviews() {
@@ -57,7 +64,7 @@ final class HomeViewController: AppPageViewController {
 
     private func addHomeHeader() {
         let fullName = UserProfileStore.shared.name
-        let displayName = fullName.count > 2 ? String(fullName.suffix(2)) : fullName
+        let displayName = Self.greetingName(for: fullName)
         let greeting = UIStackView(arrangedSubviews: [
             HomePreviewStateViews.label(
                 "\(displayName)님, 반가워요",
@@ -87,7 +94,7 @@ final class HomeViewController: AppPageViewController {
         notificationButton.accessibilityIdentifier = "home-notifications"
         let header = UIStackView(arrangedSubviews: [greeting, notificationButton])
         header.axis = .horizontal
-        header.alignment = .center
+        header.alignment = .top
         header.spacing = 12
         contentStack.addArrangedSubview(header)
     }
@@ -152,12 +159,13 @@ final class HomeViewController: AppPageViewController {
     private func addTipsSection() {
         let header = HomePreviewStateViews.label(
             "질문 잘하는 방법",
-            size: 14,
+            size: 18,
             weight: .medium,
-            color: AppStyle.muted,
-            lineHeight: 20
+            color: AppStyle.ink,
+            lineHeight: 26,
+            kern: -0.2
         )
-        contentStack.addArrangedSubview(sectionHeader(title: header))
+        let headerView = sectionHeader(title: header)
 
         let tips = UIStackView(arrangedSubviews: [
             HomeTipRowFactory.make(
@@ -177,63 +185,14 @@ final class HomeViewController: AppPageViewController {
         ])
         tips.axis = .vertical
         tips.spacing = 10
-        contentStack.addArrangedSubview(tips)
+        let section = UIStackView(arrangedSubviews: [headerView, tips])
+        section.axis = .vertical
+        section.spacing = 16
+        tipsSection = section
+        contentStack.addArrangedSubview(section)
     }
 
-    private func addPopularSection(isLoading: Bool, hasError: Bool) {
-        let title = HomePreviewStateViews.label(
-            "커뮤니티 인기글",
-            size: 14,
-            weight: .medium,
-            color: AppStyle.muted,
-            lineHeight: 20
-        )
-        let more = UIButton(type: .system)
-        popularMoreButton = more
-        more.setTitle("더보기", for: .normal)
-        more.setTitleColor(brandBlue, for: .normal)
-        more.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        more.addTarget(self, action: #selector(openCommunity), for: .touchUpInside)
-        more.isHidden = hasError || isLoading
-
-        contentStack.addArrangedSubview(sectionHeader(title: title, moreButton: more))
-
-        let content = UIStackView()
-        content.axis = .vertical
-        content.spacing = 10
-        popularContent = content
-        if isLoading {
-            content.addArrangedSubview(HomePreviewStateViews.popularSkeleton())
-        } else if hasError {
-            content.addArrangedSubview(HomePreviewStateViews.popularError(tertiary: tertiary) { [weak self] in
-                self?.retryPopularPosts()
-            })
-        } else {
-            populatePopularRows(in: content)
-        }
-        contentStack.addArrangedSubview(content)
-    }
-
-    private func populatePopularRows(in container: UIStackView) {
-        for post in popularPosts {
-            let row = HomePopularRowFactory.make(
-                cohort: post.0,
-                title: post.1,
-                likes: post.2,
-                style: HomePopularRowStyle(
-                    blue: brandBlue,
-                    softBlue: softBlue,
-                    tertiary: tertiary,
-                    border: subtleBorder
-                )
-            ) { [weak self] in
-                self?.openCommunity()
-            }
-            container.addArrangedSubview(row)
-        }
-    }
-
-    private func sectionHeader(title: UILabel, moreButton: UIButton? = nil) -> UIView {
+    func sectionHeader(title: UILabel, moreButton: UIButton? = nil) -> UIView {
         let header = UIView()
         title.translatesAutoresizingMaskIntoConstraints = false
         header.addSubview(title)
@@ -265,15 +224,12 @@ final class HomeViewController: AppPageViewController {
 
 }
 
-private extension HomeViewController {
-    @objc func retryPopularPosts() {
-        guard let popularContent else { return }
-        popularContent.arrangedSubviews.forEach { view in
-            popularContent.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-        populatePopularRows(in: popularContent)
-        popularMoreButton?.isHidden = false
+extension HomeViewController {
+    static func greetingName(for fullName: String) -> String {
+        let name = fullName.trimmingCharacters(in: .whitespaces)
+        let isHangul = name.unicodeScalars.allSatisfy { (0xAC00...0xD7A3).contains($0.value) }
+        let isKoreanFullName = name.count == 3 && isHangul
+        return isKoreanFullName ? String(name.dropFirst()) : name
     }
 
     @objc func openChat() {
