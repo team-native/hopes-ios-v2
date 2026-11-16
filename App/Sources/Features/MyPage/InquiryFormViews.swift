@@ -25,6 +25,7 @@ extension InquiryViewController {
         header.axis = .horizontal
         header.alignment = .center
         header.spacing = 12
+        header.translatesAutoresizingMaskIntoConstraints = false
         return header
     }
 
@@ -40,8 +41,8 @@ extension InquiryViewController {
         configureEmailField()
         configureMessageView()
 
-        let emailLabelText = showsInputPreview || emailField.text?.isEmpty == false ? "답변 받을 이메일" : "이메일"
-        let emailLabel = AppStyle.label(emailLabelText, size: 14, weight: .medium, color: secondaryTextColor)
+        let emailLabelText = emailField.text?.isEmpty == false ? "답변 받을 이메일" : "이메일"
+        emailLabel = AppStyle.label(emailLabelText, size: 14, weight: .medium, color: secondaryTextColor)
         emailErrorRow = makeErrorRow("이메일 형식이 올바르지 않아요.")
         let emailGroup = makeFieldGroup(label: emailLabel, field: emailField, errorRow: emailErrorRow)
         let messageLabel = AppStyle.label("문의 내용", size: 14, weight: .medium, color: secondaryTextColor)
@@ -104,31 +105,32 @@ extension InquiryViewController {
     }
 
     func pinSubmitButtonToBottom() {
-        let button = AppStyle.button("문의 보내기", primary: true) { [weak self] in
-            self?.submit()
+        let button: UIButton
+        if let submitButton {
+            button = submitButton
+        } else {
+            button = AppStyle.button("문의 보내기", primary: true) { [weak self] in
+                self?.submit()
+            }
+            button.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+            button.layer.cornerRadius = 12
+            button.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
+            button.accessibilityIdentifier = "inquiry-submit"
+            submitButton = button
+            submitButtonHeightConstraint = button.heightAnchor.constraint(equalToConstant: 50)
+            submitButtonHeightConstraint.isActive = true
         }
-        button.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
-        button.layer.cornerRadius = 12
-        button.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
-        button.accessibilityIdentifier = "inquiry-submit"
         button.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(button)
 
-        if let bottomConstraint = view.constraints.first(where: {
-            $0.firstItem === scrollView && $0.firstAttribute == .bottom
-        }) {
-            bottomConstraint.isActive = false
-        }
-        NSLayoutConstraint.activate([
+        scrollBottomConstraint?.isActive = false
+        submitButtonConstraints = [
             button.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            button.heightAnchor.constraint(equalToConstant: 50),
+            button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             scrollView.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -16)
-        ])
-        let bottomConstraint = button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
-            constant: -16)
-        bottomConstraint.isActive = true
-        submitButtonBottomConstraint = bottomConstraint
+        ]
+        NSLayoutConstraint.activate(submitButtonConstraints)
     }
 
     func makeFieldGroup(label: UILabel, field: UIView, errorRow: UIView) -> UIView {
@@ -180,7 +182,8 @@ extension InquiryViewController {
         emailField.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
         emailField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 1))
         emailField.leftViewMode = .always
-        emailField.heightAnchor.constraint(equalToConstant: 54).isActive = true
+        emailHeightConstraint = emailField.heightAnchor.constraint(equalToConstant: 56)
+        emailHeightConstraint.isActive = true
         emailField.addTarget(self, action: #selector(emailDidChange), for: .editingChanged)
     }
 
