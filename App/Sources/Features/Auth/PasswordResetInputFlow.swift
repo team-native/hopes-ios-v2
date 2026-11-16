@@ -87,11 +87,12 @@ extension PasswordResetViewController {
 
     func startCountdown() {
         countdownTimer?.invalidate()
-        countdown = 300
+        countdownDeadline = AuthCountdown.deadline()
+        countdown = AuthCountdown.remainingSeconds(until: countdownDeadline)
         countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
             MainActor.assumeIsolated {
                 guard let self else { timer.invalidate(); return }
-                self.countdown = max(0, self.countdown - 1)
+                self.countdown = AuthCountdown.remainingSeconds(until: self.countdownDeadline)
                 if self.countdown == 0 {
                     timer.invalidate()
                     self.codeError = "인증 시간이 지났어요. 인증번호를 다시 받아 주세요."

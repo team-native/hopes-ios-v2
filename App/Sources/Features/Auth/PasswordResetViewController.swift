@@ -48,6 +48,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
     var passwordError: String?
     var confirmError: String?
     var countdown = 300
+    var countdownDeadline = AuthCountdown.deadline()
     var countdownTimer: Timer?
     var keyboardObservers: [NSObjectProtocol] = []
 
