@@ -20,7 +20,7 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         }) {
             topConstraint.constant = 8
         }
-        contentStack.spacing = 16
+        contentStack.spacing = showsSaveError ? 14 : 16
         addHeader()
 
         if showsSaveError {
@@ -69,11 +69,11 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
     }
 
     private func addErrorBanner() {
-        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
-        icon.tintColor = UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1)
+        let icon = UIImageView(image: UIImage(named: "ProfileSaveError")?.withRenderingMode(.alwaysOriginal))
+        let errorColor = UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
         icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
         icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
-        let message = AppStyle.label("저장하지 못했어요. 잠시 후 다시 시도해 주세요.", size: 12, color: icon.tintColor!)
+        let message = AppStyle.label("저장하지 못했어요. 잠시 후 다시 시도해 주세요.", size: 12, color: errorColor)
         let banner = UIStackView(arrangedSubviews: [icon, message])
         banner.axis = .horizontal
         banner.alignment = .center
@@ -93,18 +93,21 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         card.layer.shadowOpacity = 0.05
         card.layer.shadowRadius = 4
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
-        let heading = AppStyle.label("계정 정보", size: 15, weight: .medium, color: UIColor(red: 20 / 255,
-            green: 27 / 255, blue: 43 / 255, alpha: 1))
-        let note = AppStyle.label("수정할 수 없는 정보예요.", size: 12, color: UIColor(red: 152 / 255, green: 163 / 255,
-            blue: 184 / 255, alpha: 1))
-        let headingStack = UIStackView(arrangedSubviews: [heading, note])
-        headingStack.axis = .vertical
-        headingStack.spacing = 2
-        let emailRow = accountInfoRow(title: "이메일", value: UserProfileStore.shared.email)
-        let departmentRow = accountInfoRow(title: "전공", value: UserProfileStore.shared.department)
-        let stack = UIStackView(arrangedSubviews: [headingStack, emailRow, departmentRow])
+        let heading = AppStyle.label(showsSaveError ? "계정 정보 (수정 불가)" : "계정 정보",
+            size: showsSaveError ? 14 : 15, weight: .medium,
+            color: UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1))
+        let rows: [UIView] = [
+            accountInfoRow(title: "이메일", value: UserProfileStore.shared.email),
+            accountInfoRow(
+                title: showsSaveError ? "과 · 기수" : "전공",
+                value: showsSaveError
+                    ? "\(UserProfileStore.shared.department) · \(UserProfileStore.shared.generation)"
+                    : UserProfileStore.shared.department
+            )
+        ]
+        let stack = UIStackView(arrangedSubviews: [heading] + rows)
         stack.axis = .vertical
-        stack.spacing = 12
+        stack.spacing = showsSaveError ? 8 : 12
         stack.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -147,11 +150,12 @@ extension EditProfileViewController {
             green: 120 / 255, blue: 144 / 255, alpha: 1))
         configureNameField()
         let introductionLabel = configureIntroductionField()
-        let fields = UIStackView(arrangedSubviews: [
-            heading,
-            makeLabeledField(label: nameLabel, field: nameField),
-            makeLabeledField(label: introductionLabel, field: introductionView)
-        ])
+        let nameFieldGroup = makeLabeledField(label: nameLabel, field: nameField)
+        let introductionFieldGroup = makeLabeledField(label: introductionLabel, field: introductionView)
+        let profileFields: [UIView] = showsSaveError
+            ? [nameFieldGroup, introductionFieldGroup]
+            : [heading, nameFieldGroup, introductionFieldGroup]
+        let fields = UIStackView(arrangedSubviews: profileFields)
         fields.axis = .vertical
         fields.spacing = 12
         fields.translatesAutoresizingMaskIntoConstraints = false
