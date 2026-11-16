@@ -162,9 +162,12 @@ extension SignupViewController {
     func updateVerificationDigitAppearance() {
         let activeIndex = min((codeField.text ?? "").count, 5)
         for (index, digitBox) in codeDigits.arrangedSubviews.enumerated() {
-            if codeError != nil {
+            if codeError != nil && countdown > 0 {
                 digitBox.layer.borderColor = Palette.error.cgColor
-                digitBox.layer.borderWidth = 1
+                digitBox.layer.borderWidth = 1.5
+            } else if countdown == 0 && index == 0 {
+                digitBox.layer.borderColor = Palette.line.cgColor
+                digitBox.layer.borderWidth = 1.5
             } else if codeField.isFirstResponder && index == activeIndex && (codeField.text ?? "").count < 6 {
                 digitBox.layer.borderColor = Palette.focus.cgColor
                 digitBox.layer.borderWidth = 1.5
@@ -188,6 +191,7 @@ extension SignupViewController {
         timerRow.alignment = .center
         timerRow.spacing = 8
         timerLabel.text = formattedCountdown
+        timerLabel.textColor = countdown == 0 ? Palette.error : Palette.blue
         timerLabel.accessibilityLabel = "인증번호 유효 시간 \(formattedCountdown)"
         let clockIcon = UIImageView(image: UIImage(systemName: "clock"))
         clockIcon.tintColor = Palette.blue
@@ -202,7 +206,7 @@ extension SignupViewController {
         timerRow.addArrangedSubview(UIView())
         let resend = UIButton(type: .system)
         resend.setTitle("인증번호 다시 받기", for: .normal)
-        resend.setTitleColor(Palette.blue, for: .normal)
+        resend.setTitleColor(countdown == 0 ? Palette.muted : Palette.blue, for: .normal)
         resend.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         resend.addTarget(self, action: #selector(resendCode), for: .touchUpInside)
         timerRow.addArrangedSubview(resend)
