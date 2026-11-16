@@ -59,6 +59,8 @@ final class SignupViewController: UIViewController, UITextFieldDelegate {
     var actionTopSpacer: UIView?
     var actionTopSpacerHeightConstraint: NSLayoutConstraint?
     var confirmFieldHeightConstraint: NSLayoutConstraint?
+    weak var passwordRequirementsStack: UIStackView?
+    var fieldErrorRows: [ObjectIdentifier: UIView] = [:]
     lazy var scrollTopToBarConstraint = scrollView.topAnchor.constraint(equalTo: topBar.bottomAnchor)
     lazy var scrollTopToSafeAreaConstraint = scrollView.topAnchor.constraint(
         equalTo: view.safeAreaLayoutGuide.topAnchor

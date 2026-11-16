@@ -272,34 +272,20 @@ extension SignupViewController {
         let requirements = UIStackView()
         requirements.axis = .vertical
         requirements.spacing = 6
-        let value = passwordField.text ?? ""
-        let requirementsList: [(String, Bool)] = [
-            ("8자 이상", value.count >= 8),
-            (
-                "영문과 숫자 포함",
-                value.rangeOfCharacter(from: .letters) != nil &&
-                    value.rangeOfCharacter(from: .decimalDigits) != nil
-            ),
-            ("특수문자 포함", value.rangeOfCharacter(from: CharacterSet.punctuationCharacters.union(.symbols)) != nil)
-        ]
-        requirementsList.forEach { text, isValid in
+        for _ in 0..<3 {
             let row = UIStackView()
             row.axis = .horizontal
             row.alignment = .center
             row.spacing = 6
-            let showsRequirementError = passwordError != nil && !isValid
-            let imageName = showsRequirementError
-                ? "SignupRuleX"
-                : (isValid ? "SignupRuleCheck" : "SignupRuleCheckMuted")
-            let icon = UIImage(named: imageName)?.withRenderingMode(.alwaysOriginal)
-            let image = UIImageView(image: icon)
+            let image = UIImageView()
             image.widthAnchor.constraint(equalToConstant: 14).isActive = true
             image.heightAnchor.constraint(equalToConstant: 14).isActive = true
             row.addArrangedSubview(image)
-            let textColor = isValid ? Palette.blue : (showsRequirementError ? Palette.error : Palette.placeholder)
-            row.addArrangedSubview(makeLabel(text, size: 12, color: textColor))
+            row.addArrangedSubview(makeLabel("", size: 12, color: Palette.placeholder))
             requirements.addArrangedSubview(row)
         }
+        passwordRequirementsStack = requirements
+        updatePasswordRequirementRows()
         contentStack.addArrangedSubview(requirements)
         requirements.translatesAutoresizingMaskIntoConstraints = false
         requirements.heightAnchor.constraint(equalToConstant: 60).isActive = true
@@ -334,6 +320,39 @@ extension SignupViewController {
 
     var formattedCountdown: String {
         String(format: "%02d:%02d", countdown / 60, countdown % 60)
+    }
+
+    var passwordRequirementStates: [(String, Bool)] {
+        let value = passwordField.text ?? ""
+        return [
+            ("8자 이상", value.count >= 8),
+            (
+                "영문과 숫자 포함",
+                value.rangeOfCharacter(from: .letters) != nil &&
+                    value.rangeOfCharacter(from: .decimalDigits) != nil
+            ),
+            ("특수문자 포함", value.rangeOfCharacter(from: CharacterSet.punctuationCharacters.union(.symbols)) != nil)
+        ]
+    }
+
+    func updatePasswordRequirementRows() {
+        guard let rows = passwordRequirementsStack?.arrangedSubviews as? [UIStackView] else { return }
+        for (row, state) in zip(rows, passwordRequirementStates) {
+            let (text, isValid) = state
+            let showsError = passwordError != nil && !isValid
+            let imageName = showsError ? "SignupRuleX" : (isValid ? "SignupRuleCheck" : "SignupRuleCheckMuted")
+            (row.arrangedSubviews.first as? UIImageView)?.image = UIImage(named: imageName)?
+                .withRenderingMode(.alwaysOriginal)
+            let label = row.arrangedSubviews.last as? UILabel
+            label?.text = text
+            label?.textColor = isValid ? Palette.blue : (showsError ? Palette.error : Palette.placeholder)
+        }
+    }
+
+    func clearInlineError(for field: UITextField) {
+        fieldErrorRows[ObjectIdentifier(field)]?.isHidden = true
+        field.layer.borderColor = (field.isFirstResponder ? Palette.focus : Palette.line).cgColor
+        field.layer.borderWidth = field.isFirstResponder ? 1.5 : 1
     }
 
     var passwordRequirementsMet: Bool {

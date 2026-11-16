@@ -89,9 +89,11 @@ extension SignupViewController {
             field.rightViewMode = .always
         }
         group.addArrangedSubview(field)
+        fieldErrorRows[ObjectIdentifier(field)] = nil
         if let error {
             let errorRow = makeInlineError(error)
             group.addArrangedSubview(errorRow)
+            fieldErrorRows[ObjectIdentifier(field)] = errorRow
             if field === emailField {
                 emailErrorRow = errorRow
             }

@@ -341,13 +341,14 @@ extension SignupViewController {
         let confirmation = confirmField.text ?? ""
         if passwordError != nil, password.isEmpty || passwordRequirementsMet {
             passwordError = nil
+            clearInlineError(for: passwordField)
         }
         if confirmError != nil, confirmation.isEmpty || confirmation == password {
             confirmError = nil
+            clearInlineError(for: confirmField)
         }
-        let responder = [passwordField, confirmField].first(where: \.isFirstResponder)
-        render()
-        DispatchQueue.main.async { responder?.becomeFirstResponder() }
+        updatePasswordRequirementRows()
+        updateActionButton()
     }
 
     @objc func changeEmail() {

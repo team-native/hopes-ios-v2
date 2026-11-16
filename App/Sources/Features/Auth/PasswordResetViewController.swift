@@ -16,6 +16,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         static let muted = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
         static let line = UIColor(red: 226 / 255, green: 234 / 255, blue: 246 / 255, alpha: 1)
         static let fieldLine = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+        static let focus = UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)
         static let placeholder = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
         static let error = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1)
         static let paleBlue = UIColor(red: 242 / 255, green: 247 / 255, blue: 255 / 255, alpha: 1)
@@ -35,6 +36,8 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
     let newPasswordField = UITextField()
     let confirmPasswordField = UITextField()
     var completionContentView: UIView?
+    weak var passwordRequirementsStack: UIStackView?
+    var fieldErrorRows: [ObjectIdentifier: UIView] = [:]
     var actionButtonConstraints: [NSLayoutConstraint] = []
     var isActionButtonInline = false
     var keyboardIsVisible = false
@@ -244,7 +247,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         let hasError = (textField === emailField && emailError != nil)
             || (textField === newPasswordField && passwordError != nil)
             || (textField === confirmPasswordField && confirmError != nil)
-        textField.layer.borderColor = (hasError ? Palette.error : Palette.blue).cgColor
+        textField.layer.borderColor = (hasError ? Palette.error : Palette.focus).cgColor
         textField.layer.borderWidth = 1.5
     }
 

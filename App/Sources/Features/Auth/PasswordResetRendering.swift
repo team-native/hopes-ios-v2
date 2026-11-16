@@ -255,37 +255,34 @@ extension PasswordResetViewController {
             field.rightViewMode = .always
         }
         group.addArrangedSubview(field)
-        if let error { group.addArrangedSubview(makeInlineError(error)) }
+        fieldErrorRows[ObjectIdentifier(field)] = nil
+        if let error {
+            let errorRow = makeInlineError(error)
+            group.addArrangedSubview(errorRow)
+            fieldErrorRows[ObjectIdentifier(field)] = errorRow
+        }
         contentStack.addArrangedSubview(group)
         group.translatesAutoresizingMaskIntoConstraints = false
     }
 
     func addPasswordRequirements() {
-        let value = newPasswordField.text ?? ""
-        let requirements: [(String, Bool)] = [
-            ("8자 이상", value.count >= 8),
-            (
-                "영문과 숫자 포함",
-                value.rangeOfCharacter(from: .letters) != nil &&
-                    value.rangeOfCharacter(from: .decimalDigits) != nil
-            ),
-            ("특수문자 포함", value.rangeOfCharacter(from: CharacterSet.punctuationCharacters.union(.symbols)) != nil)
-        ]
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 6
-        for (text, isValid) in requirements {
+        for _ in 0..<3 {
             let row = UIStackView()
             row.axis = .horizontal
             row.alignment = .center
             row.spacing = 6
-            let icon = UIImageView(image: UIImage(named: isValid ? "SignupRuleCheck" : "SignupRuleCheckMuted"))
+            let icon = UIImageView()
             icon.widthAnchor.constraint(equalToConstant: 14).isActive = true
             icon.heightAnchor.constraint(equalToConstant: 14).isActive = true
             row.addArrangedSubview(icon)
-            row.addArrangedSubview(makeLabel(text, size: 12, color: isValid ? Palette.blue : Palette.muted))
+            row.addArrangedSubview(makeLabel("", size: 12, color: Palette.muted))
             stack.addArrangedSubview(row)
         }
+        passwordRequirementsStack = stack
+        updatePasswordRequirementRows()
         contentStack.addArrangedSubview(stack)
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.heightAnchor.constraint(equalToConstant: 60).isActive = true
