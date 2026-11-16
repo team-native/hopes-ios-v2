@@ -39,17 +39,25 @@ extension PasswordResetViewController {
                       let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
                 let local = self.view.convert(frame, from: nil)
                 let overlap = max(0, self.view.bounds.maxY - local.minY)
+                self.keyboardIsVisible = overlap > 1
                 self.scrollView.contentInset.bottom = overlap + 64
                 self.scrollView.verticalScrollIndicatorInsets.bottom = overlap
-                self.actionButton.transform = overlap > 0 ? CGAffineTransform(translationX: 0, y: -overlap) : .identity
+                let inline = self.keyboardIsVisible && (self.step == .email || self.step == .verification)
+                self.setActionButtonInline(inline)
+                self.actionButton.transform = overlap > 0 && !inline
+                    ? CGAffineTransform(translationX: 0, y: -overlap)
+                    : .identity
             }
         })
         keyboardObservers.append(center.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil,
             queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.scrollView.contentInset.bottom = 0
-                self?.scrollView.verticalScrollIndicatorInsets.bottom = 0
-                self?.actionButton.transform = .identity
+                guard let self else { return }
+                self.keyboardIsVisible = false
+                self.setActionButtonInline(false)
+                self.scrollView.contentInset.bottom = 0
+                self.scrollView.verticalScrollIndicatorInsets.bottom = 0
+                self.actionButton.transform = .identity
             }
         })
     }

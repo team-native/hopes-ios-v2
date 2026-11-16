@@ -4,6 +4,7 @@ import UIKit
 extension PasswordResetViewController {
     func render() {
         contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
+        isActionButtonInline = false
         completionContentView?.removeFromSuperview()
         completionContentView = nil
         switch step {
@@ -16,6 +17,8 @@ extension PasswordResetViewController {
         case .complete:
             renderCompleteStep()
         }
+        let shouldInlineActionButton = keyboardIsVisible && (step == .email || step == .verification)
+        setActionButtonInline(shouldInlineActionButton)
         backButton.isHidden = step == .complete
         titleLabel.isHidden = step == .complete
         updateActionButton()
@@ -34,7 +37,7 @@ extension PasswordResetViewController {
         addStepper(current: 0)
         addHeading(lines: ["가입한 학교 이메일을", "입력해 주세요"], accent: "학교 이메일")
         addField(label: "학교 이메일", field: emailField, error: emailError)
-        addSpacer(24)
+        addSpacer(16)
     }
 
     func renderVerificationStep() {
@@ -66,7 +69,7 @@ extension PasswordResetViewController {
         contentStack.addArrangedSubview(timerRow)
         timerRow.translatesAutoresizingMaskIntoConstraints = false
         timerRow.heightAnchor.constraint(equalToConstant: 20).isActive = true
-        addSpacer(18)
+        addSpacer(16)
     }
 
     func makeCodeInputGroup() -> UIStackView {
@@ -238,7 +241,7 @@ extension PasswordResetViewController {
                 : UIImage(systemName: "eye.slash")
             eye.setImage(eyeImage, for: .normal)
             eye.tintColor = Palette.muted
-            eye.frame = CGRect(x: 0, y: 0, width: 40, height: 44)
+            eye.frame = CGRect(x: 0, y: 0, width: 50, height: 55)
             eye.addAction(UIAction { [weak field] _ in
                 field?.isSecureTextEntry.toggle()
                 (field?.rightView as? UIButton)?.setImage(

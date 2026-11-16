@@ -35,6 +35,9 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
     let newPasswordField = UITextField()
     let confirmPasswordField = UITextField()
     var completionContentView: UIView?
+    var actionButtonConstraints: [NSLayoutConstraint] = []
+    var isActionButtonInline = false
+    var keyboardIsVisible = false
     var step: Step = .email
     var email = UserProfileStore.shared.email
     var emailError: String?
@@ -129,12 +132,13 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         actionButton.addTarget(self, action: #selector(performPrimaryAction), for: .touchUpInside)
         actionButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(actionButton)
-        NSLayoutConstraint.activate([
+        actionButtonConstraints = [
             actionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             actionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             actionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
             actionButton.heightAnchor.constraint(equalToConstant: 50)
-        ])
+        ]
+        NSLayoutConstraint.activate(actionButtonConstraints)
     }
 
     func configureFields() {
@@ -204,6 +208,29 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         field.heightAnchor.constraint(equalToConstant: height).isActive = true
     }
 
+    func setActionButtonInline(_ inline: Bool) {
+        let isInDesiredContainer = inline
+            ? actionButton.superview === contentStack
+            : actionButton.superview === view
+        guard !isInDesiredContainer || isActionButtonInline != inline else { return }
+
+        if inline {
+            NSLayoutConstraint.deactivate(actionButtonConstraints)
+            actionButton.removeFromSuperview()
+            contentStack.addArrangedSubview(actionButton)
+        } else {
+            if actionButton.superview === contentStack {
+                contentStack.removeArrangedSubview(actionButton)
+                actionButton.removeFromSuperview()
+            }
+            if actionButton.superview !== view {
+                view.addSubview(actionButton)
+                NSLayoutConstraint.activate(actionButtonConstraints)
+            }
+        }
+        isActionButtonInline = inline
+    }
+
     func textField(
         _ textField: UITextField,
         shouldChangeCharactersIn range: NSRange,
@@ -228,6 +255,7 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
             || (textField === newPasswordField && passwordError != nil)
             || (textField === confirmPasswordField && confirmError != nil)
         textField.layer.borderColor = (hasError ? Palette.error : Palette.blue).cgColor
+        textField.layer.borderWidth = 1.5
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
@@ -235,5 +263,6 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
             || (textField === newPasswordField && passwordError != nil)
             || (textField === confirmPasswordField && confirmError != nil)
         textField.layer.borderColor = (hasError ? Palette.error : Palette.fieldLine).cgColor
+        textField.layer.borderWidth = hasError ? 1.5 : 1
     }
 }
