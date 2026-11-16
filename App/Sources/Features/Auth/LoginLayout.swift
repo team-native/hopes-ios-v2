@@ -272,13 +272,21 @@ extension LoginViewController {
 
     func configureLayout() {
         view.addLayoutGuide(sheetTopGuide)
+        sheetStackLeadingConstraint = sheetStack.leadingAnchor.constraint(
+            equalTo: sheet.leadingAnchor,
+            constant: 24
+        )
+        sheetStackTrailingConstraint = sheetStack.trailingAnchor.constraint(
+            equalTo: sheet.trailingAnchor,
+            constant: -24
+        )
         NSLayoutConstraint.activate([
             sheetTopGuide.topAnchor.constraint(equalTo: view.topAnchor),
             sheetTopGuide.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 453.0 / 874.0),
             sheet.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             sheet.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            sheetStack.leadingAnchor.constraint(equalTo: sheet.leadingAnchor, constant: 24),
-            sheetStack.trailingAnchor.constraint(equalTo: sheet.trailingAnchor, constant: -24),
+            sheetStackLeadingConstraint,
+            sheetStackTrailingConstraint,
             sheetStack.bottomAnchor.constraint(equalTo: sheet.safeAreaLayoutGuide.bottomAnchor, constant: -1)
         ])
         sheetStackTopConstraint = sheetStack.topAnchor.constraint(equalTo: sheet.topAnchor, constant: 12)
