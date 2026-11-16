@@ -10,7 +10,7 @@ enum ChatAttachmentDocumentCardFactory {
         card.backgroundColor = .white
         card.layer.cornerRadius = 16
         card.layer.borderWidth = 1
-        card.layer.borderColor = AppStyle.line.cgColor
+        card.layer.borderColor = ChatDetailPalette.border.cgColor
         card.translatesAutoresizingMaskIntoConstraints = false
         card.heightAnchor.constraint(equalToConstant: 72).isActive = true
         let widthConstraint = card.widthAnchor.constraint(equalToConstant: 192)
@@ -31,11 +31,11 @@ enum ChatAttachmentDocumentCardFactory {
 
     private static func makeContent(_ attachment: ChatAttachmentItem) -> UIStackView {
         let iconChip = UIView()
-        iconChip.backgroundColor = attachment.isSupported ? AppStyle.paleBlue : .white
+        iconChip.backgroundColor = attachment.isSupported ? ChatDetailPalette.brandSoft : .white
         iconChip.layer.cornerRadius = 12
         iconChip.translatesAutoresizingMaskIntoConstraints = false
         let icon = UIImageView(image: UIImage(systemName: "doc.text"))
-        icon.tintColor = attachment.validationState == .unreadablePDF ? dangerColor : AppStyle.blue
+        icon.tintColor = attachment.validationState == .unreadablePDF ? dangerColor : ChatDetailPalette.brand
         icon.contentMode = .scaleAspectFit
         icon.translatesAutoresizingMaskIntoConstraints = false
         iconChip.addSubview(icon)
@@ -48,7 +48,7 @@ enum ChatAttachmentDocumentCardFactory {
             icon.heightAnchor.constraint(equalToConstant: 16)
         ])
 
-        let name = AppStyle.label(attachment.fileName, size: 14, weight: .medium, color: AppStyle.ink)
+        let name = AppStyle.label(attachment.fileName, size: 14, weight: .medium, color: ChatDetailPalette.ink)
         name.lineBreakMode = .byTruncatingMiddle
         let detail = makeDetailLabel(for: attachment)
         let labels = UIStackView(arrangedSubviews: [name, detail])
@@ -70,7 +70,7 @@ enum ChatAttachmentDocumentCardFactory {
         switch attachment.validationState {
         case .supported:
             text = attachment.pageCount.map { "PDF · \($0)쪽" } ?? "PDF 문서"
-            color = AppStyle.muted
+            color = ChatDetailPalette.muted
         case .unsupportedFormat:
             text = "지원하지 않는 형식"
             color = dangerColor
@@ -91,7 +91,7 @@ enum ChatAttachmentDocumentCardFactory {
         card.addSubview(hitArea)
         let remove = UIButton(type: .system)
         remove.setImage(UIImage(systemName: "xmark"), for: .normal)
-        remove.tintColor = AppStyle.muted
+        remove.tintColor = ChatDetailPalette.placeholder
         remove.accessibilityLabel = "첨부 제거"
         remove.addAction(UIAction { _ in action(id) }, for: .touchUpInside)
         remove.translatesAutoresizingMaskIntoConstraints = false
