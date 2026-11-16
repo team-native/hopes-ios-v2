@@ -7,6 +7,8 @@ extension CommunityPostDetailViewController {
         let message = state.arrangedSubviews[2]
         let container = makeDeletedPostContainer(state: state, message: message)
         contentStack.addArrangedSubview(container)
+        container.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor,
+            constant: -40).isActive = true
     }
 
     private func makeDeletedPostStack() -> UIStackView {
@@ -57,8 +59,6 @@ extension CommunityPostDetailViewController {
 
     private func makeDeletedPostContainer(state: UIStackView, message: UIView) -> UIView {
         let container = UIView()
-        container.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor,
-            constant: -40).isActive = true
         container.addSubview(state)
         state.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([

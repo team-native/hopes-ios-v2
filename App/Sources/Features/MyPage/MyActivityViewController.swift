@@ -308,13 +308,14 @@ extension MyActivityViewController {
         container.addSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -121),
             content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             content.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
             content.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor)
         ])
         itemsStack.addArrangedSubview(container)
+        container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -121)
+            .isActive = true
     }
 
     private func makePostsEmptyStateContent() -> UIStackView {

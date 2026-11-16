@@ -182,7 +182,10 @@ extension CommunitySearchViewController {
         resultsStack.addArrangedSubview(heading)
         resultsStack.setCustomSpacing(16, after: heading)
         guard !posts.isEmpty else {
-            resultsStack.addArrangedSubview(makeEmptyState())
+            let emptyState = makeEmptyState()
+            resultsStack.addArrangedSubview(emptyState)
+            emptyState.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, constant: -100)
+                .isActive = true
             return
         }
         posts.forEach { post in resultsStack.addArrangedSubview(makeResultCard(post)) }
@@ -336,10 +339,6 @@ extension CommunitySearchViewController {
     func makeEmptyState() -> UIView {
         let state = makeEmptyStateStack()
         let container = UIView()
-        container.heightAnchor.constraint(
-            equalTo: scrollView.frameLayoutGuide.heightAnchor,
-            constant: -100
-        ).isActive = true
         container.addSubview(state)
         state.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
