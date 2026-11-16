@@ -182,7 +182,8 @@ extension LoginViewController {
         keepRow.addArrangedSubview(forgotButton)
         keepRow.translatesAutoresizingMaskIntoConstraints = false
         keepRow.heightAnchor.constraint(equalToConstant: 20).isActive = true
-        sheetStack.addArrangedSubview(makeSpacer(height: 14))
+        keepRowSpacer.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        sheetStack.addArrangedSubview(keepRowSpacer)
         sheetStack.addArrangedSubview(keepRow)
         bottomSpacer.translatesAutoresizingMaskIntoConstraints = false
         bottomSpacer.setContentHuggingPriority(.defaultLow, for: .vertical)
