@@ -7,7 +7,18 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
     let introductionPlaceholder = AppStyle.label("예: 프론트엔드에 관심 많은 8기 학생이에요.", size: 15,
         color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
     let showsSaveError = ProcessInfo.processInfo.arguments.contains("--profile-save-error")
+    var accountCard: UIView?
+    var profileSectionHeading: UILabel?
+    var saveButton: UIButton?
     var saveButtonBottomConstraint: NSLayoutConstraint?
+    var saveButtonLeadingConstraint: NSLayoutConstraint?
+    var saveButtonTrailingConstraint: NSLayoutConstraint?
+    var saveButtonHeightConstraint: NSLayoutConstraint?
+    var scrollBottomConstraint: NSLayoutConstraint?
+    var keyboardScrollBottomConstraint: NSLayoutConstraint?
+    var contentTopConstraint: NSLayoutConstraint?
+    var isKeyboardLayoutActive = false
+    var isCompactKeyboardLayoutActive = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -65,7 +76,31 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
         header.axis = .horizontal
         header.alignment = .center
         header.spacing = 12
-        contentStack.addArrangedSubview(header)
+
+        let pinnedTop = UIView()
+        pinnedTop.translatesAutoresizingMaskIntoConstraints = false
+        header.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(pinnedTop)
+        pinnedTop.addSubview(header)
+        NSLayoutConstraint.activate([
+            pinnedTop.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            pinnedTop.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            pinnedTop.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            pinnedTop.heightAnchor.constraint(equalToConstant: 56),
+            header.topAnchor.constraint(equalTo: pinnedTop.topAnchor, constant: 8),
+            header.leadingAnchor.constraint(equalTo: pinnedTop.leadingAnchor, constant: 20),
+            header.trailingAnchor.constraint(equalTo: pinnedTop.trailingAnchor, constant: -20),
+            header.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        view.constraints.first(where: {
+            $0.firstItem === scrollView && $0.firstAttribute == .top
+        })?.isActive = false
+        scrollView.topAnchor.constraint(equalTo: pinnedTop.bottomAnchor).isActive = true
+        contentTopConstraint = scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .top
+        })
+        contentTopConstraint?.constant = showsSaveError ? 10 : 12
     }
 
     private func addErrorBanner() {
@@ -87,6 +122,7 @@ final class EditProfileViewController: AppPageViewController, UITextViewDelegate
 
     private func addAccountCard() {
         let card = AppStyle.card()
+        accountCard = card
         card.layer.cornerRadius = 24
         card.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
         card.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
@@ -146,6 +182,7 @@ extension EditProfileViewController {
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
         let heading = AppStyle.label("프로필", size: 15, weight: .medium, color: UIColor(red: 20 / 255,
             green: 27 / 255, blue: 43 / 255, alpha: 1))
+        profileSectionHeading = heading
         let nameLabel = AppStyle.label("이름", size: 14, weight: .medium, color: UIColor(red: 107 / 255,
             green: 120 / 255, blue: 144 / 255, alpha: 1))
         configureNameField()
@@ -236,6 +273,7 @@ extension EditProfileViewController {
 extension EditProfileViewController {
     private func addSaveButton() {
         let saveButton = UIButton(type: .system)
+        self.saveButton = saveButton
         var configuration = UIButton.Configuration.filled()
         configuration.title = "저장"
         configuration.baseBackgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
@@ -259,31 +297,24 @@ extension EditProfileViewController {
         }) {
             bottomConstraint.isActive = false
         }
+        let leadingConstraint = saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20)
+        let trailingConstraint = saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        let heightConstraint = saveButton.heightAnchor.constraint(equalToConstant: 50)
+        let scrollBottomConstraint = scrollView.bottomAnchor.constraint(equalTo: saveButton.topAnchor, constant: -16)
+        saveButtonLeadingConstraint = leadingConstraint
+        saveButtonTrailingConstraint = trailingConstraint
+        saveButtonHeightConstraint = heightConstraint
+        self.scrollBottomConstraint = scrollBottomConstraint
         NSLayoutConstraint.activate([
-            saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            saveButton.heightAnchor.constraint(equalToConstant: 50),
-            scrollView.bottomAnchor.constraint(equalTo: saveButton.topAnchor, constant: -16)
+            leadingConstraint,
+            trailingConstraint,
+            heightConstraint,
+            scrollBottomConstraint
         ])
         let bottomConstraint = saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
             constant: -16)
         bottomConstraint.isActive = true
         saveButtonBottomConstraint = bottomConstraint
-    }
-
-    @objc private func keyboardWillChangeFrame(_ notification: Notification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
-        else { return }
-        let frame = view.convert(keyboardFrame, from: nil)
-        let overlap = max(0, view.bounds.maxY - view.safeAreaInsets.bottom - frame.minY)
-        saveButtonBottomConstraint?.constant = -(16 + overlap)
-
-        let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
-        let curveValue = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt ?? 0
-        let options = UIView.AnimationOptions(rawValue: curveValue << 16)
-        UIView.animate(withDuration: duration, delay: 0, options: options) {
-            self.view.layoutIfNeeded()
-        }
     }
 
     private func save() {
