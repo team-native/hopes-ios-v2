@@ -29,6 +29,7 @@ final class LocationMapIllustrationView: UIView {
         Building(positionX: 210, positionY: 200, width: 110, height: 90),
         Building(positionX: 20, positionY: 270, width: 120, height: 70)
     ]
+    private let designWidth: CGFloat = 328
     private let accuracyView = UIImageView(image: UIImage(named: "map-accuracy"))
     private let pinContainer = UIView()
 
@@ -82,7 +83,7 @@ final class LocationMapIllustrationView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        let scale = bounds.width / 362
+        let scale = bounds.width / designWidth
         for (view, building) in zip(subviews.prefix(buildings.count), buildings) {
             view.frame = CGRect(
                 x: building.positionX * scale,
