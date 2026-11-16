@@ -5,12 +5,14 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
     var onOpen: (() -> Void)?
     var onDelete: (() -> Void)?
     var onBeginSwipe: (() -> Void)?
+    var onSwipeEnded: ((Bool) -> Void)?
 
     private let revealWidth: CGFloat = 80
     private let contentButton = UIButton(type: .custom)
     private let deleteButton = UIButton(type: .system)
     private var startOffset: CGFloat = 0
     private var offset: CGFloat = 0
+    private weak var metadataLabel: UILabel?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -21,14 +23,15 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(content: UIView, trashImage: UIImage?) {
+    func configure(content: UIView, trashImage: UIImage?, metadataLabel: UILabel?) {
+        self.metadataLabel = metadataLabel
         content.translatesAutoresizingMaskIntoConstraints = false
         contentButton.addSubview(content)
         NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: contentButton.topAnchor, constant: 14),
+            content.topAnchor.constraint(equalTo: contentButton.topAnchor, constant: 12),
             content.leadingAnchor.constraint(equalTo: contentButton.leadingAnchor, constant: 16),
             content.trailingAnchor.constraint(equalTo: contentButton.trailingAnchor, constant: -16),
-            content.bottomAnchor.constraint(equalTo: contentButton.bottomAnchor, constant: -14)
+            content.bottomAnchor.constraint(equalTo: contentButton.bottomAnchor, constant: -12)
         ])
         var configuration = UIButton.Configuration.plain()
         configuration.image = trashImage
@@ -37,6 +40,11 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
         configuration.title = "삭제"
         configuration.baseForegroundColor = .white
         configuration.contentInsets = .zero
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 12)
+            return outgoing
+        }
         deleteButton.configuration = configuration
         deleteButton.addAction(UIAction { [weak self] _ in self?.onDelete?() }, for: .touchUpInside)
         contentButton.addAction(UIAction { [weak self] _ in self?.onOpen?() }, for: .touchUpInside)
@@ -52,8 +60,12 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
         }
     }
 
+    func setMetadataVisible(_ visible: Bool) {
+        metadataLabel?.isHidden = !visible
+    }
+
     private func build() {
-        backgroundColor = UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1)
+        backgroundColor = UIColor(red: 239 / 255, green: 68 / 255, blue: 88 / 255, alpha: 1)
         clipsToBounds = true
 
         deleteButton.translatesAutoresizingMaskIntoConstraints = false
@@ -73,7 +85,7 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
             contentButton.leadingAnchor.constraint(equalTo: leadingAnchor),
             contentButton.trailingAnchor.constraint(equalTo: trailingAnchor),
             contentButton.bottomAnchor.constraint(equalTo: bottomAnchor),
-            heightAnchor.constraint(greaterThanOrEqualToConstant: 64)
+            heightAnchor.constraint(greaterThanOrEqualToConstant: 48)
         ])
 
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
@@ -91,7 +103,9 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
             offset = min(0, max(-revealWidth, startOffset + translation))
             contentButton.transform = CGAffineTransform(translationX: offset, y: 0)
         case .ended, .cancelled, .failed:
-            setRevealed(offset <= -revealWidth / 2, animated: true)
+            let isRevealed = offset <= -revealWidth / 2
+            setRevealed(isRevealed, animated: true)
+            onSwipeEnded?(isRevealed)
         default:
             break
         }
