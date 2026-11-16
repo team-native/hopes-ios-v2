@@ -48,6 +48,13 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         view.backgroundColor = UIColor(red: 0.965, green: 0.976, blue: 0.988, alpha: 1)
         contentStack.spacing = 16
         buildContent()
+        NotificationCenter.default.addObserver(self, selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    @objc private func appWillEnterForeground() {
+        guard viewIfLoaded?.window != nil else { return }
+        loadConversations()
     }
 
     func buildContent() {
