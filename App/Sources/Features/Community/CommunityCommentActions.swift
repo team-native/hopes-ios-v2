@@ -191,6 +191,10 @@ extension CommunityPostDetailViewController {
             renderingMode: .alwaysOriginal)
         likeButton.setImage(image, for: .normal)
         likeButton.setTitle("\(likes)", for: .normal)
+        if let id = post.id {
+            let liked = liked
+            CommunityPostStore.shared.syncWithServer { try await CommunityAPI.setLike(postID: id, liked: liked) }
+        }
     }
 
     func submitComment() {
