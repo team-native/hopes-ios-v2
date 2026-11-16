@@ -345,13 +345,24 @@ extension EditProfileViewController {
             showMessage("이름을 입력해주세요")
             return
         }
-        UserProfileStore.shared.update(
-            name: name,
-            department: UserProfileStore.shared.department,
-            email: UserProfileStore.shared.email,
-            introduction: introductionView.text
-        )
-        UserProfileStore.shared.markProfileSaved()
-        navigationController?.popViewController(animated: true)
+        let introduction = introductionView.text ?? ""
+        Task { [weak self] in
+            if AccessTokenStore.shared.hasToken {
+                do {
+                    try await AccountAPI.updateProfile(username: name, profileInfo: introduction)
+                } catch {
+                    self?.showMessage((error as? APIError)?.message ?? "프로필을 저장하지 못했어요.")
+                    return
+                }
+            }
+            UserProfileStore.shared.update(
+                name: name,
+                department: UserProfileStore.shared.department,
+                email: UserProfileStore.shared.email,
+                introduction: introduction
+            )
+            UserProfileStore.shared.markProfileSaved()
+            self?.navigationController?.popViewController(animated: true)
+        }
     }
 }

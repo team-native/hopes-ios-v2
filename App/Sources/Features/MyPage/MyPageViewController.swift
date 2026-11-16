@@ -45,6 +45,11 @@ final class MyPageViewController: AppPageViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
         refreshProfileSummary()
+        guard AccessTokenStore.shared.hasToken else { return }
+        Task { [weak self] in
+            await AuthAPI.syncProfile()
+            self?.refreshProfileSummary()
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {

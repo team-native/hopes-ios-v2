@@ -205,7 +205,17 @@ final class InquiryViewController: AppPageViewController, UITextFieldDelegate, U
             return
         }
         view.endEditing(true)
-        push(InquiryCompletionViewController(email: email))
+        Task { [weak self] in
+            if AccessTokenStore.shared.hasToken {
+                do {
+                    try await AccountAPI.sendInquiry(email: email, message: message)
+                } catch {
+                    self?.showMessage((error as? APIError)?.message ?? "문의를 보내지 못했어요.")
+                    return
+                }
+            }
+            self?.push(InquiryCompletionViewController(email: email))
+        }
     }
 
     func displayValidationErrors(emailInvalid: Bool, messageEmpty: Bool) {
