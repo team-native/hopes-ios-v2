@@ -272,7 +272,7 @@ extension ChatConversationViewController {
         return card
     }
 
-    private func retryAttachmentAnalysis() {
+    func retryAttachmentAnalysis() {
         guard !isOffline, let attachments = attachmentResponseState.lastSentAttachments else { return }
         attachmentResponseState.failureCard?.removeFromSuperview()
         attachmentResponseState.failureCard = nil
@@ -300,6 +300,7 @@ extension ChatConversationViewController {
         attachmentResponseState.lastSentAttachments = nil
         attachmentResponseState.messageClientRequestId = nil
         attachmentResponseState.isResponse = false
+        clearAttachmentUploadState()
         if let pendingAnswerCard {
             messagesStack.removeArrangedSubview(pendingAnswerCard)
             pendingAnswerCard.removeFromSuperview()
@@ -332,6 +333,11 @@ extension ChatConversationViewController {
         removePendingAttachmentAnalysisCard()
         attachmentResponseState.failureCard?.removeFromSuperview()
         attachmentResponseState.failureCard = nil
+        let unsentAttachmentIDs = Array(attachmentResponseState.uploadedAttachmentIDs.values)
+        if !unsentAttachmentIDs.isEmpty {
+            Task { await Self.deleteUnsentAttachments(unsentAttachmentIDs) }
+        }
+        clearAttachmentUploadState()
         attachmentResponseState.lastSentAttachments = nil
         attachmentResponseState.messageClientRequestId = nil
         attachmentResponseState.isResponse = false

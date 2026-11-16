@@ -51,6 +51,7 @@ extension ChatConversationViewController {
         guard selectedAttachments.map(\.id) == attachments.map(\.id) else { return false }
 
         attachmentTrayView?.validationError = nil
+        attachmentResponseState.uploadedAttachmentIDs.removeAll()
         attachmentResponseState.lastSentAttachments = attachments
         attachmentResponseState.messageClientRequestId = UUID().uuidString
         addSentAttachments(attachments)

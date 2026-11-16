@@ -49,20 +49,14 @@ extension ChatConversationViewController {
         let messageClientRequestId = attachmentResponseState.messageClientRequestId ?? UUID().uuidString
         attachmentResponseState.messageClientRequestId = messageClientRequestId
         answerTask = Task { [weak self] in
-            var attachmentIDs: [Int64] = []
             do {
-                attachmentIDs = try await Self.uploadAttachments(uploads)
+                guard let self else { return }
+                let attachmentIDs = try await self.uploadAttachmentsWithProgress(uploads)
                 guard !Task.isCancelled else {
-                    await Self.deleteUnsentAttachments(attachmentIDs)
-                    return
-                }
-                guard let self else {
-                    await Self.deleteUnsentAttachments(attachmentIDs)
                     return
                 }
                 let chatID = try await self.ensureConversation(title: question)
                 guard !Task.isCancelled else {
-                    await Self.deleteUnsentAttachments(attachmentIDs)
                     return
                 }
                 let payload = SendMessagePayload(
@@ -74,7 +68,6 @@ extension ChatConversationViewController {
                 )
                 let chat = try await ChatAPI.send(chatID: chatID, payload: payload)
                 guard !Task.isCancelled else {
-                    await Self.deleteUnsentAttachments(attachmentIDs)
                     return
                 }
                 self.answerTask = nil
@@ -82,8 +75,12 @@ extension ChatConversationViewController {
                 self.removePendingAttachmentAnalysisCard()
                 self.finishAnswerGeneration()
             } catch {
-                await Self.deleteUnsentAttachments(attachmentIDs)
                 guard let self, !Task.isCancelled else { return }
+                if let failedUpload = uploads.first(where: {
+                    self.attachmentResponseState.uploadedAttachmentIDs[$0.clientRequestId] == nil
+                }) {
+                    self.updateAttachmentUploadFailed(clientRequestId: failedUpload.clientRequestId)
+                }
                 self.answerTask = nil
                 self.showAttachmentAnalysisFailure()
             }
@@ -135,24 +132,40 @@ extension ChatConversationViewController {
         }.value
     }
 
-    nonisolated static func uploadAttachments(_ uploads: [ChatAttachmentUploadPayload]) async throws -> [Int64] {
-        var ids: [Int64] = []
-        do {
-            for upload in uploads {
-                try Task.checkCancellation()
+    func uploadAttachmentsWithProgress(_ uploads: [ChatAttachmentUploadPayload]) async throws -> [Int64] {
+        for upload in uploads {
+            try Task.checkCancellation()
+            if attachmentResponseState.uploadedAttachmentIDs[upload.clientRequestId] != nil {
+                updateAttachmentUploadCompleted(clientRequestId: upload.clientRequestId)
+                continue
+            }
+
+            do {
                 let result = try await AttachmentAPI.upload(
                     data: upload.data,
                     fileName: upload.fileName,
                     mimeType: upload.mimeType,
-                    clientRequestId: upload.clientRequestId
+                    clientRequestId: upload.clientRequestId,
+                    onProgress: { [weak self] sent, expected in
+                        Task { @MainActor [weak self] in
+                            self?.updateAttachmentUploadProgress(
+                                clientRequestId: upload.clientRequestId,
+                                sent: sent,
+                                expected: expected
+                            )
+                        }
+                    }
                 )
-                ids.append(result.id)
+                attachmentResponseState.uploadedAttachmentIDs[upload.clientRequestId] = result.id
+                updateAttachmentUploadCompleted(clientRequestId: upload.clientRequestId)
+            } catch {
+                updateAttachmentUploadFailed(clientRequestId: upload.clientRequestId)
+                throw error
             }
-            return ids
-        } catch {
-            await deleteUnsentAttachments(ids)
-            throw error
         }
+        let ids = uploads.compactMap { attachmentResponseState.uploadedAttachmentIDs[$0.clientRequestId] }
+        guard ids.count == uploads.count else { throw APIError.decoding }
+        return ids
     }
 
     nonisolated static func uploadData(for attachment: ChatAttachmentItem) async -> (data: Data, mimeType: String)? {
