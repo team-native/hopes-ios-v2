@@ -122,6 +122,7 @@ final class ScreenEntryTests: XCTestCase {
         let post = CommunityPost(grade: "전체", title: "삭제됨", body: "", time: "", comments: 0,
                                  likes: 0, category: "질문")
         let controller = CommunityPostDetailViewController(post: post)
+        XCTAssertFalse(controller.shouldSimulateCommentFailure)
         controller.loadViewIfNeeded()
         controller.showDeletedPostState()
         controller.view.layoutIfNeeded()

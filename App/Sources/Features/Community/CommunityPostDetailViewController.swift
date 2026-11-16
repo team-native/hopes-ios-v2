@@ -22,7 +22,7 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
     var commentCountLabel: UILabel?
     var visibleCommentCount = 3
     weak var postMoreButton: UIButton?
-    var shouldSimulateCommentFailure = true
+    var shouldSimulateCommentFailure = ProcessInfo.processInfo.arguments.contains("--comment-send-failure-preview")
     var composerBottomConstraint: NSLayoutConstraint!
     var keyboardObserver: NSObjectProtocol?
 
