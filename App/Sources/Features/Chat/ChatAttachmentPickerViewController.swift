@@ -111,7 +111,7 @@ final class ChatAttachmentPickerViewController: UIViewController, PHPickerViewCo
     @objc private func openPhotoLibrary() {
         var configuration = PHPickerConfiguration()
         configuration.filter = .images
-        configuration.selectionLimit = 0
+        configuration.selectionLimit = 3
         let picker = PHPickerViewController(configuration: configuration)
         picker.delegate = self
         present(picker, animated: true)

@@ -36,6 +36,61 @@ extension ChatConversationViewController {
         }
     }
 
+    func requestAttachmentAnswer(attachments: [ChatAttachmentItem], question: String) {
+        answerTask?.cancel()
+        answerTask = Task { [weak self] in
+            do {
+                var attachmentIDs: [Int64] = []
+                for attachment in attachments {
+                    guard let upload = Self.uploadData(for: attachment) else { continue }
+                    let result = try await AttachmentAPI.upload(
+                        data: upload.data, fileName: attachment.fileName, mimeType: upload.mimeType
+                    )
+                    attachmentIDs.append(result.id)
+                }
+                guard let self else { return }
+                let chatID = try await self.ensureConversation(title: question)
+                let payload = SendMessagePayload(
+                    content: question,
+                    attachmentIds: attachmentIDs,
+                    departmentId: ChatContextStore.departmentID,
+                    specialtyId: ChatContextStore.specialtyID,
+                    clientRequestId: UUID().uuidString
+                )
+                let chat = try await ChatAPI.send(chatID: chatID, payload: payload)
+                guard !Task.isCancelled else { return }
+                self.answerTask = nil
+                self.serverAnswer = chat.messages.last(where: { !$0.isUser })?.content ?? ""
+                self.removePendingAttachmentAnalysisCard()
+                self.finishAnswerGeneration()
+            } catch {
+                guard let self, !Task.isCancelled else { return }
+                self.answerTask = nil
+                self.showAttachmentAnalysisFailure()
+            }
+        }
+    }
+
+    static func uploadData(for attachment: ChatAttachmentItem) -> (data: Data, mimeType: String)? {
+        if let image = attachment.image, let data = image.jpegData(compressionQuality: 0.85) {
+            return (data, "image/jpeg")
+        }
+        if let url = attachment.url {
+            let didAccess = url.startAccessingSecurityScopedResource()
+            defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+            guard let data = try? Data(contentsOf: url) else { return nil }
+            return (data, "application/pdf")
+        }
+        return nil
+    }
+
+    func shareAnswer() {
+        let answer = lastAnswerText
+            ?? "Frontend 시작 순서\nHTML·CSS로 간단한 페이지 만들기 → JavaScript 기초 문법 익히기 → React로 작은 프로젝트 완성하기"
+        let activity = UIActivityViewController(activityItems: [answer], applicationActivities: nil)
+        present(activity, animated: true)
+    }
+
     func ensureConversation(title: String) async throws -> Int64 {
         if let conversationID { return conversationID }
         let chat = try await ChatAPI.create(title: title)

@@ -71,3 +71,14 @@ enum ChatAPI {
         return formatter.date(from: value)
     }
 }
+
+struct AttachmentDTO: Decodable {
+    let id: Int64
+    let status: String
+}
+
+enum AttachmentAPI {
+    static func upload(data: Data, fileName: String, mimeType: String) async throws -> AttachmentDTO {
+        try await APIClient.shared.upload("/api/attachments", fileData: data, fileName: fileName, mimeType: mimeType)
+    }
+}

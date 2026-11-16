@@ -249,13 +249,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         }
     }
 
-    func shareAnswer() {
-        let answer = lastAnswerText
-            ?? "Frontend 시작 순서\nHTML·CSS로 간단한 페이지 만들기 → JavaScript 기초 문법 익히기 → React로 작은 프로젝트 완성하기"
-        let activity = UIActivityViewController(activityItems: [answer], applicationActivities: nil)
-        present(activity, animated: true)
-    }
-
     func presentMessage(_ message: String) {
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default))
@@ -374,6 +367,7 @@ private extension ChatConversationViewController {
         addUserMessage(question)
         selectedAttachments.removeAll()
         refreshAttachmentTray()
+        pendingQuestion = question
         beginAttachmentAnalysis(attachments: attachments)
     }
 

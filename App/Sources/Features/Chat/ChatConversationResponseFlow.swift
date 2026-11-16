@@ -166,13 +166,7 @@ extension ChatConversationViewController {
         inputField.placeholder = "자료를 확인하는 중이에요…"
         inputField.isEnabled = false
 
-        let work = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.removePendingAttachmentAnalysisCard()
-            self.finishAnswerGeneration()
-        }
-        generationTimer = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
+        requestAttachmentAnswer(attachments: attachments, question: pendingQuestion ?? "첨부한 자료를 설명해줘")
     }
 
     private func makeAttachmentAnalysisCard(countDescription: String) -> UIView {
@@ -307,7 +301,12 @@ extension ChatConversationViewController {
         inputField.placeholder = "추가 질문 입력…"
         if isAttachmentResponse {
             resizeSentAttachmentThumbnails(to: 56)
-            addAttachmentFormattedAnswer(sourceFileName: attachmentSourceFileName)
+            if let serverAnswer {
+                self.serverAnswer = nil
+                addMarkdownAnswer(serverAnswer)
+            } else {
+                addAttachmentFormattedAnswer(sourceFileName: attachmentSourceFileName)
+            }
         } else if let serverAnswer {
             self.serverAnswer = nil
             addMarkdownAnswer(serverAnswer)
