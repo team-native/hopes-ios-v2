@@ -3,6 +3,7 @@ import UIKit
 @MainActor
 final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     struct Conversation {
+        var id: Int64?
         let title: String
         let time: String
         let department: String
@@ -12,7 +13,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     private let showsSearchPreview = ProcessInfo.processInfo.arguments.contains("--history-search-preview")
     var conversations: [Conversation] = {
         let arguments = ProcessInfo.processInfo.arguments
-        guard !arguments.contains("--empty-history") else { return [] }
+        guard !arguments.contains("--empty-history"), !AccessTokenStore.shared.hasToken else { return [] }
         var conversations = [
             Conversation(title: "기숙사 하루 일과가 어떻게 돼?", time: "어제", department: "소프트웨어개발과", olderThanWeek: false),
             Conversation(title: "전공 선택은 어떻게 하는 게 좋아?", time: "2일 전", department: "소프트웨어개발과", olderThanWeek: false),
@@ -46,6 +47,12 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
         title = "기록"
         view.backgroundColor = UIColor(red: 0.965, green: 0.976, blue: 0.988, alpha: 1)
         contentStack.spacing = 16
+        buildContent()
+    }
+
+    func buildContent() {
+        contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
+        conversationRows.removeAll()
         contentStack.setCustomSpacing(24, after: resultsStack)
         if conversations.isEmpty {
             navigationController?.setNavigationBarHidden(true, animated: false)
@@ -76,6 +83,7 @@ final class HistoryViewController: AppPageViewController, UITextFieldDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(conversations.isEmpty, animated: animated)
+        loadConversations()
     }
 
 }
@@ -317,9 +325,7 @@ extension HistoryViewController {
         let row = ConversationRowView()
         row.accessibilityLabel = "\(conversation.title), \(conversation.time), \(conversation.department)"
         row.accessibilityTraits = .button
-        row.onOpen = { [weak self] in
-            self?.push(ChatConversationViewController(question: conversation.title))
-        }
+        row.onOpen = { [weak self] in self?.openConversation(conversation) }
         row.onDelete = { [weak self, weak row] in
             self?.confirmDeletion(of: conversation, from: row)
         }
@@ -352,30 +358,20 @@ extension HistoryViewController {
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
             guard let self else { return }
-            self.conversations.removeAll { $0.title == conversation.title && $0.time == conversation.time }
-            self.renderConversations()
+            Task {
+                if let id = conversation.id {
+                    do {
+                        try await ChatAPI.delete(id: id)
+                    } catch {
+                        self.showMessage((error as? APIError)?.message ?? "대화를 삭제하지 못했어요.")
+                        return
+                    }
+                }
+                self.conversations.removeAll { $0.title == conversation.title && $0.time == conversation.time }
+                self.buildContent()
+            }
         })
         present(alert, animated: true)
-    }
-
-    func highlightedTitle(_ title: String, query: String) -> NSAttributedString {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.minimumLineHeight = 24
-        paragraph.maximumLineHeight = 24
-        let result = NSMutableAttributedString(
-            string: title,
-            attributes: [
-                .font: UIFont.systemFont(ofSize: 15),
-                .foregroundColor: AppStyle.ink,
-                .paragraphStyle: paragraph
-            ]
-        )
-        guard !query.isEmpty, let range = title.range(of: query, options: [.caseInsensitive,
-            .diacriticInsensitive]) else { return result }
-        let nsRange = NSRange(range, in: title)
-        result.addAttributes([.foregroundColor: AppStyle.blue, .font: UIFont.systemFont(ofSize: 15,
-            weight: .medium)], range: nsRange)
-        return result
     }
 
     func image(named name: String) -> UIImage? {
