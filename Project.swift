@@ -16,6 +16,7 @@ let project = Project(
                     "CFBundleVersion": "1",
                     "UIAppFonts": ["Inter-Variable.ttf"],
                     "UILaunchScreen": [:],
+                    "UIUserInterfaceStyle": "Light",
                     "UIApplicationSceneManifest": [
                         "UIApplicationSupportsMultipleScenes": false,
                         "UISceneConfigurations": [
