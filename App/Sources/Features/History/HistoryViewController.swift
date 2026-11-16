@@ -177,7 +177,10 @@ extension HistoryViewController {
         let filtered = conversations.filter { query.isEmpty || $0.title.localizedCaseInsensitiveContains(query) }
         guard !filtered.isEmpty else {
             if isSearching {
-                resultsStack.addArrangedSubview(makeNoSearchResultsState())
+                let emptyState = makeNoSearchResultsState()
+                resultsStack.addArrangedSubview(emptyState)
+                emptyState.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.55)
+                    .isActive = true
             } else {
                 resultsStack.addArrangedSubview(AppStyle.label("대화 기록이 없어요", size: 14, color: AppStyle.muted))
             }
@@ -237,7 +240,6 @@ extension HistoryViewController {
         container.addSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.55),
             content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
         ])

@@ -42,7 +42,8 @@ extension ChatConversationViewController {
             do {
                 var attachmentIDs: [Int64] = []
                 for attachment in attachments {
-                    guard let upload = Self.uploadData(for: attachment) else { continue }
+                    guard !Task.isCancelled else { return }
+                    guard let upload = await Self.uploadData(for: attachment) else { throw APIError.decoding }
                     let result = try await AttachmentAPI.upload(
                         data: upload.data, fileName: attachment.fileName, mimeType: upload.mimeType
                     )
@@ -71,7 +72,7 @@ extension ChatConversationViewController {
         }
     }
 
-    static func uploadData(for attachment: ChatAttachmentItem) -> (data: Data, mimeType: String)? {
+    nonisolated static func uploadData(for attachment: ChatAttachmentItem) async -> (data: Data, mimeType: String)? {
         if let image = attachment.image, let data = image.jpegData(compressionQuality: 0.85) {
             return (data, "image/jpeg")
         }
@@ -88,6 +89,11 @@ extension ChatConversationViewController {
         let answer = lastAnswerText
             ?? "Frontend 시작 순서\nHTML·CSS로 간단한 페이지 만들기 → JavaScript 기초 문법 익히기 → React로 작은 프로젝트 완성하기"
         let activity = UIActivityViewController(activityItems: [answer], applicationActivities: nil)
+        if let popover = activity.popoverPresentationController {
+            popover.sourceView = view
+            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+            popover.permittedArrowDirections = []
+        }
         present(activity, animated: true)
     }
 

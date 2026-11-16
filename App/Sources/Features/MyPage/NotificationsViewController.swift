@@ -212,11 +212,12 @@ extension NotificationsViewController {
         container.addSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.9),
             content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor)
         ])
         contentStack.addArrangedSubview(container)
+        container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.9)
+            .isActive = true
     }
 
     private func skeletonLine(width: CGFloat, height: CGFloat, radius: CGFloat) -> UIView {

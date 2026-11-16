@@ -232,8 +232,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
             label.topAnchor.constraint(equalTo: bubble.topAnchor, constant: 13),
             label.leadingAnchor.constraint(equalTo: bubble.leadingAnchor, constant: 15),
             label.trailingAnchor.constraint(equalTo: bubble.trailingAnchor, constant: -15),
-            label.bottomAnchor.constraint(equalTo: bubble.bottomAnchor, constant: -13),
-            bubble.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.8)
+            label.bottomAnchor.constraint(equalTo: bubble.bottomAnchor, constant: -13)
         ])
 
         let spacer = UIView()
@@ -242,6 +241,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         line.alignment = .top
         line.distribution = .fill
         messagesStack.addArrangedSubview(line)
+        bubble.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.8).isActive = true
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             let bottom = CGPoint(x: 0, y: max(0, self.scrollView.contentSize.height - self.scrollView.bounds.height))
