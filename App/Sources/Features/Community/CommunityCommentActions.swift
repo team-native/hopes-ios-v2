@@ -49,9 +49,7 @@ extension CommunityPostDetailViewController {
         card.removeFromSuperview()
         addComment(author: "10기 (나)", time: "방금", text: text)
         CommunityPostStore.shared.addComment(postTitle: post.title, text: text)
-        post = CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time,
-            comments: post.comments + 1, likes: post.likes, category: post.category, detailBody: post.detailBody,
-            authorCohort: post.authorCohort)
+        post = post.withCommentCount(post.comments + 1)
         visibleCommentCount += 1
         updateCommentCount()
     }
@@ -133,10 +131,7 @@ extension CommunityPostDetailViewController {
                 self.commentStack.removeArrangedSubview(commentCard)
                 commentCard.removeFromSuperview()
             }
-            self.post = CommunityPost(grade: self.post.grade, title: self.post.title, body: self.post.body,
-                time: self.post.time, comments: max(0, self.post.comments - 1), likes: self.post.likes,
-                    category: self.post.category, detailBody: self.post.detailBody,
-                    authorCohort: self.post.authorCohort)
+            self.post = self.post.withCommentCount(max(0, self.post.comments - 1))
             self.visibleCommentCount = max(0, self.visibleCommentCount - 1)
             self.updateCommentCount()
             if self.editingComment == text { self.cancelCommentEdit() }
@@ -192,9 +187,7 @@ extension CommunityPostDetailViewController {
         }
         addComment(author: "10기 (나)", time: "방금", text: text)
         CommunityPostStore.shared.addComment(postTitle: post.title, text: text)
-        post = CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time,
-            comments: post.comments + 1, likes: post.likes, category: post.category, detailBody: post.detailBody,
-            authorCohort: post.authorCohort)
+        post = post.withCommentCount(post.comments + 1)
         visibleCommentCount += 1
         updateCommentCount()
         commentField.text = nil

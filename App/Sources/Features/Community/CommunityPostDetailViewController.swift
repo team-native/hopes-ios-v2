@@ -3,7 +3,8 @@ import UIKit
 @MainActor
 final class CommunityPostDetailViewController: AppPageViewController, UITextFieldDelegate {
     var post: CommunityPost
-    let isMine: Bool
+    private let openedAsMine: Bool
+    var isMine: Bool { openedAsMine || post.isMine }
     var likes: Int
     var liked = false
     let commentStack = UIStackView()
@@ -28,9 +29,10 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
 
     init(post: CommunityPost, isMine: Bool = false) {
         self.post = post
-        self.isMine = isMine
+        openedAsMine = isMine
         likes = post.likes
         liked = post.likedByMe
+        visibleCommentCount = post.comments
         super.init(nibName: nil, bundle: nil)
         hidesBottomBarWhenPushed = true
     }
@@ -67,6 +69,7 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
         constrainConversationToComposer()
         observeKeyboard()
         view.accessibilityIdentifier = "community-post-detail-screen"
+        loadPostDetail()
     }
 
     private func configureComments() {
@@ -109,17 +112,7 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
 
     private func addInitialComments() {
         if let id = post.id, CommunityPostStore.shared.isServerBacked {
-            Task { [weak self] in
-                guard let page = try? await CommunityAPI.comments(postID: id), let self else { return }
-                for comment in page.items {
-                    self.addComment(
-                        author: comment.isMine ? "익명 (나)" : "익명",
-                        time: CommunityAPI.relativeTime(comment.createdAt),
-                        text: comment.content,
-                        commentID: comment.id
-                    )
-                }
-            }
+            loadServerComments(postID: id)
             return
         }
         let myComment = CommunityPostStore.shared.myComments.first { $0.postTitle == post.title }?.text
@@ -259,6 +252,7 @@ extension CommunityPostDetailViewController {
 
     var isPostAvailable: Bool {
         let posts = isMine ? CommunityPostStore.shared.myPosts : CommunityPostStore.shared.posts
+        if post.id != nil { return true }
         return posts.contains { $0.title == post.title && $0.body == post.body }
     }
 
