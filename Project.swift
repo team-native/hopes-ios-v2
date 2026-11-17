@@ -14,6 +14,7 @@ let project = Project(
                     "CFBundleDisplayName": "hopes",
                     "CFBundleShortVersionString": "2.0.0",
                     "CFBundleVersion": "1",
+                    "ITSAppUsesNonExemptEncryption": false,
                     "UIAppFonts": ["Inter-Variable.ttf"],
                     "UILaunchScreen": [:],
                     "UIUserInterfaceStyle": "Light",
