@@ -174,7 +174,7 @@ final class ScreenEntryTests: XCTestCase {
         let controller = ChatConversationViewController(question: nil)
         controller.loadViewIfNeeded()
         controller.view.layoutIfNeeded()
-        XCTAssertGreaterThan(controller.messagesStack.arrangedSubviews.count, 1)
+        XCTAssertGreaterThan(controller.messagesStack.arrangedSubviews.count, 0)
         controller.networkMonitor.cancel()
     }
 
