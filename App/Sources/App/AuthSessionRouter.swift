@@ -14,16 +14,19 @@ enum AuthSessionRouter {
 
     static func logOut() {
         Task { await AuthAPI.logout() }
+        CommunityPostStore.shared.resetForNewSession()
         replaceRoot(with: WelcomeViewController())
     }
 
     static func showHome() {
+        CommunityPostStore.shared.resetForNewSession()
         replaceRoot(with: AppTabBarController())
     }
 
     static func finishAccountDeletion() {
         AccessTokenStore.shared.clear()
         UserProfileStore.shared.clearLocalData()
+        CommunityPostStore.shared.resetForNewSession()
         let welcome = WelcomeViewController()
         welcome.pendingToastMessage = "탈퇴가 완료됐어요"
         replaceRoot(with: welcome)
@@ -31,6 +34,7 @@ enum AuthSessionRouter {
 
     static func showLogin() {
         AccessTokenStore.shared.clear()
+        CommunityPostStore.shared.resetForNewSession()
         let welcome = WelcomeViewController()
         welcome.opensLoginOnAppear = true
         replaceRoot(with: welcome)

@@ -30,6 +30,7 @@ extension CommunityPostStore {
                 time: CommunityAPI.relativeTime(comment.createdAt)
             )
         }
+        markLoadedFromServer()
         NotificationCenter.default.post(name: .communityStoreDidChange, object: nil)
     }
 
