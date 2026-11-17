@@ -29,7 +29,12 @@ enum AccountAPI {
     }
 
     static func sendInquiry(email: String, message: String) async throws {
-        let content = "답변 받을 이메일: \(email)\n\n\(message)"
-        try await client.send("POST", "/api/setting/inquiry", body: ["content": content], authenticated: true)
+        try await client.send("POST", "/api/setting/inquiry", body: inquiryBody(email: email, message: message),
+            authenticated: true)
+    }
+
+    static func inquiryBody(email: String, message: String) -> [String: String] {
+        let replyEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        return replyEmail.isEmpty ? ["content": message] : ["content": message, "replyEmail": replyEmail]
     }
 }

@@ -21,7 +21,8 @@ extension ChatConversationViewController {
                     attachmentIds: [],
                     departmentId: ChatContextStore.departmentID,
                     specialtyId: ChatContextStore.specialtyID,
-                    clientRequestId: UUID().uuidString
+                    clientRequestId: UUID().uuidString,
+                    specialtyIds: ChatContextStore.specialtyIDs
                 )
                 let chat = try await ChatAPI.send(chatID: chatID, payload: payload)
                 guard !Task.isCancelled else { return }
@@ -64,7 +65,8 @@ extension ChatConversationViewController {
                     attachmentIds: attachmentIDs,
                     departmentId: ChatContextStore.departmentID,
                     specialtyId: ChatContextStore.specialtyID,
-                    clientRequestId: messageClientRequestId
+                    clientRequestId: messageClientRequestId,
+                    specialtyIds: ChatContextStore.specialtyIDs
                 )
                 let chat = try await ChatAPI.send(chatID: chatID, payload: payload)
                 guard !Task.isCancelled else {
@@ -230,7 +232,7 @@ extension ChatConversationViewController {
         Task { [weak self] in
             let result = try? await CatalogAPI.recommendations(
                 department: defaults.string(forKey: "chat.selectedDepartment"),
-                specialty: defaults.string(forKey: "chat.selectedMajor"),
+                specialties: ChatMajorSelection.load(defaults: defaults),
                 refreshToken: nil,
                 excludeIDs: []
             )
@@ -321,7 +323,9 @@ enum ChatContextStore {
         CatalogAPI.departmentID(for: UserDefaults.standard.string(forKey: "chat.selectedDepartment"))
     }
 
-    static var specialtyID: Int64? {
-        CatalogAPI.specialtyID(for: UserDefaults.standard.string(forKey: "chat.selectedMajor"))
+    static var specialtyIDs: [Int64] {
+        CatalogAPI.specialtyIDs(for: ChatMajorSelection.load())
     }
+
+    static var specialtyID: Int64? { specialtyIDs.first }
 }
