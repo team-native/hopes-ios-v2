@@ -271,6 +271,11 @@ extension ChatConversationViewController {
             content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
             content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
         ])
+        card.accessibilityHint = "길게 눌러 답변을 복사할 수 있어요"
+        card.addGestureRecognizer(ChatAnswerCopyGesture(markdown: markdown) { [weak self] text in
+            UIPasteboard.general.string = text
+            self?.showToast("답변을 복사했어요")
+        })
         messagesStack.addArrangedSubview(card)
         if showsActions {
             addAnswerActions()

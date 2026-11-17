@@ -44,3 +44,10 @@ final class ChatMarkdownTests: XCTestCase {
         XCTAssertEqual(result, ["포트폴리오는 언제?", "동아리는?"])
     }
 }
+
+final class ChatAnswerCopyTests: XCTestCase {
+    func testCopiedAnswerIsReadablePlainText() {
+        let text = ChatAnswerCopyGesture.plainText(from: "## 제목\n**굵게** 문장\n1. 하나\n2. 둘\n> 인용")
+        XCTAssertEqual(text, "제목\n\n굵게 문장\n\n1. 하나\n2. 둘\n\n인용")
+    }
+}
