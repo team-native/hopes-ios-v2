@@ -144,6 +144,7 @@ enum HomePreviewStateViews {
             shape.widthAnchor.constraint(equalToConstant: width),
             shape.heightAnchor.constraint(equalToConstant: height)
         ])
+        AppLoadingMotion.pulse(shape)
         return shape
     }
 

@@ -58,6 +58,7 @@ extension ChatHomeViewController {
             block.widthAnchor.constraint(equalToConstant: width),
             block.heightAnchor.constraint(equalToConstant: height)
         ])
+        AppLoadingMotion.pulse(block)
         return block
     }
 
