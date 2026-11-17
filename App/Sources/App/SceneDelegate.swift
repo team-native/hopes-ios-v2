@@ -13,6 +13,14 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let window = UIWindow(windowScene: windowScene)
         let arguments = ProcessInfo.processInfo.arguments
+        #if DEBUG
+        if let harness = ZZFlowHarness.root(for: arguments) {
+            window.rootViewController = harness
+            self.window = window
+            window.makeKeyAndVisible()
+            return
+        }
+        #endif
         if arguments.contains("--inquiry-input-preview") {
             window.rootViewController = UINavigationController(rootViewController: InquiryViewController())
         } else if arguments.contains("--inquiry-error-preview") {
