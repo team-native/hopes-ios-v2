@@ -177,17 +177,17 @@ extension CommunitySearchViewController {
         let posts = CommunityPostStore.shared.posts.filter { post in
             post.title.lowercased().contains(normalizedQuery) || post.body.lowercased().contains(normalizedQuery)
         }
+        guard !posts.isEmpty else {
+            let emptyState = makeEmptyState()
+            resultsStack.addArrangedSubview(emptyState)
+            emptyState.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -64)
+                .isActive = true
+            return
+        }
         let heading = AppStyle.label("검색 결과 \(posts.count)개", size: 14, weight: .medium, color: secondary)
         heading.heightAnchor.constraint(equalToConstant: 20).isActive = true
         resultsStack.addArrangedSubview(heading)
         resultsStack.setCustomSpacing(16, after: heading)
-        guard !posts.isEmpty else {
-            let emptyState = makeEmptyState()
-            resultsStack.addArrangedSubview(emptyState)
-            emptyState.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, constant: -100)
-                .isActive = true
-            return
-        }
         posts.forEach { post in resultsStack.addArrangedSubview(makeResultCard(post)) }
     }
 

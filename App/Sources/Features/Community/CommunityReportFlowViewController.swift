@@ -163,12 +163,7 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
     }
 
     private func makeHandle() -> UIView {
-        let handle = UIView()
-        handle.backgroundColor = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
-        handle.layer.cornerRadius = 2.5
-        handle.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        handle.heightAnchor.constraint(equalToConstant: 5).isActive = true
-        return handle
+        AppStyle.sheetHandle()
     }
 
     private func makeHomeIndicator() -> UIView {

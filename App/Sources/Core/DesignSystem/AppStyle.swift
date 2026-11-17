@@ -9,6 +9,23 @@ enum AppStyle {
     static let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     static let canvas = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
 
+    static func sheetHandle() -> UIView {
+        let container = UIView()
+        let handle = UIView()
+        handle.backgroundColor = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
+        handle.layer.cornerRadius = 2.5
+        handle.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(handle)
+        NSLayoutConstraint.activate([
+            handle.widthAnchor.constraint(equalToConstant: 44),
+            handle.heightAnchor.constraint(equalToConstant: 5),
+            handle.topAnchor.constraint(equalTo: container.topAnchor),
+            handle.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            handle.centerXAnchor.constraint(equalTo: container.centerXAnchor)
+        ])
+        return container
+    }
+
     static func label(
         _ text: String,
         size: CGFloat,
