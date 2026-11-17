@@ -12,8 +12,7 @@ extension ChatConversationViewController {
 
         let department = UserDefaults.standard.string(forKey: "chat.selectedDepartment")
             .flatMap { $0.isEmpty ? nil : $0 } ?? "소프트웨어개발과"
-        let major = UserDefaults.standard.string(forKey: "chat.selectedMajor")
-            .flatMap { $0.isEmpty ? nil : $0 } ?? "Frontend"
+        let major = ChatMajorSelection.displayName(ChatMajorSelection.load()) ?? "Frontend"
         let context = AppStyle.label("\(department) · \(major)", size: 12, color: AppStyle.muted)
         let title = AppStyle.label("전공 공부", size: 18, weight: .medium, color: ChatDetailPalette.ink)
         applyLineHeight(title, lineHeight: 26, height: 26)

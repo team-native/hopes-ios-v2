@@ -29,32 +29,24 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
     var hiddenStatesBeforeKeyboard: [ObjectIdentifier: Bool] = [:]
     var selectedDepartment: String?
-    var selectedMajor: String?
+    var selectedMajors: [String] = []
+    var selectedMajor: String? {
+        get { ChatMajorSelection.displayName(selectedMajors) }
+        set { selectedMajors = newValue.map { [$0] } ?? [] }
+    }
     var recommendationState: ChatHomeRecommendationState = .ready
     var questionSetIndex = 0
     var recommendationRequestID = 0
     var recommendationRefreshToken: String?
     var shownRecommendationIDs: [Int64] = []
 
-    var questionSets: [[(String, String)]] = [
-        [
-            ("chat-question-bed-icon", "기숙사 하루 일과가 어떻게 돼?"),
-            ("chat-question-file-icon", "입학하려면 뭘 준비해야 해?"),
-            ("chat-question-code-icon", "Frontend는 뭐부터 공부하면 좋아?"),
-            ("chat-question-heart-icon", "후배한테 해주고 싶은 조언 있어?")
-        ],
-        [
-            ("chat-question-code-icon", "처음 만드는 프로젝트는 어떤 게 좋아?"),
-            ("chat-question-bed-icon", "기숙사 생활에 필요한 준비물이 뭐야?"),
-            ("chat-question-file-icon", "입학 전에 공부하면 좋은 과목이 있어?"),
-            ("chat-question-heart-icon", "학교생활에서 가장 기억에 남는 일은 뭐야?")
-        ]
-    ]
+    var questionSets = ChatHomeViewController.defaultQuestionSets(major: "Frontend")
 
     override func viewDidLoad() {
         super.viewDidLoad()
         selectedDepartment = Self.loadContextValue(key: "chat.selectedDepartment", defaultValue: "소프트웨어개발과")
-        selectedMajor = Self.loadContextValue(key: "chat.selectedMajor", defaultValue: "Frontend")
+        selectedMajors = ChatMajorSelection.load()
+        questionSets = Self.defaultQuestionSets(major: selectedMajors.first)
         title = nil
         view.backgroundColor = UIColor(red: 246 / 255, green: 249 / 255, blue: 252 / 255, alpha: 1)
         navigationController?.setNavigationBarHidden(true, animated: false)

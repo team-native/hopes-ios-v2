@@ -15,12 +15,12 @@ extension ChatHomeViewController {
     }
 
     @objc func selectMajor() {
-        let picker = MajorPickerViewController(selectedMajor: selectedMajor)
-        picker.onComplete = { [weak self] major in
+        let picker = MajorPickerViewController(selectedMajors: selectedMajors)
+        picker.onComplete = { [weak self] majors in
             guard let self else { return }
-            let didChange = self.selectedMajor != major
-            self.selectedMajor = major
-            UserDefaults.standard.set(major ?? "", forKey: "chat.selectedMajor")
+            let didChange = self.selectedMajors != majors
+            self.selectedMajors = majors
+            ChatMajorSelection.save(majors)
             self.applyContextSelection(didChange: didChange)
         }
         present(picker, animated: false)
@@ -74,7 +74,7 @@ extension ChatHomeViewController {
             do {
                 let result = try await CatalogAPI.recommendations(
                     department: self.selectedDepartment,
-                    specialty: self.selectedMajor,
+                    specialty: self.selectedMajors.first,
                     refreshToken: refresh ? self.recommendationRefreshToken : nil,
                     excludeIDs: refresh ? self.shownRecommendationIDs : []
                 )
@@ -98,10 +98,13 @@ extension ChatHomeViewController {
     private func applyContextSelection(didChange: Bool) {
         if didChange {
             let department = selectedDepartment
-            let specialty = selectedMajor
+            let specialty = selectedMajors.first
             Task { await CatalogAPI.savePreferences(department: department, specialty: specialty) }
         }
         updateContextChipTitles()
+        if didChange, !AccessTokenStore.shared.hasToken {
+            questionSets = Self.defaultQuestionSets(major: selectedMajors.first)
+        }
         if didChange, selectedDepartment != nil, selectedMajor != nil {
             loadRecommendations()
         }

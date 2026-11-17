@@ -30,7 +30,7 @@ final class UserProfileStore {
         let keys = [
             "profile.name", "profile.department", "profile.email", "profile.generation",
             "profile.introduction", "profile.saveToastPending", "answerStyle.systemPrompt",
-            "chat.selectedDepartment", "chat.selectedMajor", "auth.keepSignedIn"
+            "chat.selectedDepartment", "chat.selectedMajor", "chat.selectedMajors", "auth.keepSignedIn"
         ]
         keys.forEach(defaults.removeObject(forKey:))
     }
