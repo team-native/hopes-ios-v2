@@ -14,6 +14,7 @@ extension CommunityViewController {
             bar.layer.cornerRadius = height / 2
             bar.widthAnchor.constraint(equalToConstant: width).isActive = true
             bar.heightAnchor.constraint(equalToConstant: height).isActive = true
+            AppLoadingMotion.pulse(bar)
             return bar
         })
         stack.axis = .vertical

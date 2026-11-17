@@ -123,6 +123,7 @@ extension ChatConversationViewController {
         cursor.backgroundColor = AppStyle.blue
         cursor.widthAnchor.constraint(equalToConstant: 2).isActive = true
         cursor.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        AppLoadingMotion.blink(cursor)
         let content = UIStackView(arrangedSubviews: [title, partial, cursor])
         content.axis = .vertical
         content.spacing = 10
@@ -192,6 +193,7 @@ extension ChatConversationViewController {
             dot.heightAnchor.constraint(equalToConstant: 6).isActive = true
             dots.addArrangedSubview(dot)
         }
+        AppLoadingMotion.bounce(dots.arrangedSubviews)
         let title = AppStyle.label("자료를 분석하고 있어요…", size: 15, weight: .medium)
         let detail = AppStyle.label("첨부 자료 확인 중 · \(countDescription)", size: 12, color: AppStyle.muted)
         let labels = UIStackView(arrangedSubviews: [title, detail])

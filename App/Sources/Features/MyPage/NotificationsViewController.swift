@@ -152,6 +152,7 @@ final class NotificationsViewController: AppPageViewController {
             icon.layer.cornerRadius = 12
             icon.widthAnchor.constraint(equalToConstant: 36).isActive = true
             icon.heightAnchor.constraint(equalToConstant: 36).isActive = true
+            AppLoadingMotion.pulse(icon)
 
             let primaryLine = skeletonLine(width: 220, height: 12, radius: 6)
             let secondaryLine = skeletonLine(width: 140, height: 10, radius: 5)
@@ -229,6 +230,7 @@ extension NotificationsViewController {
         line.layer.cornerRadius = radius
         line.widthAnchor.constraint(equalToConstant: width).isActive = true
         line.heightAnchor.constraint(equalToConstant: height).isActive = true
+        AppLoadingMotion.pulse(line)
         return line
     }
 
