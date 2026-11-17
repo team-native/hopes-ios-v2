@@ -283,7 +283,7 @@ extension CommunitySearchViewController {
         card.layer.shadowRadius = 8
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
         content.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(content)
+        card.addPassthroughSubview(content)
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: card.topAnchor),
             content.leadingAnchor.constraint(equalTo: card.leadingAnchor),

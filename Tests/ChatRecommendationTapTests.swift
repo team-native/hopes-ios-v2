@@ -19,3 +19,23 @@ final class ChatRecommendationTapTests: XCTestCase {
         XCTAssertTrue(navigation.topViewController is ChatConversationViewController)
     }
 }
+
+@MainActor
+final class PassthroughContentTests: XCTestCase {
+    func testHistoryRowContentDoesNotSwallowTouches() {
+        let row = ConversationRowView()
+        row.frame = CGRect(x: 0, y: 0, width: 362, height: 60)
+        row.layoutIfNeeded()
+        var hit = row.hitTest(CGPoint(x: 100, y: 30), with: nil)
+        while let view = hit, !(view is UIControl) { hit = view.superview }
+        XCTAssertNotNil(hit, "a control must receive the touch, not the content stack")
+    }
+
+    func testPassthroughSubviewDisablesInteraction() {
+        let control = UIControl(frame: CGRect(x: 0, y: 0, width: 100, height: 40))
+        let content = UIStackView(frame: control.bounds)
+        control.addPassthroughSubview(content)
+        XCTAssertFalse(content.isUserInteractionEnabled)
+        XCTAssertTrue(control.hitTest(CGPoint(x: 50, y: 20), with: nil) === control)
+    }
+}

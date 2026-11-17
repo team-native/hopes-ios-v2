@@ -143,7 +143,7 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         row.isLayoutMarginsRelativeArrangement = true
         row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16)
         let button = UIButton(type: .custom)
-        button.addSubview(row)
+        button.addPassthroughSubview(row)
         row.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             row.topAnchor.constraint(equalTo: button.topAnchor),

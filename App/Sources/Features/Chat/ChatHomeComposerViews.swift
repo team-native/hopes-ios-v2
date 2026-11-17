@@ -121,7 +121,7 @@ extension ChatHomeViewController {
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
 
         let row = UIControl()
-        row.addSubview(content)
+        row.addPassthroughSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: row.topAnchor),
@@ -158,8 +158,7 @@ extension ChatHomeViewController {
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 13, leading: 17, bottom: 13, trailing: 17)
 
         let card = UIControl()
-        content.isUserInteractionEnabled = false
-        card.addSubview(content)
+        card.addPassthroughSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: card.topAnchor),
