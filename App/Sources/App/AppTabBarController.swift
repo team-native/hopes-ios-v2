@@ -173,7 +173,7 @@ final class AppTabBarController: UITabBarController {
 
     private func makeNavigationControllers(for tabs: [TabItem]) -> [UIViewController] {
         tabs.map { item in
-            let navigation = UINavigationController(rootViewController: item.controller)
+            let navigation = AppNavigationController(rootViewController: item.controller)
             navigation.tabBarItem = UITabBarItem(title: item.title, image: nil, tag: 0)
             navigation.tabBarItem.accessibilityIdentifier = "tab-\(item.identifier)"
             return navigation
