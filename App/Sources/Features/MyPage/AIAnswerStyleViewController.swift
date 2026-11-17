@@ -222,7 +222,8 @@ final class AIAnswerStyleViewController: AppPageViewController {
         saveButtonConstraints = [
             saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
+            saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+                constant: -AppStyle.bottomActionSafeInset)
         ]
         NSLayoutConstraint.activate(saveButtonConstraints)
     }
