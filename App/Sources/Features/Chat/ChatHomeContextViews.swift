@@ -24,8 +24,8 @@ extension ChatHomeViewController {
     func addInfoBanner() {
         infoBanner.translatesAutoresizingMaskIntoConstraints = false
         infoBanner.backgroundColor = softBlue
-        infoBanner.layer.cornerRadius = 14
-        let icon = UIImageView(image: UIImage(named: "home-alert-icon"))
+        infoBanner.layer.cornerRadius = 16
+        let icon = UIImageView(image: UIImage(named: "chat-notice-alert")?.withRenderingMode(.alwaysOriginal))
         icon.contentMode = .scaleAspectFit
         icon.translatesAutoresizingMaskIntoConstraints = false
         let message = UILabel()
@@ -38,7 +38,7 @@ extension ChatHomeViewController {
         row.alignment = .center
         row.spacing = 8
         row.isLayoutMarginsRelativeArrangement = true
-        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
         row.translatesAutoresizingMaskIntoConstraints = false
         infoBanner.addSubview(row)
         NSLayoutConstraint.activate([
@@ -57,9 +57,9 @@ extension ChatHomeViewController {
     func configureRecommendationFailureNotice() {
         recommendationFailureNotice.translatesAutoresizingMaskIntoConstraints = false
         recommendationFailureNotice.backgroundColor = softBlue
-        recommendationFailureNotice.layer.cornerRadius = 14
+        recommendationFailureNotice.layer.cornerRadius = 16
 
-        let icon = UIImageView(image: UIImage(named: "home-alert-icon"))
+        let icon = UIImageView(image: UIImage(named: "chat-notice-alert")?.withRenderingMode(.alwaysOriginal))
         icon.contentMode = .scaleAspectFit
         icon.translatesAutoresizingMaskIntoConstraints = false
 
@@ -74,12 +74,12 @@ extension ChatHomeViewController {
         var configuration = UIButton.Configuration.filled()
         configuration.title = "다시 시도"
         configuration.baseForegroundColor = brandBlue
-        configuration.baseBackgroundColor = .white
-        configuration.cornerStyle = .medium
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10)
+        configuration.baseBackgroundColor = softBlue
+        configuration.background.cornerRadius = 10
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
         configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 12, weight: .medium)
+            outgoing.font = .systemFont(ofSize: 14, weight: .medium)
             return outgoing
         }
         retry.configuration = configuration

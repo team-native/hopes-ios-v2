@@ -25,6 +25,9 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
     weak var recommendationTitleLabel: UILabel?
     let composerBar = UIView()
     let messageField = UITextField()
+    let keyboardHint = AppStyle.label("추천 질문을 누르면 입력창에 채워져요", size: 12,
+        color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
+    var hiddenStatesBeforeKeyboard: [ObjectIdentifier: Bool] = [:]
     var selectedDepartment: String?
     var selectedMajor: String?
     var recommendationState: ChatHomeRecommendationState = .ready
@@ -90,10 +93,12 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         navigationController?.setNavigationBarHidden(true, animated: animated)
         tabBarController?.tabBar.isHidden = false
         updateContextChipTitles()
+        observeKeyboardCollapse()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        stopObservingKeyboardCollapse()
         navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
@@ -111,7 +116,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         newChat.translatesAutoresizingMaskIntoConstraints = false
         var configuration = UIButton.Configuration.plain()
         configuration.title = "새 대화"
-        configuration.baseForegroundColor = ink
+        configuration.baseForegroundColor = brandBlue
         configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
             outgoing.font = .systemFont(ofSize: 14, weight: .medium)
@@ -152,6 +157,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         button.accessibilityIdentifier = identifier
         button.addTarget(self, action: action, for: .touchUpInside)
         button.setContentCompressionResistancePriority(.required, for: .horizontal)
+        button.heightAnchor.constraint(equalToConstant: 32).isActive = true
     }
 
     private func addRecommendationHeader() {
@@ -214,7 +220,7 @@ final class ChatHomeViewController: AppPageViewController, UITextFieldDelegate {
         }
         infoBanner.isHidden = true
         promptTitleView?.isHidden = recommendationState == .loading
-        refreshSlot?.isHidden = recommendationState != .ready
+        refreshSlot?.isHidden = recommendationState == .loading
         recommendationFailureNotice.isHidden = recommendationState != .failed
 
         switch recommendationState {

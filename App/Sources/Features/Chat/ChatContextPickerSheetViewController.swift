@@ -10,7 +10,7 @@ class ChatContextPickerSheetViewController: UIViewController {
 
     private let titleText: String
     private let subtitleText: String
-    private let sheetHeight: CGFloat
+    var sheetHeight: CGFloat
     private let sheet = UIView()
     private let dim = UIView()
     private var isDismissing = false
@@ -117,6 +117,7 @@ class ChatContextPickerSheetViewController: UIViewController {
         content.spacing = 16
         content.isLayoutMarginsRelativeArrangement = true
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 0, trailing: 20)
+        content.insetsLayoutMarginsFromSafeArea = false
         content.translatesAutoresizingMaskIntoConstraints = false
         sheet.addSubview(content)
 
@@ -172,6 +173,7 @@ class ChatContextPickerSheetViewController: UIViewController {
         let indicator = UIView()
         indicator.translatesAutoresizingMaskIntoConstraints = false
         indicator.backgroundColor = ink
+        indicator.isHidden = true
         indicator.layer.cornerRadius = 2.5
         container.addSubview(indicator)
         NSLayoutConstraint.activate([
