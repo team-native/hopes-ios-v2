@@ -229,7 +229,6 @@
               let nav = tabs.selectedViewController as? UINavigationController
             else { return }
             let controller = make()
-            controller.hidesBottomBarWhenPushed = true
             nav.pushViewController(controller, animated: false)
           }
         }
