@@ -1,11 +1,50 @@
 import UIKit
 
+enum LoginFailure: Equatable {
+    case invalidCredentials
+    case offline
+    case rateLimited
+    case serverError
+
+    static func classify(_ error: Error) -> LoginFailure {
+        guard let error = error as? APIError else { return .serverError }
+        switch error {
+        case .unauthorized:
+            return .invalidCredentials
+        case .network:
+            return .offline
+        case let .server(status, _, _, _):
+            return status == 429 ? .rateLimited : .serverError
+        case .decoding:
+            return .serverError
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .invalidCredentials: "이메일 또는 비밀번호가 맞지 않아요. 다시 확인해 주세요."
+        case .offline: "인터넷 연결이 끊겼어요. 연결을 확인하고 다시 시도해 주세요."
+        case .rateLimited: "로그인 시도가 많아요. 잠시 후 다시 시도해 주세요."
+        case .serverError: "로그인에 실패했어요. 잠시 후 다시 시도해 주세요."
+        }
+    }
+
+    var feedback: LoginViewController.Feedback {
+        switch self {
+        case .invalidCredentials: .invalidCredentials
+        case .offline: .offline
+        case .rateLimited, .serverError: .serverError
+        }
+    }
+}
+
 @MainActor
 final class LoginViewController: UIViewController, UITextFieldDelegate {
     enum Feedback {
         case none
         case invalidCredentials
         case offline
+        case serverError
         case loading
     }
 
@@ -27,6 +66,7 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     let emailGroup = UIStackView()
     let passwordGroup = UIStackView()
     let errorRow = UIStackView()
+    let errorRowLabel = UILabel()
     let keepRow = UIStackView()
     let keepRowSpacer = UIView()
     let keepCheckbox = UIButton(type: .system)
@@ -34,6 +74,8 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     let loginButton = UIButton(type: .system)
     let signupRow = UIStackView()
     let offlineBanner = UIStackView()
+    let offlineBannerIcon = UIImageView()
+    let offlineBannerLabel = UILabel()
     let sheetTopGuide = UILayoutGuide()
     var sheetTopConstraint: NSLayoutConstraint!
     var fullTopConstraint: NSLayoutConstraint!
@@ -48,6 +90,7 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     var titleGroupHeightConstraint: NSLayoutConstraint!
     var titleTopSpacerHeightConstraint: NSLayoutConstraint!
     var feedback: Feedback = .none
+    var loginFailure: LoginFailure?
     var mode: LayoutMode = .sheet
     var keepSignedIn = UserDefaults.standard.object(forKey: "auth.keepSignedIn") as? Bool ?? true
     var keyboardObserver: NSObjectProtocol?
@@ -113,10 +156,10 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         heroTitleLabel.isHidden = newMode != .sheet
         bottomSpacer.isHidden = newMode != .full
         errorRow.isHidden = feedback != .invalidCredentials
-        offlineBanner.isHidden = feedback != .offline
+        offlineBanner.isHidden = feedback != .offline && feedback != .serverError
         sheet.layer.cornerRadius = newMode == .sheet ? 28 : 0
         sheet.layer.shadowOpacity = newMode == .sheet ? 0.06 : 0
-        sheetStackTopConstraint.constant = newMode == .sheet ? 12 : (feedback == .offline ? 64 : 8)
+        sheetStackTopConstraint.constant = newMode == .sheet ? 12 : (showsFailureBanner ? 64 : 8)
         titleTopSpacerHeightConstraint.constant = newMode == .sheet ? 0 : 8
         titleGroupHeightConstraint.constant = newMode == .sheet ? 54 : 66
         titleGroup.layoutIfNeeded()
@@ -125,6 +168,8 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     }
 
     func applyFeedback() {
+        offlineBannerIcon.image = UIImage(systemName: feedback == .offline ? "wifi.slash" : "exclamationmark.triangle")
+        offlineBannerLabel.text = loginFailure?.message ?? feedbackMessage
         switch feedback {
         case .none:
             setLayoutMode(.sheet)
@@ -140,9 +185,14 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
             passwordField.layer.borderColor = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1).cgColor
         case .offline:
             setLayoutMode(.full)
-            loginButton.isEnabled = false
-            loginButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 0.38)
-            loginButton.setTitle("로그인", for: .normal)
+            loginButton.isEnabled = true
+            loginButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+            loginButton.setTitle("다시 시도", for: .normal)
+        case .serverError:
+            setLayoutMode(.full)
+            loginButton.isEnabled = true
+            loginButton.backgroundColor = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
+            loginButton.setTitle("다시 시도", for: .normal)
         case .loading:
             setLayoutMode(.full)
             loginButton.isEnabled = false
@@ -151,7 +201,7 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         }
         passwordGroupHeightConstraint.constant = feedback == .invalidCredentials ? 103 : 80
         errorRow.isHidden = feedback != .invalidCredentials
-        offlineBanner.isHidden = feedback != .offline
+        offlineBanner.isHidden = feedback != .offline && feedback != .serverError
     }
 
     @objc func toggleKeepSignedIn() {
@@ -166,10 +216,12 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
               email.contains("@"),
               !(passwordField.text ?? "").isEmpty else {
             feedback = .invalidCredentials
+            loginFailure = .invalidCredentials
+            errorRowLabel.text = LoginFailure.invalidCredentials.message
             applyFeedback()
             return
         }
-        guard feedback != .offline else { return }
+        loginFailure = nil
         feedback = .loading
         applyFeedback()
         guard !loginPreviewIsStatic else { return }
@@ -181,9 +233,25 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
                 AuthSessionRouter.showHome()
             } catch {
                 guard let self else { return }
-                self.feedback = (error as? APIError) == .network ? .offline : .invalidCredentials
+                let failure = LoginFailure.classify(error)
+                self.loginFailure = failure
+                self.feedback = failure.feedback
+                self.errorRowLabel.text = failure.message
                 self.applyFeedback()
             }
+        }
+    }
+
+    private var showsFailureBanner: Bool {
+        feedback == .offline || feedback == .serverError
+    }
+
+    private var feedbackMessage: String {
+        switch feedback {
+        case .offline: LoginFailure.offline.message
+        case .serverError: LoginFailure.serverError.message
+        case .invalidCredentials: LoginFailure.invalidCredentials.message
+        case .none, .loading: ""
         }
     }
 
@@ -197,6 +265,7 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
         feedback = .none
+        loginFailure = nil
         errorRow.isHidden = true
         let focused = UIColor(red: 142 / 255, green: 193 / 255, blue: 255 / 255, alpha: 1).cgColor
         let normal = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor

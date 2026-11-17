@@ -78,12 +78,12 @@ extension LoginViewController {
         errorIcon.tintColor = UIColor(red: 235 / 255, green: 76 / 255, blue: 93 / 255, alpha: 1)
         errorIcon.widthAnchor.constraint(equalToConstant: 14).isActive = true
         errorIcon.heightAnchor.constraint(equalToConstant: 14).isActive = true
-        let errorLabel = UILabel()
-        errorLabel.text = "이메일 또는 비밀번호가 맞지 않아요. 다시 확인해 주세요."
-        errorLabel.font = .systemFont(ofSize: 12)
-        errorLabel.textColor = errorIcon.tintColor
+        errorRowLabel.text = "이메일 또는 비밀번호가 맞지 않아요. 다시 확인해 주세요."
+        errorRowLabel.font = .systemFont(ofSize: 12)
+        errorRowLabel.textColor = errorIcon.tintColor
+        errorRowLabel.numberOfLines = 1
         errorRow.addArrangedSubview(errorIcon)
-        errorRow.addArrangedSubview(errorLabel)
+        errorRow.addArrangedSubview(errorRowLabel)
         errorRow.isHidden = true
         errorRow.heightAnchor.constraint(equalToConstant: 16).isActive = true
     }
@@ -259,17 +259,16 @@ extension LoginViewController {
         offlineBanner.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
         offlineBanner.backgroundColor = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
         offlineBanner.layer.cornerRadius = 12
-        let icon = UIImageView(image: UIImage(systemName: "wifi.slash"))
-        icon.tintColor = .white
-        icon.widthAnchor.constraint(equalToConstant: 14).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 14).isActive = true
-        let label = UILabel()
-        label.text = "인터넷 연결이 끊겼어요. 연결되면 다시 로그인할 수 있어요."
-        label.font = .systemFont(ofSize: 10, weight: .medium)
-        label.textColor = .white
-        label.numberOfLines = 1
-        offlineBanner.addArrangedSubview(icon)
-        offlineBanner.addArrangedSubview(label)
+        offlineBannerIcon.image = UIImage(systemName: "wifi.slash")
+        offlineBannerIcon.tintColor = .white
+        offlineBannerIcon.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        offlineBannerIcon.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        offlineBannerLabel.text = "인터넷 연결이 끊겼어요. 연결을 확인하고 다시 시도해 주세요."
+        offlineBannerLabel.font = .systemFont(ofSize: 10, weight: .medium)
+        offlineBannerLabel.textColor = .white
+        offlineBannerLabel.numberOfLines = 1
+        offlineBanner.addArrangedSubview(offlineBannerIcon)
+        offlineBanner.addArrangedSubview(offlineBannerLabel)
         offlineBanner.isHidden = true
         offlineBanner.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(offlineBanner)
