@@ -14,6 +14,7 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
     private var offset: CGFloat = 0
     private weak var metadataLabel: UILabel?
     private var contentInsetConstraints: [NSLayoutConstraint] = []
+    private var contentTrailingConstraint: NSLayoutConstraint?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -54,12 +55,17 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
 
     func setRevealed(_ revealed: Bool, animated: Bool) {
         offset = revealed ? -revealWidth : 0
-        let changes = { self.contentButton.transform = CGAffineTransform(translationX: self.offset, y: 0) }
+        let changes = { self.applyOffset(self.offset) }
         if animated {
             UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut], animations: changes)
         } else {
             changes()
         }
+    }
+
+    private func applyOffset(_ value: CGFloat) {
+        contentTrailingConstraint?.constant = value
+        layoutIfNeeded()
     }
 
     func setSwipeLayout(_ isSwiping: Bool) {
@@ -94,10 +100,13 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
         NSLayoutConstraint.activate([
             contentButton.topAnchor.constraint(equalTo: topAnchor),
             contentButton.leadingAnchor.constraint(equalTo: leadingAnchor),
-            contentButton.trailingAnchor.constraint(equalTo: trailingAnchor),
             contentButton.bottomAnchor.constraint(equalTo: bottomAnchor),
             heightAnchor.constraint(greaterThanOrEqualToConstant: 48)
         ])
+
+        let trailing = contentButton.trailingAnchor.constraint(equalTo: trailingAnchor)
+        trailing.isActive = true
+        contentTrailingConstraint = trailing
 
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
         pan.delegate = self
@@ -112,7 +121,7 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
             onBeginSwipe?()
         case .changed:
             offset = min(0, max(-revealWidth, startOffset + translation))
-            contentButton.transform = CGAffineTransform(translationX: offset, y: 0)
+            applyOffset(offset)
         case .ended, .cancelled, .failed:
             let isRevealed = offset <= -revealWidth / 2
             setRevealed(isRevealed, animated: true)

@@ -206,7 +206,7 @@ extension HistoryViewController {
             if isSearching {
                 let emptyState = makeNoSearchResultsState()
                 resultsStack.addArrangedSubview(emptyState)
-                emptyState.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.55)
+                emptyState.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -166)
                     .isActive = true
             } else {
                 resultsStack.addArrangedSubview(AppStyle.label("대화 기록이 없어요", size: 14, color: AppStyle.muted))

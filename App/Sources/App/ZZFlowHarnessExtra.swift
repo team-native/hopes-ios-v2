@@ -43,6 +43,50 @@
         CommunityPostStore.shared.markPostPublished(board: "10기")
         return CommunityViewController()
       },
+      "historynone": {
+        let controller = HistoryViewController()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+          controller.searchField.text = "축제"
+          controller.renderConversations()
+        }
+        return controller
+      },
+      "historyswipe": {
+        let controller = HistoryViewController()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+          (controller.view.firstDescendant(type: ConversationRowView.self))?.setRevealed(true, animated: false)
+        }
+        return controller
+      },
+      "historydelete": {
+        let controller = HistoryViewController()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+          controller.confirmDeletion(of: controller.conversations[0], from: nil)
+        }
+        return controller
+      },
+      "announcement": { AnnouncementDetailViewController() },
+      "profilesaved": {
+        UserProfileStore.shared.markProfileSaved()
+        return MyPageViewController()
+      },
+      "profilekb": {
+        let controller = EditProfileViewController()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { controller.introductionView.becomeFirstResponder() }
+        return controller
+      },
+      "promptkb": {
+        let controller = AIAnswerStyleViewController()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { controller.promptView.becomeFirstResponder() }
+        return controller
+      },
+      "logout": {
+        let controller = SettingsViewController()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+          (controller.view.firstDescendant(id: "settings-logout") as? UIButton)?.sendActions(for: .touchUpInside)
+        }
+        return controller
+      },
       "postedit": { CommunityPostEditViewController(post: CommunityPostStore.shared.myPosts[0]) },
       "reportdone": {
         let controller = CommunityPostDetailViewController(post: CommunityPostStore.shared.posts[0])
@@ -93,6 +137,14 @@
   }
 
   extension UIView {
+    func firstDescendant<T: UIView>(type: T.Type) -> T? {
+      if let match = self as? T { return match }
+      for child in subviews {
+        if let match = child.firstDescendant(type: type) { return match }
+      }
+      return nil
+    }
+
     func firstDescendant(id: String) -> UIView? {
       if accessibilityIdentifier == id { return self }
       for child in subviews {

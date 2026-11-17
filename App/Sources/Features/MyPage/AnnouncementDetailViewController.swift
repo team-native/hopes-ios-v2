@@ -8,6 +8,11 @@ final class AnnouncementDetailViewController: AppPageViewController {
         hidesBottomBarWhenPushed = true
         navigationController?.setNavigationBarHidden(true, animated: false)
         contentStack.spacing = 16
+        if let topConstraint = scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .top
+        }) {
+            topConstraint.constant = 8
+        }
         addHeader()
         addAnnouncementCard()
     }
@@ -58,7 +63,12 @@ final class AnnouncementDetailViewController: AppPageViewController {
 
         let title = AppStyle.label("답변 데이터 업데이트 완료", size: 22, weight: .bold)
         title.numberOfLines = 0
-        let date = AppStyle.label("2026.11.12", size: 12, color: AppStyle.muted)
+        title.attributedText = NSAttributedString(string: "답변 데이터 업데이트 완료", attributes: [
+            .font: UIFont.systemFont(ofSize: 22, weight: .bold), .foregroundColor: AppStyle.ink, .kern: -0.3,
+            .paragraphStyle: Self.lineStyle(30)
+        ])
+        let date = AppStyle.label("2026.11.12", size: 12,
+            color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
 
         let divider = UIView()
         divider.backgroundColor = AppStyle.line
@@ -85,8 +95,6 @@ final class AnnouncementDetailViewController: AppPageViewController {
     }
 
     private func announcementBody() -> NSAttributedString {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.lineSpacing = 4
         let text = "선배 답변 데이터가 업데이트됐어요. 학과·전공별 추천 질문이 더 정확해지고, "
             + "기숙사·입학 관련 답변이 최신 내용으로 바뀌었어요.\n\n"
             + "이용 중 불편한 점은 마이페이지 > 문의하기로 알려 주세요."
@@ -95,8 +103,16 @@ final class AnnouncementDetailViewController: AppPageViewController {
             attributes: [
                 .font: UIFont.systemFont(ofSize: 15),
                 .foregroundColor: AppStyle.ink,
-                .paragraphStyle: paragraph
+                .kern: -0.1,
+                .paragraphStyle: Self.lineStyle(24)
             ]
         )
+    }
+
+    private static func lineStyle(_ height: CGFloat) -> NSParagraphStyle {
+        let style = NSMutableParagraphStyle()
+        style.minimumLineHeight = height
+        style.maximumLineHeight = height
+        return style
     }
 }
