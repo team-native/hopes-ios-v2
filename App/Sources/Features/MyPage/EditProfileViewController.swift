@@ -340,8 +340,8 @@ extension EditProfileViewController {
             heightConstraint,
             scrollBottomConstraint
         ])
-        let bottomConstraint = saveButton.bottomAnchor.constraint(equalTo: view.bottomAnchor,
-            constant: -AppStyle.bottomActionInset)
+        let bottomConstraint = saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+            constant: -12)
         bottomConstraint.isActive = true
         saveButtonBottomConstraint = bottomConstraint
     }
