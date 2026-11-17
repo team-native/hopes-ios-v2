@@ -72,7 +72,7 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     let keepCheckbox = UIButton(type: .system)
     let forgotButton = UIButton(type: .system)
     let loginButton = UIButton(type: .system)
-    let signupRow = UIStackView()
+    let signupRow = TouchExpandingStackView()
     let offlineBanner = UIStackView()
     let offlineBannerIcon = UIImageView()
     let offlineBannerLabel = UILabel()

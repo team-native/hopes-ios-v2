@@ -227,6 +227,9 @@ extension LoginViewController {
         signupButton.setTitleColor(UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1), for: .normal)
         signupButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         signupButton.addTarget(self, action: #selector(openSignUp), for: .touchUpInside)
+        signupButton.accessibilityIdentifier = "login-signup"
+        signupRow.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openSignUp)))
+        signupRow.accessibilityIdentifier = "login-signup-row"
         signupRow.axis = .horizontal
         signupRow.alignment = .center
         signupRow.spacing = 8
