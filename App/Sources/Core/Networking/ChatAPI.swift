@@ -32,6 +32,7 @@ struct SendMessagePayload: Encodable {
     let departmentId: Int64?
     let specialtyId: Int64?
     let clientRequestId: String
+    var specialtyIds: [Int64]?
 }
 
 enum ChatAPI {
