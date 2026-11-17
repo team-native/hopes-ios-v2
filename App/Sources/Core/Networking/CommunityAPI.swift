@@ -34,6 +34,10 @@ struct MyCommentDTO: Decodable {
     let createdAt: String
 }
 
+struct ItemsDTO<Item: Decodable>: Decodable {
+    let items: [Item]
+}
+
 struct PageDTO<Item: Decodable>: Decodable {
     let items: [Item]
     let hasNext: Bool
@@ -57,7 +61,8 @@ enum CommunityAPI {
     private static let base = "/api/community"
 
     static func boards() async throws -> [BoardDTO] {
-        try await client.send("GET", "\(base)/boards", authenticated: true)
+        let response: ItemsDTO<BoardDTO> = try await client.send("GET", "\(base)/boards", authenticated: true)
+        return response.items
     }
 
     static func posts() async throws -> PageDTO<PostPreviewDTO> {
