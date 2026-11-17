@@ -6,8 +6,6 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
     let bodyView = UITextView()
     let fieldBorderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     let bodyPlaceholder = "내용을 입력하세요"
-    let bodySample = "3층 끝방인데 저녁만 되면 너무 느려져서…"
-    var isShowingBodySample = true
     var selectedBoard = "10기"
     let boardValue = AppStyle.label("10기", size: 15, weight: .medium)
     let titleErrorLabel = AppStyle.label("", size: 12, color: .systemRed)
@@ -42,7 +40,10 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
         header.addArrangedSubview(registerButton)
         contentStack.addArrangedSubview(makeRegistrationErrorBanner())
         configureFormFields()
-        let notice = makePrivacyNotice()
+        let notice = CommunityFormViews.privacyNotice()
+        let spacer = CommunityFormViews.flexibleSpacer()
+        contentStack.addArrangedSubview(spacer)
+        contentStack.setCustomSpacing(0, after: spacer)
         contentStack.addArrangedSubview(notice)
         keyboardLayout = CommunityWriteKeyboardLayout(
             view: view,
@@ -51,6 +52,8 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
             bodyView: bodyView,
             privacyNotice: notice
         )
+        keyboardLayout?.minimumContentHeight = CommunityFormViews.pinToBottom(contentStack, in: scrollView,
+            safeArea: view.safeAreaLayoutGuide, minimumOffset: 67)
         view.accessibilityIdentifier = "community-write-screen"
     }
 
@@ -169,8 +172,8 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
 
     private func configureTitleField() {
         titleField.attributedPlaceholder = NSAttributedString(
-            string: "기숙사 와이파이 다들 잘 돼?",
-            attributes: [.foregroundColor: AppStyle.ink]
+            string: "제목",
+            attributes: [.foregroundColor: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)]
         )
         titleField.font = .systemFont(ofSize: 15)
         titleField.textColor = AppStyle.ink
@@ -205,40 +208,14 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
 
     private func configureBodyView() {
         bodyView.font = .systemFont(ofSize: 15)
-        bodyView.textColor = AppStyle.ink
-        bodyView.text = bodySample
+        bodyView.textColor = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+        bodyView.text = bodyPlaceholder
         bodyView.backgroundColor = .white
         bodyView.layer.cornerRadius = 16
         bodyView.layer.borderWidth = 1
         bodyView.layer.borderColor = fieldBorderColor.cgColor
         bodyView.textContainerInset = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
         bodyView.delegate = self
-    }
-
-    private func makePrivacyNotice() -> UIView {
-        let lock = UIImageView(image: UIImage(named: "community-write-lock-icon")?.withRenderingMode(.alwaysOriginal))
-        lock.widthAnchor.constraint(equalToConstant: 18).isActive = true
-        lock.heightAnchor.constraint(equalToConstant: 18).isActive = true
-        let messageText = "작성자는 기수만 표시돼요. 이름·학번은 다른 사용자에게 공개되지 않아요."
-        let message = AppStyle.label(messageText, size: 12, color: UIColor(red: 107 / 255, green: 120 / 255,
-            blue: 144 / 255, alpha: 1))
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.minimumLineHeight = 16
-        paragraphStyle.maximumLineHeight = 16
-        message.attributedText = NSAttributedString(string: messageText, attributes: [
-            .font: UIFont.systemFont(ofSize: 12),
-            .foregroundColor: UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1),
-            .paragraphStyle: paragraphStyle
-        ])
-        let notice = UIStackView(arrangedSubviews: [lock, message])
-        notice.axis = .horizontal
-        notice.alignment = .top
-        notice.spacing = 8
-        notice.isLayoutMarginsRelativeArrangement = true
-        notice.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
-        notice.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
-        notice.layer.cornerRadius = 16
-        return notice
     }
 
     private func makeRegistrationErrorBanner() -> UIStackView {
@@ -265,10 +242,9 @@ final class CommunityWriteViewController: AppPageViewController, UITextViewDeleg
 @MainActor
 extension CommunityWriteViewController {
     func textViewDidBeginEditing(_ textView: UITextView) {
-        if isShowingBodySample || textView.text == bodyPlaceholder {
+        if textView.text == bodyPlaceholder {
             textView.text = ""
             textView.textColor = AppStyle.ink
-            isShowingBodySample = false
         }
         if bodyErrorRow?.isHidden != false {
             bodyView.layer.borderColor = AppStyle.blue.withAlphaComponent(0.55).cgColor
@@ -278,7 +254,7 @@ extension CommunityWriteViewController {
     func textViewDidEndEditing(_ textView: UITextView) {
         if textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             textView.text = bodyPlaceholder
-            textView.textColor = AppStyle.muted
+            textView.textColor = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
         }
         let borderColor = bodyErrorRow?.isHidden == false ? UIColor.systemRed.cgColor : fieldBorderColor.cgColor
         bodyView.layer.borderColor = borderColor
@@ -297,7 +273,7 @@ extension CommunityWriteViewController {
     @objc private func cancel() {
         let titleHasDraft = !(titleField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let bodyHasDraft = !bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            bodyView.text != bodyPlaceholder && !isShowingBodySample
+            bodyView.text != bodyPlaceholder
         let hasDraft = titleHasDraft || bodyHasDraft
         guard hasDraft else {
             navigationController?.popViewController(animated: true)
@@ -332,7 +308,7 @@ extension CommunityWriteViewController {
         let bodyText = bodyView.text == bodyPlaceholder
             ? ""
             : bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let bodyIsEmpty = bodyText.isEmpty || isShowingBodySample
+        let bodyIsEmpty = bodyText.isEmpty
         setTitleError(titleText.isEmpty)
         setBodyError(bodyIsEmpty)
         guard !titleText.isEmpty, !bodyIsEmpty else {
