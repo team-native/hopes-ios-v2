@@ -38,6 +38,7 @@ final class CommunityPostStore {
         CommunityComment(board: "10기", postTitle: "전공 프로젝트 준비 팁", text: "작게라도 먼저 만들어보는 걸 추천해요.", time: "지난주")
     ]
     private var shouldShowPublishedToast = false
+    private var publishedBoard: String?
     var reportedPostKeys = Set<String>()
     var reportedCommentIDs = Set<Int64>()
     var boards: [BoardDTO] = []
@@ -66,13 +67,17 @@ final class CommunityPostStore {
         hasLoadedFromServer = false
     }
 
-    func markPostPublished() {
+    func markPostPublished(board: String) {
         shouldShowPublishedToast = true
+        publishedBoard = board
     }
 
-    func consumePublishedToast() -> Bool {
-        defer { shouldShowPublishedToast = false }
-        return shouldShowPublishedToast
+    func consumePublishedBoard() -> String? {
+        defer {
+            shouldShowPublishedToast = false
+            publishedBoard = nil
+        }
+        return shouldShowPublishedToast ? (publishedBoard ?? "전체") : nil
     }
 
     func hasReported(_ post: CommunityPost) -> Bool {

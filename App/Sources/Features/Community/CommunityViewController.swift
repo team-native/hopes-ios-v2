@@ -95,8 +95,12 @@ final class CommunityViewController: AppPageViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
         if isViewLoaded {
-            renderPosts()
-            if CommunityPostStore.shared.consumePublishedToast() { showPublishToast() }
+            if let board = CommunityPostStore.shared.consumePublishedBoard() {
+                selectBoard(board)
+                showPublishToast()
+            } else {
+                renderPosts()
+            }
         }
         refreshPosts()
     }
@@ -294,7 +298,7 @@ extension CommunityViewController {
         view.addSubview(toast)
         NSLayoutConstraint.activate([
             toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            toast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            toast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40)
         ])
         presentToast(toast)
     }

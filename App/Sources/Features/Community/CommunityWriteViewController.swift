@@ -270,6 +270,11 @@ extension CommunityWriteViewController {
         setTitleError(false)
     }
 
+    func showRegistrationFailure() {
+        registrationErrorBanner?.isHidden = false
+        keyboardLayout?.setRegistrationFailure(true)
+    }
+
     @objc private func cancel() {
         let titleHasDraft = !(titleField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let bodyHasDraft = !bodyView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
@@ -317,7 +322,7 @@ extension CommunityWriteViewController {
         let store = CommunityPostStore.shared
         guard store.isServerBacked else {
             store.add(title: titleText, body: bodyText, category: "질문", grade: selectedBoard)
-            store.markPostPublished()
+            store.markPostPublished(board: selectedBoard)
             navigationController?.popViewController(animated: true)
             return
         }
@@ -330,11 +335,10 @@ extension CommunityWriteViewController {
                 }
                 try await CommunityAPI.createPost(boardID: boardID, title: titleText, content: bodyText)
                 try? await store.refresh()
-                store.markPostPublished()
+                store.markPostPublished(board: self?.selectedBoard ?? "전체")
                 self?.navigationController?.popViewController(animated: true)
             } catch {
-                self?.registrationErrorBanner?.isHidden = false
-                self?.keyboardLayout?.setRegistrationFailure(true)
+                self?.showRegistrationFailure()
             }
         }
     }
