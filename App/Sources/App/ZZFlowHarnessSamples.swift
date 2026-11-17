@@ -86,4 +86,11 @@ import CoreLocation
     }
   }
 
+@MainActor
+enum ZZCommunityFixture {
+    static var post: CommunityPost {
+        CommunityPost(grade: "10기", title: "검수용 게시글", body: "화면 검수용 샘플 내용입니다.",
+                      time: "방금", comments: 0, likes: 0, category: "질문")
+    }
+}
 #endif

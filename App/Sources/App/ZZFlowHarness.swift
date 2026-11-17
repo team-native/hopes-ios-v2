@@ -108,26 +108,26 @@
               }
             }
           },
-          "post": { CommunityPostDetailViewController(post: CommunityPostStore.shared.posts[0]) },
+          "post": { CommunityPostDetailViewController(post: ZZCommunityFixture.post) },
           "mypost": {
             CommunityPostDetailViewController(
-              post: CommunityPostStore.shared.myPosts[0], isMine: true)
+              post: ZZCommunityFixture.post, isMine: true)
           },
           "postmore": {
             let controller = CommunityPostDetailViewController(
-              post: CommunityPostStore.shared.posts[0])
+              post: ZZCommunityFixture.post)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { controller.showPostActions() }
             return controller
           },
           "mypostmore": {
             let controller = CommunityPostDetailViewController(
-              post: CommunityPostStore.shared.myPosts[0], isMine: true)
+              post: ZZCommunityFixture.post, isMine: true)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { controller.showPostActions() }
             return controller
           },
           "report": {
             let controller = CommunityPostDetailViewController(
-              post: CommunityPostStore.shared.posts[0])
+              post: ZZCommunityFixture.post)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
               controller.present(CommunityReportFlowViewController(), animated: false)
             }
@@ -149,7 +149,7 @@
           },
           "commentfail": {
             let controller = CommunityPostDetailViewController(
-              post: CommunityPostStore.shared.posts[0])
+              post: ZZCommunityFixture.post)
             controller.shouldSimulateCommentFailure = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
               controller.commentField.text = "저녁엔 3층도 느려요"
