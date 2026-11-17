@@ -284,7 +284,7 @@ extension ChatConversationViewController {
         return button
     }
 
-    func addRelatedQuestions() {
+    func addRelatedQuestions(_ questions: [String] = ["포트폴리오는 언제부터 만들었어?", "전공 동아리 들어가려면 뭐 준비해?"]) {
         let card = AppStyle.card()
         card.layer.cornerRadius = 24
         card.layer.borderColor = ChatDetailPalette.border.cgColor
@@ -300,7 +300,6 @@ extension ChatConversationViewController {
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 17, leading: 17, bottom: 9, trailing: 17)
         applyLineHeight(heading, lineHeight: 24, height: 24)
         content.addArrangedSubview(heading)
-        let questions = ["포트폴리오는 언제부터 만들었어?", "전공 동아리 들어가려면 뭐 준비해?"]
         for (index, question) in questions.enumerated() {
             content.addArrangedSubview(makeRelatedQuestionButton(question))
             if index < questions.count - 1 {
@@ -355,8 +354,9 @@ extension ChatConversationViewController {
         button.heightAnchor.constraint(equalToConstant: 48).isActive = true
         button.accessibilityLabel = question
         button.addAction(UIAction { [weak self] _ in
-            self?.addUserMessage(question)
-            self?.addMessage("질문을 기록했어요. 실제 답변은 서버 연결 후 표시됩니다.", outgoing: false)
+            guard let self, self.inputField.isEnabled else { return }
+            self.inputField.text = question
+            self.sendMessage()
         }, for: .touchUpInside)
         return button
     }
