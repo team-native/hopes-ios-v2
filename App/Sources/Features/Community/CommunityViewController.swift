@@ -336,6 +336,12 @@ extension CommunityViewController {
             selectFilterAppearance()
             return
         }
+        if CommunityPostStore.shared.isServerBacked && !CommunityPostStore.shared.hasLoadedFromServer {
+            writeButton?.isHidden = true
+            (0..<3).forEach { _ in postStack.addArrangedSubview(Self.makeSkeletonCard()) }
+            selectFilterAppearance()
+            return
+        }
         let visiblePosts = CommunityPostStore.shared.posts.filter { selectedBoard == "전체" || $0.grade == selectedBoard }
         if visiblePosts.isEmpty {
             writeButton?.isHidden = true
