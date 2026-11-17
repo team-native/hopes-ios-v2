@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate:
     name: Generate, lint, and build
-    runs-on: macos-15
+    runs-on: xcode-27
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -49,7 +49,22 @@ jobs:
 
       - name: Run screen entry regression tests
         run: |
-          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(v["udid"] for k,vs in d["devices"].items() if "iOS" in k for v in vs if "iPhone" in v["name"]))')
+          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, re, sys
+          devices = json.load(sys.stdin)["devices"]
+          runtimes = sorted([
+              (tuple(map(int, re.findall(r"\d+", runtime))), runtime)
+              for runtime in devices
+              if runtime.startswith("iOS ") and tuple(map(int, re.findall(r"\d+", runtime))) >= (27, 0)
+          ], reverse=True)
+          for _, runtime in runtimes:
+              simulator = next((device for device in devices[runtime] if device["name"] == "iPhone 17e"), None)
+              if simulator:
+                  print(simulator["udid"])
+                  break
+          else:
+              raise SystemExit("No iOS 27 iPhone 17e simulator is available")
+          ')
           xcodebuild \
             -project Hopes.xcodeproj \
             -scheme Hopes \

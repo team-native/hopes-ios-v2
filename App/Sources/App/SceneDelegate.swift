@@ -51,7 +51,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         KeyboardDismissGesture.shared.install(on: window)
         self.window = window
-        (UIApplication.shared.delegate as? AppDelegate)?.window = window
         window.makeKeyAndVisible()
     }
 
@@ -61,8 +60,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
-        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-              appDelegate.window === window else { return }
-        appDelegate.window = nil
+        window = nil
     }
 }
