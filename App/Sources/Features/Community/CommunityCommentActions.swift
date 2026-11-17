@@ -166,11 +166,7 @@ extension CommunityPostDetailViewController {
     func toggleLike() {
         liked.toggle()
         likes += liked ? 1 : -1
-        let color = liked ? AppStyle.blue : UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)
-        let image = UIImage(systemName: liked ? "heart.fill" : "heart")?.withTintColor(color,
-            renderingMode: .alwaysOriginal)
-        likeButton.setImage(image, for: .normal)
-        likeButton.setTitle(" \(likes)", for: .normal)
+        applyLikeAppearance()
         if let id = post.id {
             let liked = liked
             CommunityPostStore.shared.syncWithServer { try await CommunityAPI.setLike(postID: id, liked: liked) }

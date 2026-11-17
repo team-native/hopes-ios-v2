@@ -30,6 +30,7 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
         self.post = post
         self.isMine = isMine
         likes = post.likes
+        liked = post.likedByMe
         super.init(nibName: nil, bundle: nil)
         hidesBottomBarWhenPushed = true
     }
