@@ -88,7 +88,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
-        tabBarController?.tabBar.isHidden = true
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -96,7 +95,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         view.endEditing(true)
         dismissSuccessToast()
         navigationController?.setNavigationBarHidden(false, animated: animated)
-        tabBarController?.tabBar.isHidden = false
     }
 
     override func viewDidDisappear(_ animated: Bool) {

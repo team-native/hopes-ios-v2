@@ -80,8 +80,14 @@ final class AppTabBarController: UITabBarController {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let shouldShowBar = !tabBar.isHidden
-        customBar.isHidden = !shouldShowBar
+        syncBarVisibility()
+    }
+
+    func syncBarVisibility() {
+        let navigation = selectedViewController as? UINavigationController
+        let showsRoot = (navigation?.viewControllers.count ?? 1) <= 1
+        tabBar.alpha = 0
+        customBar.isHidden = !showsRoot
         if let parent = tabBar.superview {
             parent.bringSubviewToFront(customBar)
         }
@@ -90,11 +96,16 @@ final class AppTabBarController: UITabBarController {
     private func configureNativeTabBarForNavigationCompatibility() {
         tabBar.alpha = 0
         tabBar.isUserInteractionEnabled = false
-        tabBar.backgroundColor = .white
+        let appearance = UITabBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.shadowColor = .clear
+        tabBar.standardAppearance = appearance
+        tabBar.scrollEdgeAppearance = appearance
     }
 
     private func configureCustomBar(for tabs: [TabItem]) {
         customBar.backgroundColor = .white
+        customBar.accessibilityIdentifier = "app-custom-tab-bar"
         customBar.translatesAutoresizingMaskIntoConstraints = false
         guard let parent = tabBar.superview else { return }
         parent.insertSubview(customBar, aboveSubview: tabBar)
@@ -174,7 +185,12 @@ final class AppTabBarController: UITabBarController {
     private func makeNavigationControllers(for tabs: [TabItem]) -> [UIViewController] {
         tabs.map { item in
             let navigation = AppNavigationController(rootViewController: item.controller)
-            navigation.tabBarItem = UITabBarItem(title: item.title, image: nil, tag: 0)
+            navigation.onDidShow = { [weak self] _ in
+                self?.syncBarVisibility()
+                DispatchQueue.main.async { self?.syncBarVisibility() }
+            }
+            navigation.tabBarItem = UITabBarItem(title: nil, image: nil, tag: 0)
+            navigation.tabBarItem.accessibilityLabel = item.title
             navigation.tabBarItem.accessibilityIdentifier = "tab-\(item.identifier)"
             return navigation
         }
@@ -213,5 +229,6 @@ final class AppTabBarController: UITabBarController {
 extension AppTabBarController: UITabBarControllerDelegate {
     func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
         updateSelection()
+        syncBarVisibility()
     }
 }
