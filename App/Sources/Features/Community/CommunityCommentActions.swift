@@ -44,34 +44,6 @@ extension CommunityPostDetailViewController {
         commentStack.addArrangedSubview(stack)
     }
 
-    func addFailedComment(text: String) -> UIStackView {
-        let author = AppStyle.label("10기 (나)", size: 12, weight: .medium, color: AppStyle.blue)
-        let status = AppStyle.label("· 전송 실패", size: 12, color: AppStyle.muted)
-        let retry = UIButton(type: .system)
-        retry.setTitle("· 다시 시도", for: .normal)
-        retry.setTitleColor(AppStyle.muted, for: .normal)
-        retry.titleLabel?.font = .systemFont(ofSize: 12)
-        let more = AppStyle.label("···", size: 14, color: AppStyle.muted)
-        let header = UIStackView(arrangedSubviews: [author, status, retry, UIView(), more])
-        header.axis = .horizontal
-        header.alignment = .center
-        header.spacing = 4
-
-        let textLabel = AppStyle.label(text, size: 14, color: UIColor(red: 0.94, green: 0.27, blue: 0.35, alpha: 1))
-        let card = UIStackView(arrangedSubviews: [header, textLabel])
-        card.axis = .vertical
-        card.spacing = 6
-        card.backgroundColor = .white
-        card.isLayoutMarginsRelativeArrangement = true
-        card.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 13, leading: 14, bottom: 13, trailing: 14)
-        commentStack.addArrangedSubview(card)
-        retry.addAction(UIAction { [weak self, weak card] _ in
-            guard let self, let card else { return }
-            self.retryFailedComment(text: text, card: card)
-        }, for: .touchUpInside)
-        return card
-    }
-
     func retryFailedComment(text: String, card: UIStackView) {
         commentStack.removeArrangedSubview(card)
         card.removeFromSuperview()
