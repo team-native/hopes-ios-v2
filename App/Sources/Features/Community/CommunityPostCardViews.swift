@@ -54,9 +54,7 @@ extension CommunityPostDetailViewController {
 
         let title = makeFigmaLabel(post.title, size: 18, weight: .medium, lineHeight: 26)
         titleLabel = title
-        let meta = AppStyle.label("\(post.authorCohort) · \(post.time)", size: 12, color: UIColor(red: 152 / 255,
-            green: 163 / 255, blue: 184 / 255, alpha: 1))
-        meta.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        let meta = makePostMeta()
         let body = makeFigmaLabel(post.detailBody ?? post.body, size: 15, lineHeight: 24)
         bodyLabel = body
 
@@ -99,11 +97,20 @@ extension CommunityPostDetailViewController {
         return card
     }
 
+    private func makePostMeta() -> UILabel {
+        let isOwnPost = isMine || post.isMine
+        let metaText = isOwnPost ? "\(post.authorCohort) (나) · \(post.time)" : "\(post.authorCohort) · \(post.time)"
+        let meta = AppStyle.label(metaText, size: 12, color: isOwnPost ? AppStyle.blue : UIColor(red: 152 / 255,
+            green: 163 / 255, blue: 184 / 255, alpha: 1))
+        meta.heightAnchor.constraint(equalToConstant: 16).isActive = true
+        return meta
+    }
+
     private func configureLikeButton() {
         likeButton.translatesAutoresizingMaskIntoConstraints = false
         likeButton.setImage(UIImage(named: "community-detail-heart-icon")?.withRenderingMode(.alwaysOriginal),
             for: .normal)
-        likeButton.setTitle("\(likes)", for: .normal)
+        likeButton.setTitle(" \(likes)", for: .normal)
         likeButton.setTitleColor(AppStyle.blue, for: .normal)
         likeButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         likeButton.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
@@ -133,7 +140,7 @@ extension CommunityPostDetailViewController {
         commentCountButton.translatesAutoresizingMaskIntoConstraints = false
         let image = UIImage(named: "community-detail-comment-icon")?.withRenderingMode(.alwaysOriginal)
         commentCountButton.setImage(image, for: .normal)
-        commentCountButton.setTitle("\(visibleCommentCount)", for: .normal)
+        commentCountButton.setTitle(" \(visibleCommentCount)", for: .normal)
         commentCountButton.setTitleColor(secondaryText, for: .normal)
         commentCountButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .regular)
         commentCountButton.backgroundColor = .white
@@ -151,7 +158,7 @@ extension CommunityPostDetailViewController {
 
     func updateCommentCount() {
         commentCountLabel?.text = "댓글 \(visibleCommentCount)"
-        commentCountButton.setTitle("\(visibleCommentCount)", for: .normal)
+        commentCountButton.setTitle(" \(visibleCommentCount)", for: .normal)
     }
 
     func makeMoreButton(identifier: String) -> UIButton {

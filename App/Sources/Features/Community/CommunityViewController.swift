@@ -342,6 +342,13 @@ extension CommunityViewController {
             addPlaceholder(makeEmptyState())
         } else {
             writeButton?.isHidden = false
+            if selectedBoard != "전체" {
+                let caption = AppStyle.label("\(selectedBoard) 게시판 · 다른 기수도 읽고 쓸 수 있어요", size: 12,
+                    color: UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1))
+                caption.heightAnchor.constraint(equalToConstant: 16).isActive = true
+                caption.accessibilityIdentifier = "community-board-caption"
+                postStack.addArrangedSubview(caption)
+            }
             visiblePosts.forEach { post in postStack.addArrangedSubview(makePostCard(post)) }
         }
         selectFilterAppearance()

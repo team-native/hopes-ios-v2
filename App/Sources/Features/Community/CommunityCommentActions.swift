@@ -198,7 +198,7 @@ extension CommunityPostDetailViewController {
         let image = UIImage(systemName: liked ? "heart.fill" : "heart")?.withTintColor(color,
             renderingMode: .alwaysOriginal)
         likeButton.setImage(image, for: .normal)
-        likeButton.setTitle("\(likes)", for: .normal)
+        likeButton.setTitle(" \(likes)", for: .normal)
         if let id = post.id {
             let liked = liked
             CommunityPostStore.shared.syncWithServer { try await CommunityAPI.setLike(postID: id, liked: liked) }
