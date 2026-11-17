@@ -90,10 +90,7 @@ final class CommunityActionSheetViewController: UIViewController, UIGestureRecog
     }
 
     private func makeContent() -> UIStackView {
-        let handle = UIView()
-        handle.backgroundColor = UIColor(red: 220 / 255, green: 230 / 255, blue: 244 / 255, alpha: 1)
-        handle.layer.cornerRadius = 2.5
-        handle.translatesAutoresizingMaskIntoConstraints = false
+        let handle = AppStyle.sheetHandle()
 
         let rows = UIStackView()
         rows.axis = .vertical
@@ -123,8 +120,6 @@ final class CommunityActionSheetViewController: UIViewController, UIGestureRecog
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 0, trailing: 20)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            handle.widthAnchor.constraint(equalToConstant: 44),
-            handle.heightAnchor.constraint(equalToConstant: 5),
             indicator.heightAnchor.constraint(equalToConstant: 21)
         ])
         return content
