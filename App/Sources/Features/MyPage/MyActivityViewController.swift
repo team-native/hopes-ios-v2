@@ -249,7 +249,7 @@ extension MyActivityViewController {
         card.layer.shadowOpacity = 0.05
         card.layer.shadowRadius = 4
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
-        card.addSubview(content)
+        card.addPassthroughSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: card.topAnchor),

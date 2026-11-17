@@ -121,7 +121,7 @@ extension ChatHomeViewController {
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
 
         let row = UIControl()
-        row.addSubview(content)
+        row.addPassthroughSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: row.topAnchor),
@@ -158,7 +158,7 @@ extension ChatHomeViewController {
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 13, leading: 17, bottom: 13, trailing: 17)
 
         let card = UIControl()
-        card.addSubview(content)
+        card.addPassthroughSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: card.topAnchor),
@@ -176,9 +176,15 @@ extension ChatHomeViewController {
         card.layer.shadowRadius = 8
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
         card.accessibilityLabel = question
+        card.accessibilityTraits = .button
+        card.accessibilityIdentifier = "chat-recommendation-card"
         card.addAction(UIAction { [weak self] _ in
-            self?.fillQuestion(question)
+            self?.startConversation(with: question)
         }, for: .touchUpInside)
+        card.addAction(UIAction { [weak content] _ in content?.alpha = 0.6 }, for: [.touchDown, .touchDragEnter])
+        card.addAction(UIAction { [weak content] _ in
+            UIView.animate(withDuration: 0.15) { content?.alpha = 1 }
+        }, for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit])
         return card
     }
 

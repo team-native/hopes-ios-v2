@@ -2,6 +2,12 @@ import UIKit
 
 @MainActor
 extension ChatHomeViewController {
+    func startConversation(with question: String) {
+        messageField.text = nil
+        messageField.resignFirstResponder()
+        navigationController?.pushViewController(ChatConversationViewController(question: question), animated: true)
+    }
+
     func fillQuestion(_ question: String) {
         messageField.text = question
         messageField.becomeFirstResponder()

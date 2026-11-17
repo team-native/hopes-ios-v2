@@ -28,7 +28,7 @@ final class ConversationRowView: UIView, UIGestureRecognizerDelegate {
     func configure(content: UIView, trashImage: UIImage?, metadataLabel: UILabel?) {
         self.metadataLabel = metadataLabel
         content.translatesAutoresizingMaskIntoConstraints = false
-        contentButton.addSubview(content)
+        contentButton.addPassthroughSubview(content)
         contentInsetConstraints = [
             content.topAnchor.constraint(equalTo: contentButton.topAnchor, constant: 12),
             content.leadingAnchor.constraint(equalTo: contentButton.leadingAnchor),

@@ -27,7 +27,7 @@ extension MyActivityViewController {
         content.axis = .vertical
         content.spacing = 6
         content.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(content)
+        card.addPassthroughSubview(content)
 
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),

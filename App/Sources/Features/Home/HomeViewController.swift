@@ -191,10 +191,7 @@ final class HomeViewController: AppPageViewController {
                 text: "“1학년 기숙사 평일 루틴 알려줘”",
                 style: tipStyle
             ) { [weak self] in
-                self?.openChatHome { chat in
-                    chat.navigationController?.pushViewController(
-                        ChatConversationViewController(question: "1학년 기숙사 평일 루틴 알려줘"), animated: true)
-                }
+                self?.openChatHome { $0.startConversation(with: "1학년 기숙사 평일 루틴 알려줘") }
             }
         ])
         tips.axis = .vertical

@@ -322,7 +322,7 @@ extension NotificationsViewController {
         content.spacing = 12
 
         let row = UIControl()
-        row.addSubview(content)
+        row.addPassthroughSubview(content)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: row.topAnchor, constant: 15),
