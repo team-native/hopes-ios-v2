@@ -43,11 +43,11 @@ enum AuthAPI {
         AccessTokenStore.shared.save(response.accessToken)
     }
 
-    static func login(email: String, password: String) async throws {
+    static func login(email: String, password: String, keepSignedIn: Bool = true) async throws {
         let response: TokenResponse = try await client.send(
             "POST", "/api/login", body: ["username": email, "password": password]
         )
-        AccessTokenStore.shared.save(response.accessToken)
+        AccessTokenStore.shared.save(response.accessToken, persistent: keepSignedIn)
     }
 
     static func requestPasswordResetCode(email: String) async throws {

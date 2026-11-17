@@ -231,9 +231,10 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
         applyFeedback()
         guard !loginPreviewIsStatic else { return }
         let password = passwordField.text ?? ""
+        let keepSignedIn = keepSignedIn
         Task { [weak self] in
             do {
-                try await AuthAPI.login(email: email, password: password)
+                try await AuthAPI.login(email: email, password: password, keepSignedIn: keepSignedIn)
                 await AuthAPI.syncProfile()
                 AuthSessionRouter.showHome()
             } catch {
