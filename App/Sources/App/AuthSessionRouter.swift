@@ -15,6 +15,7 @@ enum AuthSessionRouter {
     static func logOut() {
         Task { await AuthAPI.logout() }
         CommunityPostStore.shared.resetForNewSession()
+        UserProfileStore.shared.clearLocalData()
         replaceRoot(with: WelcomeViewController())
     }
 
