@@ -16,8 +16,9 @@ final class MyPageViewController: AppPageViewController {
     let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
     weak var statsCardView: UIView?
     var chatCount = 0
+    var displayedStatValues = [0, 0, 0]
     let secondary = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
-    private let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
+    let line = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1)
     let tertiary = UIColor(red: 152 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
     var profileAvatarLabel: UILabel?
     var profileNameLabel: UILabel?
@@ -47,6 +48,8 @@ final class MyPageViewController: AppPageViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
         refreshProfileSummary()
+        displayedStatValues = [0, 0, 0]
+        addStatsCard()
         guard AccessTokenStore.shared.hasToken else { return }
         Task { [weak self] in
             await AuthAPI.syncProfile()
@@ -173,58 +176,6 @@ extension MyPageViewController {
 
 @MainActor
 extension MyPageViewController {
-    func addStatsCard() {
-        let card = makeCard(cornerRadius: 24, shadowRadius: 10, shadowYOffset: 4)
-        let stats = UIStackView()
-        stats.axis = .horizontal
-        stats.alignment = .center
-        stats.distribution = .fill
-        stats.translatesAutoresizingMaskIntoConstraints = false
-        var statColumns: [UIView] = []
-        [
-            ("\(CommunityPostStore.shared.myPosts.count)", "작성글"),
-            ("\(CommunityPostStore.shared.myComments.count)", "댓글"),
-            ("\(chatCount)", "대화")
-        ].enumerated().forEach { index, value in
-            if index > 0 {
-                let divider = UIView()
-                divider.backgroundColor = line
-                divider.widthAnchor.constraint(equalToConstant: 1).isActive = true
-                divider.heightAnchor.constraint(equalToConstant: 36).isActive = true
-                stats.addArrangedSubview(divider)
-            }
-            let item = UIStackView(arrangedSubviews: [
-                styledLabel(value.0, size: 22, weight: .bold, color: ink, lineHeight: 30, kern: -0.3),
-                styledLabel(value.1, size: 12, color: secondary, lineHeight: 16)
-            ])
-            item.axis = .vertical
-            item.alignment = .center
-            item.spacing = 2
-            stats.addArrangedSubview(item)
-            statColumns.append(item)
-        }
-        NSLayoutConstraint.activate([
-            statColumns[0].widthAnchor.constraint(equalTo: statColumns[1].widthAnchor),
-            statColumns[1].widthAnchor.constraint(equalTo: statColumns[2].widthAnchor)
-        ])
-        card.addSubview(stats)
-        NSLayoutConstraint.activate([
-            card.heightAnchor.constraint(equalToConstant: 100),
-            stats.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
-            stats.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 8),
-            stats.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8),
-            stats.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14)
-        ])
-        if let old = statsCardView, let index = contentStack.arrangedSubviews.firstIndex(of: old) {
-            contentStack.removeArrangedSubview(old)
-            old.removeFromSuperview()
-            contentStack.insertArrangedSubview(card, at: index)
-        } else {
-            contentStack.addArrangedSubview(card)
-        }
-        statsCardView = card
-    }
-
     func addMenuCard() {
         let card = makeCard(cornerRadius: 24, shadowRadius: 10, shadowYOffset: 4)
         let rows = UIStackView()
