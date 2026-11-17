@@ -36,14 +36,14 @@ final class APIClient: @unchecked Sendable {
 
     private let baseURL: URL
     private let session: URLSession
-    private let tokenStore: AccessTokenStore
+    private let tokenStore: any AccessTokenStoring
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
     init(
         baseURL: URL = APIClient.productionBaseURL,
         session: URLSession = .shared,
-        tokenStore: AccessTokenStore = .shared
+        tokenStore: any AccessTokenStoring = AccessTokenStore.shared
     ) {
         self.baseURL = baseURL
         self.session = session
@@ -165,8 +165,8 @@ final class APIClient: @unchecked Sendable {
             let errorBody = try? decoder.decode(APIErrorBody.self, from: data)
             let message = errorBody?.message ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
             if http.statusCode == 401, authenticated {
-                tokenStore.clear()
                 if expiresSessionOnUnauthorized {
+                    tokenStore.clear()
                     await MainActor.run { AuthSessionRouter.notifySessionExpired() }
                 }
                 throw APIError.unauthorized(message: message)
