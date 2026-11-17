@@ -249,3 +249,36 @@ extension ChatConversationViewController {
         return button
     }
 }
+
+final class ChatAnswerCopyGesture: UILongPressGestureRecognizer {
+    private let markdown: String
+    private let onCopy: (String) -> Void
+
+    init(markdown: String, onCopy: @escaping (String) -> Void) {
+        self.markdown = markdown
+        self.onCopy = onCopy
+        super.init(target: nil, action: nil)
+        addTarget(self, action: #selector(handle))
+    }
+
+    @objc private func handle() {
+        guard state == .began else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        onCopy(Self.plainText(from: markdown))
+    }
+
+    static func plainText(from markdown: String) -> String {
+        ChatMarkdownParser.parse(markdown).map { block in
+            switch block {
+            case let .heading(text), let .paragraph(text), let .quote(text): text
+            case let .orderedList(items): items.enumerated().map { "\($0.offset + 1). \($0.element)" }
+                .joined(separator: "\n")
+            case let .bulletList(items): items.map { "• \($0)" }.joined(separator: "\n")
+            case let .code(_, text): text
+            case let .link(title, url): "\(title) \(url.absoluteString)"
+            }
+        }
+        .joined(separator: "\n\n")
+        .replacingOccurrences(of: "**", with: "")
+    }
+}
