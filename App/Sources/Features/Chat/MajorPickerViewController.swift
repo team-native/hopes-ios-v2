@@ -2,15 +2,15 @@ import UIKit
 
 @MainActor
 final class MajorPickerViewController: ChatContextPickerSheetViewController {
-    var onComplete: ((String?) -> Void)?
+    var onComplete: (([String]) -> Void)?
 
     private let options = ["iOS", "Android", "Frontend", "Backend", "AI", "IoT", "DevOps", "Design", "기타"]
-    private var selectedMajor: String?
+    private(set) var selectedMajors: [String]
     private var optionButtons: [String: UIButton] = [:]
 
-    init(selectedMajor: String?) {
-        self.selectedMajor = selectedMajor
-        super.init(title: "전공 선택", subtitle: "관심 전공을 고르면 그에 맞는 질문을 추천해 드려요.", sheetHeight: 304)
+    init(selectedMajors: [String]) {
+        self.selectedMajors = selectedMajors
+        super.init(title: "전공 선택", subtitle: "관심 전공을 여러 개 고르면 그에 맞는 질문을 추천해 드려요.", sheetHeight: 304)
     }
 
     required init?(coder: NSCoder) {
@@ -41,10 +41,10 @@ final class MajorPickerViewController: ChatContextPickerSheetViewController {
 
     override func makeActionsView() -> UIView {
         let clear = makePickerAction(title: "선택 해제", primary: false) { [weak self] in
-            self?.completeSelection(nil)
+            self?.completeSelection([])
         }
         let done = makePickerAction(title: "완료", primary: true) { [weak self] in
-            self?.completeSelection(self?.selectedMajor)
+            self?.completeSelection(self?.selectedMajors ?? [])
         }
         let actions = UIStackView(arrangedSubviews: [clear, done])
         actions.axis = .horizontal
@@ -74,8 +74,7 @@ final class MajorPickerViewController: ChatContextPickerSheetViewController {
         button.setContentHuggingPriority(.required, for: .horizontal)
         button.setContentCompressionResistancePriority(.required, for: .horizontal)
         button.addAction(UIAction { [weak self] _ in
-            self?.selectedMajor = major
-            self?.updateOptionStyles()
+            self?.toggle(major)
         }, for: .touchUpInside)
         button.accessibilityIdentifier = "major-option-\(major)"
         optionButtons[major] = button
@@ -101,9 +100,18 @@ final class MajorPickerViewController: ChatContextPickerSheetViewController {
         return rows
     }
 
+    func toggle(_ major: String) {
+        if let index = selectedMajors.firstIndex(of: major) {
+            selectedMajors.remove(at: index)
+        } else {
+            selectedMajors.append(major)
+        }
+        updateOptionStyles()
+    }
+
     private func updateOptionStyles() {
         optionButtons.forEach { major, button in
-            let selected = major == selectedMajor
+            let selected = selectedMajors.contains(major)
             var configuration = button.configuration
             configuration?.baseForegroundColor = selected ? blue : AppStyle.muted
             configuration?.background.backgroundColor = selected ? softBlue : .white
@@ -116,9 +124,10 @@ final class MajorPickerViewController: ChatContextPickerSheetViewController {
         }
     }
 
-    private func completeSelection(_ major: String?) {
+    private func completeSelection(_ majors: [String]) {
+        let ordered = options.filter(majors.contains)
         dismissWithoutSaving { [weak self] in
-            self?.onComplete?(major)
+            self?.onComplete?(ordered)
         }
     }
 }
