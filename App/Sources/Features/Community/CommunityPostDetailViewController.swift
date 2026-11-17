@@ -7,6 +7,8 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
     var isMine: Bool { openedAsMine || post.isMine }
     var likes: Int
     var liked = false
+    var hasLoadedPostDetail = true
+    var hasLoadedPostComments = true
     let commentStack = UIStackView()
     let commentField = UITextField()
     let likeButton = UIButton(type: .system)
@@ -33,6 +35,9 @@ final class CommunityPostDetailViewController: AppPageViewController, UITextFiel
         likes = post.likes
         liked = post.likedByMe
         visibleCommentCount = post.comments
+        let needsServerData = post.id != nil && CommunityPostStore.shared.isServerBacked
+        hasLoadedPostDetail = !needsServerData
+        hasLoadedPostComments = !needsServerData
         super.init(nibName: nil, bundle: nil)
         hidesBottomBarWhenPushed = true
     }

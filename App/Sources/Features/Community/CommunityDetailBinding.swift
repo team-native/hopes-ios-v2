@@ -16,8 +16,9 @@ extension CommunityPost {
 extension CommunityPostDetailViewController {
     func loadPostDetail() {
         guard let id = post.id, CommunityPostStore.shared.isServerBacked else { return }
+        hasLoadedPostDetail = false
+        updateDetailInteractionState()
         bodyLabel?.text = "게시글을 불러오는 중이에요…"
-        postMoreButton?.isEnabled = false
         Task { [weak self] in
             do {
                 let dto = try await CommunityAPI.post(id: id)
@@ -44,10 +45,13 @@ extension CommunityPostDetailViewController {
         visibleCommentCount = updated.comments
         applyLikeAppearance()
         updateCommentCount()
-        postMoreButton?.isEnabled = true
+        hasLoadedPostDetail = true
+        updateDetailInteractionState()
     }
 
     func loadServerComments(postID: Int64) {
+        hasLoadedPostComments = false
+        updateDetailInteractionState()
         Task { [weak self] in
             do {
                 let page = try await CommunityAPI.comments(postID: postID)
@@ -61,12 +65,25 @@ extension CommunityPostDetailViewController {
                         time: CommunityAPI.relativeTime(comment.createdAt), text: comment.content,
                         commentID: comment.id)
                 }
+                self.hasLoadedPostComments = true
+                self.updateDetailInteractionState()
             } catch {
                 self?.showDetailRetry(message: "댓글을 불러오지 못했어요") { [weak self] in
                     self?.loadServerComments(postID: postID)
                 }
             }
         }
+    }
+
+    var canMutatePost: Bool { hasLoadedPostDetail && hasLoadedPostComments }
+
+    func updateDetailInteractionState() {
+        likeButton.isEnabled = canMutatePost
+        commentField.isEnabled = canMutatePost
+        commentCountButton.isEnabled = canMutatePost
+        composerBar.isUserInteractionEnabled = canMutatePost
+        commentStack.isUserInteractionEnabled = canMutatePost
+        postMoreButton?.isEnabled = canMutatePost
     }
 
     private func showDetailRetry(message: String, retry: @escaping () -> Void) {

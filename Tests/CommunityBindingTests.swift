@@ -35,4 +35,27 @@ final class CommunityBindingTests: XCTestCase {
         XCTAssertTrue(controller.liked)
         XCTAssertEqual(controller.post.id, 123)
     }
+    func testMutationsWaitForBothInitialResponsesIncludingRetry() {
+        let post = CommunityPost(grade: "전체", title: "제목", body: "내용", time: "방금",
+            comments: 0, likes: 0, category: "질문")
+        let controller = CommunityPostDetailViewController(post: post)
+        controller.loadViewIfNeeded()
+        controller.hasLoadedPostDetail = false
+        controller.hasLoadedPostComments = false
+        controller.commentField.text = "보존할 입력"
+        controller.updateDetailInteractionState()
+        controller.toggleLike()
+        controller.submitComment()
+        XCTAssertFalse(controller.liked)
+        XCTAssertEqual(controller.commentField.text, "보존할 입력")
+        controller.applyServerPost(post)
+        XCTAssertFalse(controller.canMutatePost)
+        XCTAssertFalse(controller.likeButton.isEnabled)
+        controller.hasLoadedPostComments = true
+        controller.updateDetailInteractionState()
+        XCTAssertTrue(controller.likeButton.isEnabled)
+        controller.toggleLike()
+        XCTAssertTrue(controller.liked)
+    }
+
 }

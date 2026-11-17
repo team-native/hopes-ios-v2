@@ -159,6 +159,7 @@ extension CommunityPostDetailViewController {
     }
 
     func toggleLike() {
+        guard canMutatePost else { return }
         liked.toggle()
         likes += liked ? 1 : -1
         applyLikeAppearance()
@@ -169,6 +170,7 @@ extension CommunityPostDetailViewController {
     }
 
     func submitComment() {
+        guard canMutatePost else { return }
         guard let text = commentField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
             !text.isEmpty else { return }
         if let oldText = editingComment {
