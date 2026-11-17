@@ -173,22 +173,29 @@ final class HomeViewController: AppPageViewController {
             kern: -0.2
         )
         let headerView = sectionHeader(title: header)
+        let tipStyle = HomePopularRowStyle(blue: brandBlue, softBlue: softBlue, tertiary: tertiary,
+            border: subtleBorder)
 
         let tips = UIStackView(arrangedSubviews: [
             HomeTipRowFactory.make(
                 number: "1",
                 caption: "질문 전에,",
                 text: "학과·전공을 먼저 골라요",
-                blue: brandBlue,
-                softBlue: softBlue
-            ),
+                style: tipStyle
+            ) { [weak self] in
+                self?.openChatHome { $0.selectDepartment() }
+            },
             HomeTipRowFactory.make(
                 number: "2",
                 caption: "“기숙사 어때” 보단,",
                 text: "“1학년 기숙사 평일 루틴 알려줘”",
-                blue: brandBlue,
-                softBlue: softBlue
-            )
+                style: tipStyle
+            ) { [weak self] in
+                self?.openChatHome { chat in
+                    chat.navigationController?.pushViewController(
+                        ChatConversationViewController(question: "1학년 기숙사 평일 루틴 알려줘"), animated: true)
+                }
+            }
         ])
         tips.axis = .vertical
         tips.spacing = 10
@@ -241,6 +248,14 @@ extension HomeViewController {
 
     @objc func openChat() {
         tabBarController?.selectedIndex = 1
+    }
+
+    func openChatHome(then action: @escaping (ChatHomeViewController) -> Void) {
+        tabBarController?.selectedIndex = 1
+        guard let nav = tabBarController?.selectedViewController as? UINavigationController,
+              let chat = nav.viewControllers.first as? ChatHomeViewController else { return }
+        nav.popToRootViewController(animated: false)
+        DispatchQueue.main.async { action(chat) }
     }
 
     @objc func openCommunity() {
