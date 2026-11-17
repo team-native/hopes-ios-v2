@@ -2,7 +2,7 @@ import XCTest
 @testable import Hopes
 
 @MainActor
-final class CommunitySessionTests: XCTestCase {
+final class CommunitySessionTests: CommunityStoreTestCase {
     func testNewSessionClearsPreviousUserData() {
         let store = CommunityPostStore.shared
         store.myPosts = [CommunityPost(grade: "10기", title: "이전 사용자 글", body: "", time: "", comments: 0, likes: 0,
@@ -28,7 +28,7 @@ final class CommunitySessionTests: XCTestCase {
 }
 
 @MainActor
-final class CommunityPublishBoardTests: XCTestCase {
+final class CommunityPublishBoardTests: CommunityStoreTestCase {
     func testPublishedBoardIsConsumedOnce() {
         let store = CommunityPostStore.shared
         store.markPostPublished(board: "10기")
