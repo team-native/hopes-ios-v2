@@ -13,25 +13,34 @@ enum HomePopularRowFactory {
         cohort: String,
         title: String,
         likes: String,
+        liked: Bool = false,
         style: HomePopularRowStyle,
+        onLike: (() -> Void)? = nil,
         action: @escaping () -> Void
     ) -> UIView {
+        let stats = makeStats(likes, liked: liked, style: style)
         let row = UIStackView(arrangedSubviews: [
             makeBadge(cohort, style: style),
             makeTitle(title),
-            makeStats(likes, style: style)
+            stats
         ])
         configure(row, style: style)
-        let button = UIButton(type: .custom)
-        row.translatesAutoresizingMaskIntoConstraints = false
-        button.addSubview(row)
-        NSLayoutConstraint.activate([
-            row.topAnchor.constraint(equalTo: button.topAnchor),
-            row.leadingAnchor.constraint(equalTo: button.leadingAnchor),
-            row.trailingAnchor.constraint(equalTo: button.trailingAnchor),
-            row.bottomAnchor.constraint(equalTo: button.bottomAnchor)
-        ])
-        button.addAction(UIAction { _ in action() }, for: .touchUpInside)
+        let button = HomeTappableCard.wrap(row, identifier: "home-popular-row", label: title, action: action)
+        if let onLike {
+            let likeButton = UIButton(type: .custom)
+            likeButton.accessibilityIdentifier = "home-popular-like"
+            likeButton.accessibilityLabel = liked ? "좋아요 취소" : "좋아요"
+            likeButton.accessibilityTraits = liked ? [.button, .selected] : [.button]
+            likeButton.translatesAutoresizingMaskIntoConstraints = false
+            likeButton.addAction(UIAction { _ in onLike() }, for: .touchUpInside)
+            button.addSubview(likeButton)
+            NSLayoutConstraint.activate([
+                likeButton.leadingAnchor.constraint(equalTo: stats.leadingAnchor, constant: -12),
+                likeButton.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+                likeButton.topAnchor.constraint(equalTo: button.topAnchor),
+                likeButton.bottomAnchor.constraint(equalTo: button.bottomAnchor)
+            ])
+        }
         return button
     }
 
@@ -61,15 +70,17 @@ enum HomePopularRowFactory {
         return title
     }
 
-    private static func makeStats(_ likes: String, style: HomePopularRowStyle) -> UIView {
-        let heart = UIImageView(image: UIImage(named: "home-like-icon"))
+    private static func makeStats(_ likes: String, liked: Bool, style: HomePopularRowStyle) -> UIView {
+        let icon = UIImage(named: "home-like-icon")
+        let heart = UIImageView(image: liked ? icon?.withTintColor(style.blue, renderingMode: .alwaysOriginal) : icon)
         heart.contentMode = .scaleAspectFit
         heart.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             heart.widthAnchor.constraint(equalToConstant: 14),
             heart.heightAnchor.constraint(equalToConstant: 14)
         ])
-        let count = HomePreviewStateViews.label(likes, size: 12, color: style.tertiary, lineHeight: 16)
+        let count = HomePreviewStateViews.label(likes, size: 12, color: liked ? style.blue : style.tertiary,
+            lineHeight: 16)
         count.setContentHuggingPriority(.required, for: .horizontal)
         let stats = UIStackView(arrangedSubviews: [heart, count])
         stats.axis = .horizontal

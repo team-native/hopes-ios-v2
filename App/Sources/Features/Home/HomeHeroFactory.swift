@@ -54,7 +54,15 @@ enum HomeHeroFactory {
 
 @MainActor
 enum HomeTipRowFactory {
-    static func make(number: String, caption: String, text: String, blue: UIColor, softBlue: UIColor) -> UIView {
+    static func make(
+        number: String,
+        caption: String,
+        text: String,
+        style: HomePopularRowStyle,
+        action: @escaping () -> Void
+    ) -> UIView {
+        let blue = style.blue
+        let softBlue = style.softBlue
         let badge = UILabel()
         badge.text = number
         badge.textAlignment = .center
@@ -97,6 +105,31 @@ enum HomeTipRowFactory {
         row.layer.shadowRadius = 8
         row.layer.shadowOffset = CGSize(width: 0, height: 4)
         row.heightAnchor.constraint(equalToConstant: 72).isActive = true
-        return row
+        return HomeTappableCard.wrap(row, identifier: "home-tip-\(number)", label: "\(caption) \(text)",
+            action: action)
+    }
+}
+
+@MainActor
+enum HomeTappableCard {
+    static func wrap(_ row: UIView, identifier: String, label: String, action: @escaping () -> Void) -> UIButton {
+        row.isUserInteractionEnabled = false
+        let button = UIButton(type: .custom)
+        button.accessibilityLabel = label
+        button.accessibilityIdentifier = identifier
+        row.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.topAnchor.constraint(equalTo: button.topAnchor),
+            row.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            row.bottomAnchor.constraint(equalTo: button.bottomAnchor)
+        ])
+        button.addAction(UIAction { _ in action() }, for: .touchUpInside)
+        button.addAction(UIAction { [weak row] _ in row?.alpha = 0.6 }, for: [.touchDown, .touchDragEnter])
+        button.addAction(UIAction { [weak row] _ in
+            UIView.animate(withDuration: 0.15) { row?.alpha = 1 }
+        }, for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit])
+        return button
     }
 }

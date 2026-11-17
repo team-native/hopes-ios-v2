@@ -3,8 +3,9 @@ import UIKit
 struct HomePopularItem {
     let board: String
     let title: String
-    let likes: Int
+    var likes: Int
     let post: CommunityPost?
+    var liked = false
 
     static let samples = [
         HomePopularItem(board: "전체", title: "전공 동아리 면접 후기 공유", likes: 34, post: nil),
@@ -18,7 +19,12 @@ struct HomePopularItem {
             }
             .prefix(limit)
             .map { HomePopularItem(board: $0.element.grade, title: $0.element.title, likes: $0.element.likes,
-                post: $0.element) }
+                post: $0.element, liked: $0.element.likedByMe) }
+    }
+
+    mutating func toggleLike() {
+        liked.toggle()
+        likes = max(0, likes + (liked ? 1 : -1))
     }
 }
 
@@ -72,7 +78,7 @@ extension HomeViewController {
             })
         case .loaded:
             popularSection.addArrangedSubview(popularHeader())
-            let rows = UIStackView(arrangedSubviews: popularItems.map(makePopularRow))
+            let rows = UIStackView(arrangedSubviews: popularItems.indices.map(makePopularRow))
             rows.axis = .vertical
             rows.spacing = 10
             popularSection.addArrangedSubview(rows)
@@ -103,18 +109,33 @@ extension HomeViewController {
         return sectionHeader(title: title, moreButton: more)
     }
 
-    private func makePopularRow(_ item: HomePopularItem) -> UIView {
+    func togglePopularLike(at index: Int) {
+        guard popularItems.indices.contains(index) else { return }
+        popularItems[index].toggleLike()
+        renderPopular(.loaded)
+        let item = popularItems[index]
+        if let id = item.post?.id {
+            let liked = item.liked
+            CommunityPostStore.shared.syncWithServer { try await CommunityAPI.setLike(postID: id, liked: liked) }
+        }
+    }
+
+    private func makePopularRow(_ index: Int) -> UIView {
+        let item = popularItems[index]
         let style = HomePopularRowStyle(blue: brandBlue, softBlue: softBlue, tertiary: tertiary, border: subtleBorder)
         return HomePopularRowFactory.make(cohort: item.board, title: item.title, likes: "\(item.likes)",
-            style: style) { [weak self] in
+            liked: item.liked, style: style, onLike: { [weak self] in
+                self?.togglePopularLike(at: index)
+            }, action: { [weak self] in
             guard let self else { return }
-            if let post = item.post {
+            if var post = item.post {
+                post.likedByMe = item.liked
                 let detail = CommunityPostDetailViewController(post: post, isMine: post.isMine)
                 detail.hidesBottomBarWhenPushed = true
                 self.push(detail)
             } else {
                 self.openCommunity()
             }
-        }
+        })
     }
 }
