@@ -10,13 +10,25 @@ protocol AccessTokenStoring: Sendable {
 final class AccessTokenStore: AccessTokenStoring, @unchecked Sendable {
     static let shared = AccessTokenStore()
 
-    private let service = "kr.hs.gsm.hopes.auth"
+    private let service: String
     private let account = "accessToken"
     private let lock = NSLock()
+    private var sessionOnlyToken: String?
+
+    init(service: String = "kr.hs.gsm.hopes.auth") {
+        self.service = service
+    }
+
+    var isSessionOnly: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return sessionOnlyToken != nil
+    }
 
     var token: String? {
         lock.lock()
         defer { lock.unlock() }
+        if let sessionOnlyToken { return sessionOnlyToken }
         var query = baseQuery
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -29,9 +41,18 @@ final class AccessTokenStore: AccessTokenStoring, @unchecked Sendable {
     var hasToken: Bool { token != nil }
 
     func save(_ token: String) {
+        save(token, persistent: true)
+    }
+
+    func save(_ token: String, persistent: Bool) {
         lock.lock()
         defer { lock.unlock() }
         SecItemDelete(baseQuery as CFDictionary)
+        guard persistent else {
+            sessionOnlyToken = token
+            return
+        }
+        sessionOnlyToken = nil
         var query = baseQuery
         query[kSecValueData as String] = Data(token.utf8)
         query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
@@ -41,6 +62,7 @@ final class AccessTokenStore: AccessTokenStoring, @unchecked Sendable {
     func clear() {
         lock.lock()
         defer { lock.unlock() }
+        sessionOnlyToken = nil
         SecItemDelete(baseQuery as CFDictionary)
     }
 
