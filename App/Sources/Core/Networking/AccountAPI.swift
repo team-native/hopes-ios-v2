@@ -21,6 +21,13 @@ enum AccountAPI {
         try await client.send("PATCH", "/api/setting", body: ["customPrompt": prompt], authenticated: true)
     }
 
+    static func deleteAccount(password: String) async throws {
+        try await client.send(
+            "DELETE", "/api/account", body: ["password": password], authenticated: true,
+            expiresSessionOnUnauthorized: false
+        )
+    }
+
     static func sendInquiry(email: String, message: String) async throws {
         let content = "답변 받을 이메일: \(email)\n\n\(message)"
         try await client.send("POST", "/api/setting/inquiry", body: ["content": content], authenticated: true)

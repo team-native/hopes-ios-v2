@@ -21,6 +21,14 @@ enum AuthSessionRouter {
         replaceRoot(with: AppTabBarController())
     }
 
+    static func finishAccountDeletion() {
+        AccessTokenStore.shared.clear()
+        UserProfileStore.shared.clearLocalData()
+        let welcome = WelcomeViewController()
+        welcome.pendingToastMessage = "탈퇴가 완료됐어요"
+        replaceRoot(with: welcome)
+    }
+
     static func showLogin() {
         AccessTokenStore.shared.clear()
         let welcome = WelcomeViewController()

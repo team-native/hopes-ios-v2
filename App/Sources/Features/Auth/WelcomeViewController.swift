@@ -12,6 +12,7 @@ final class WelcomeViewController: UIViewController {
     private let loginButton = UIButton(type: .system)
     private var didOpenLogin = false
     var opensLoginOnAppear = false
+    var pendingToastMessage: String?
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
@@ -28,6 +29,10 @@ final class WelcomeViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        if let message = pendingToastMessage {
+            pendingToastMessage = nil
+            AppToast.show(message, in: view, bottomInset: 147)
+        }
         let arguments = ProcessInfo.processInfo.arguments
         if opensLoginOnAppear
             || arguments.contains("--login-preview")
