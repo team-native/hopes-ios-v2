@@ -176,6 +176,7 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
         let indicator = UIView()
         indicator.backgroundColor = AppStyle.ink
         indicator.layer.cornerRadius = 2.5
+        indicator.isHidden = true
         indicator.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(indicator)
         NSLayoutConstraint.activate([

@@ -178,6 +178,7 @@ final class CommunityActionSheetViewController: UIViewController, UIGestureRecog
         let container = UIView()
         let indicator = UIView()
         indicator.backgroundColor = primaryTextColor
+        indicator.isHidden = true
         indicator.layer.cornerRadius = 2.5
         indicator.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(indicator)

@@ -22,16 +22,19 @@ final class MajorPickerViewController: ChatContextPickerSheetViewController {
         chips.axis = .vertical
         chips.alignment = .leading
         chips.spacing = 8
-        for start in stride(from: 0, to: options.count, by: 4) {
-            let row = UIStackView()
+        let available = (view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width) - 40
+        let buttons = options.map(makeMajorChip)
+        let widths = buttons.map { $0.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width }
+        let rows = Self.wrapRows(widths: widths, available: available, spacing: 8)
+        for indices in rows {
+            let row = UIStackView(arrangedSubviews: indices.map { buttons[$0] })
             row.axis = .horizontal
             row.spacing = 8
-            for option in options[start..<min(start + 4, options.count)] {
-                row.addArrangedSubview(makeMajorChip(option))
-            }
             chips.addArrangedSubview(row)
         }
-        chips.heightAnchor.constraint(equalToConstant: 84).isActive = true
+        let chipsHeight = CGFloat(rows.count) * 38 + CGFloat(max(rows.count - 1, 0)) * 8
+        chips.heightAnchor.constraint(equalToConstant: chipsHeight).isActive = true
+        sheetHeight += chipsHeight - 84
         updateOptionStyles()
         return chips
     }
@@ -55,7 +58,7 @@ final class MajorPickerViewController: ChatContextPickerSheetViewController {
         let button = UIButton(type: .system)
         var configuration = UIButton.Configuration.plain()
         configuration.title = major
-        configuration.baseForegroundColor = ink
+        configuration.baseForegroundColor = AppStyle.muted
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
         configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
@@ -79,11 +82,30 @@ final class MajorPickerViewController: ChatContextPickerSheetViewController {
         return button
     }
 
+    nonisolated static func wrapRows(widths: [CGFloat], available: CGFloat, spacing: CGFloat) -> [[Int]] {
+        var rows: [[Int]] = []
+        var current: [Int] = []
+        var used: CGFloat = 0
+        for (index, width) in widths.enumerated() {
+            let needed = current.isEmpty ? width : used + spacing + width
+            if !current.isEmpty && needed > available {
+                rows.append(current)
+                current = [index]
+                used = width
+            } else {
+                current.append(index)
+                used = needed
+            }
+        }
+        if !current.isEmpty { rows.append(current) }
+        return rows
+    }
+
     private func updateOptionStyles() {
         optionButtons.forEach { major, button in
             let selected = major == selectedMajor
             var configuration = button.configuration
-            configuration?.baseForegroundColor = selected ? blue : ink
+            configuration?.baseForegroundColor = selected ? blue : AppStyle.muted
             configuration?.background.backgroundColor = selected ? softBlue : .white
             let borderColor = selected
                 ? UIColor(red: 169 / 255, green: 205 / 255, blue: 251 / 255, alpha: 1)
