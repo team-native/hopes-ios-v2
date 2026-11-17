@@ -115,12 +115,26 @@ extension CommunityPostDetailViewController {
         likeButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         likeButton.backgroundColor = UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
         likeButton.layer.cornerRadius = 17
+        applyLikeAppearance()
         likeButton.accessibilityIdentifier = "community-post-like"
         likeButton.addAction(UIAction { [weak self] _ in self?.toggleLike() }, for: .touchUpInside)
         NSLayoutConstraint.activate([
             likeButton.heightAnchor.constraint(equalToConstant: 32),
             likeButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 62)
         ])
+    }
+
+    func applyLikeAppearance() {
+        let foreground: UIColor = liked ? .white : AppStyle.blue
+        let image = UIImage(named: "community-detail-heart-icon")?.withTintColor(foreground,
+            renderingMode: .alwaysOriginal)
+        likeButton.setImage(image, for: .normal)
+        likeButton.setTitle(" \(likes)", for: .normal)
+        likeButton.setTitleColor(foreground, for: .normal)
+        likeButton.backgroundColor = liked
+            ? AppStyle.blue
+            : UIColor(red: 230 / 255, green: 241 / 255, blue: 254 / 255, alpha: 1)
+        likeButton.accessibilityTraits = liked ? [.button, .selected] : [.button]
     }
 
     func makeGradeBadge(_ grade: String) -> UIStackView {
