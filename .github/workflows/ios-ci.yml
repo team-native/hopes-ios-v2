@@ -55,7 +55,7 @@ jobs:
           runtimes = sorted([
               (tuple(map(int, re.findall(r"\d+", runtime))), runtime)
               for runtime in devices
-              if runtime.startswith("iOS ") and tuple(map(int, re.findall(r"\d+", runtime))) >= (27, 0)
+              if "iOS" in runtime and tuple(map(int, re.findall(r"\d+", runtime))) >= (27, 0)
           ], reverse=True)
           for _, runtime in runtimes:
               simulator = next((device for device in devices[runtime] if device["name"] == "iPhone 17e"), None)
