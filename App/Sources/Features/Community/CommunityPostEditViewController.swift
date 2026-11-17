@@ -21,12 +21,31 @@ final class CommunityPostEditViewController: AppPageViewController, UITextViewDe
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "게시글 수정"
+        title = nil
+        view.backgroundColor = AppStyle.canvas
+        contentStack.spacing = 12
+        if let topConstraint = scrollView.constraints.first(where: {
+            $0.firstItem === contentStack && $0.firstAttribute == .top
+        }) {
+            topConstraint.constant = 8
+        }
         configureHeader()
-
         configureBoardSelector()
         contentStack.addArrangedSubview(boardButton)
+        configureFields()
+        contentStack.addArrangedSubview(CommunityFormViews.flexibleSpacer())
+        contentStack.addArrangedSubview(CommunityFormViews.privacyNotice())
+        _ = CommunityFormViews.pinToBottom(contentStack, in: scrollView, safeArea: view.safeAreaLayoutGuide,
+            minimumOffset: 11)
+        view.accessibilityIdentifier = "community-edit-screen"
+    }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
+    private func configureFields() {
         titleField.text = originalPost.title
         titleField.font = .systemFont(ofSize: 15)
         titleField.textColor = AppStyle.ink
@@ -39,59 +58,44 @@ final class CommunityPostEditViewController: AppPageViewController, UITextViewDe
         titleField.heightAnchor.constraint(equalToConstant: 54).isActive = true
         contentStack.addArrangedSubview(titleField)
 
-        bodyView.text = originalPost.body
+        bodyView.text = originalPost.detailBody ?? originalPost.body
         bodyView.font = .systemFont(ofSize: 15)
         bodyView.textColor = AppStyle.ink
         bodyView.backgroundColor = .white
         bodyView.layer.cornerRadius = 16
         bodyView.layer.borderWidth = 1
         bodyView.layer.borderColor = AppStyle.line.cgColor
-        bodyView.textContainerInset = UIEdgeInsets(top: 14, left: 12, bottom: 14, right: 12)
+        bodyView.textContainerInset = UIEdgeInsets(top: 15, left: 12, bottom: 15, right: 12)
         bodyView.heightAnchor.constraint(equalToConstant: 300).isActive = true
         bodyView.delegate = self
         contentStack.addArrangedSubview(bodyView)
-
-        let notice = UIStackView()
-        notice.axis = .horizontal
-        notice.alignment = .top
-        notice.spacing = 8
-        notice.isLayoutMarginsRelativeArrangement = true
-        notice.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12)
-        notice.backgroundColor = AppStyle.paleBlue
-        notice.layer.cornerRadius = 14
-        let lock = UIImageView(image: UIImage(systemName: "lock"))
-        lock.tintColor = AppStyle.blue
-        lock.widthAnchor.constraint(equalToConstant: 18).isActive = true
-        lock.heightAnchor.constraint(equalToConstant: 18).isActive = true
-        notice.addArrangedSubview(lock)
-        notice.addArrangedSubview(AppStyle.label("작성자는 기수만 표시돼요. 이름·학번은 다른 사용자에게 공개되지 않아요.", size: 12,
-            color: AppStyle.muted))
-        contentStack.addArrangedSubview(UIView())
-        contentStack.addArrangedSubview(notice)
     }
 
     private func configureHeader() {
-        let close = UIButton(type: .system)
-        close.setImage(UIImage(systemName: "xmark"), for: .normal)
-        close.tintColor = AppStyle.ink
+        let close = UIButton(type: .custom)
+        close.setImage(UIImage(named: "community-write-close-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        close.accessibilityLabel = "닫기"
         close.widthAnchor.constraint(equalToConstant: 44).isActive = true
         close.heightAnchor.constraint(equalToConstant: 44).isActive = true
         close.addAction(UIAction { [weak self] _ in self?.navigationController?.popViewController(animated: true) },
             for: .touchUpInside)
 
-        let heading = AppStyle.label("게시글 수정", size: 18, weight: .semibold)
-        let save = UIButton(type: .system)
+        let heading = AppStyle.label("게시글 수정", size: 18, weight: .medium)
+        let save = UIButton(type: .custom)
         save.setTitle("저장", for: .normal)
         save.setTitleColor(.white, for: .normal)
         save.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         save.backgroundColor = AppStyle.blue
         save.layer.cornerRadius = 10
-        save.contentEdgeInsets = UIEdgeInsets(top: 8, left: 14, bottom: 8, right: 14)
+        save.accessibilityIdentifier = "community-edit-save"
+        save.widthAnchor.constraint(equalToConstant: 54).isActive = true
+        save.heightAnchor.constraint(equalToConstant: 36).isActive = true
         save.addAction(UIAction { [weak self] _ in self?.saveChanges() }, for: .touchUpInside)
         let row = UIStackView(arrangedSubviews: [close, heading, UIView(), save])
         row.axis = .horizontal
         row.alignment = .center
-        row.spacing = 8
+        row.spacing = 12
+        row.heightAnchor.constraint(equalToConstant: 44).isActive = true
         contentStack.addArrangedSubview(row)
     }
 
@@ -100,18 +104,19 @@ final class CommunityPostEditViewController: AppPageViewController, UITextViewDe
         boardButton.layer.cornerRadius = 16
         boardButton.layer.borderWidth = 1
         boardButton.layer.borderColor = AppStyle.line.cgColor
-        boardButton.heightAnchor.constraint(equalToConstant: 56).isActive = true
-        boardButton.contentHorizontalAlignment = .fill
+        boardButton.heightAnchor.constraint(equalToConstant: 54).isActive = true
+        let chevron = UIImageView(image: UIImage(named: "community-write-chevron-icon")?
+            .withRenderingMode(.alwaysOriginal))
+        chevron.contentMode = .scaleAspectFit
+        chevron.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        chevron.heightAnchor.constraint(equalToConstant: 18).isActive = true
         let row = UIStackView(arrangedSubviews: [
-            AppStyle.label("게시판", size: 14, weight: .medium, color: AppStyle.muted),
-            UIView(),
-            boardGradeLabel,
-            UIImageView(image: UIImage(systemName: "chevron.down"))
+            AppStyle.label("게시판", size: 14, weight: .medium, color: AppStyle.muted), UIView(), boardGradeLabel, chevron
         ])
         row.axis = .horizontal
         row.alignment = .center
-        row.spacing = 10
-        (row.arrangedSubviews.last as? UIImageView)?.tintColor = AppStyle.muted
+        row.spacing = 8
+        row.isUserInteractionEnabled = false
         row.translatesAutoresizingMaskIntoConstraints = false
         boardButton.addSubview(row)
         NSLayoutConstraint.activate([
@@ -120,26 +125,17 @@ final class CommunityPostEditViewController: AppPageViewController, UITextViewDe
             row.topAnchor.constraint(equalTo: boardButton.topAnchor),
             row.bottomAnchor.constraint(equalTo: boardButton.bottomAnchor)
         ])
-        updateBoardButton()
+        boardGradeLabel.text = selectedGrade
         boardButton.addAction(UIAction { [weak self] _ in self?.showBoardOptions() }, for: .touchUpInside)
     }
 
-    private func updateBoardButton() {
-        boardGradeLabel.text = selectedGrade
-    }
-
     private func showBoardOptions() {
-        let sheet = UIAlertController(title: "게시판 선택", message: nil, preferredStyle: .actionSheet)
-        ["전체", "8기", "9기", "10기", "11기"].forEach { grade in
-            sheet.addAction(UIAlertAction(title: grade, style: .default) { [weak self] _ in
-                self?.selectedGrade = grade
-                self?.updateBoardButton()
-            })
+        let picker = CommunityBoardPickerViewController(selectedBoard: selectedGrade)
+        picker.onSelect = { [weak self] grade in
+            self?.selectedGrade = grade
+            self?.boardGradeLabel.text = grade
         }
-        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
-        if let popover = sheet.popoverPresentationController { popover.sourceView = boardButton
-            popover.sourceRect = boardButton.bounds }
-        present(sheet, animated: true)
+        present(picker, animated: true)
     }
 
     private func saveChanges() {
