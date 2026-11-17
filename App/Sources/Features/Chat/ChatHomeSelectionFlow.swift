@@ -74,7 +74,7 @@ extension ChatHomeViewController {
             do {
                 let result = try await CatalogAPI.recommendations(
                     department: self.selectedDepartment,
-                    specialty: self.selectedMajors.first,
+                    specialties: self.selectedMajors,
                     refreshToken: refresh ? self.recommendationRefreshToken : nil,
                     excludeIDs: refresh ? self.shownRecommendationIDs : []
                 )
@@ -98,8 +98,8 @@ extension ChatHomeViewController {
     private func applyContextSelection(didChange: Bool) {
         if didChange {
             let department = selectedDepartment
-            let specialty = selectedMajors.first
-            Task { await CatalogAPI.savePreferences(department: department, specialty: specialty) }
+            let specialties = selectedMajors
+            Task { await CatalogAPI.savePreferences(department: department, specialties: specialties) }
         }
         updateContextChipTitles()
         if didChange, !AccessTokenStore.shared.hasToken {
