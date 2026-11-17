@@ -3,16 +3,8 @@ import UIKit
 @MainActor
 final class SplashViewController: UIViewController {
     private let logoMotion = UIView()
-    private let logoShadowTile = UIView()
-    private let logoTile = UIView()
-    private let logoImageView = UIImageView(image: UIImage(named: "auth-logo-mark"))
+    private let logoMarkView = SplashLogoDrawView()
     private let brandLabel = UILabel()
-    private var logoTileTopConstraint: NSLayoutConstraint!
-    private var logoTileWidthConstraint: NSLayoutConstraint!
-    private var logoTileHeightConstraint: NSLayoutConstraint!
-    private var logoWidthConstraint: NSLayoutConstraint!
-    private var logoHeightConstraint: NSLayoutConstraint!
-    private var brandLabelTopConstraint: NSLayoutConstraint!
     private var didBeginTransition = false
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
@@ -60,30 +52,8 @@ final class SplashViewController: UIViewController {
     }
 
     private func configureLogoElements() {
-        logoShadowTile.backgroundColor = .clear
-        logoShadowTile.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
-        logoShadowTile.layer.shadowOpacity = 0.05
-        logoShadowTile.layer.shadowRadius = 16
-        logoShadowTile.layer.shadowOffset = CGSize(width: 0, height: 4)
-        logoShadowTile.alpha = 0
-        logoShadowTile.translatesAutoresizingMaskIntoConstraints = false
-        logoMotion.addSubview(logoShadowTile)
-
-        logoTile.backgroundColor = .white
-        logoTile.layer.cornerRadius = 9
-        logoTile.layer.borderWidth = 1
-        logoTile.layer.borderColor = UIColor(red: 235 / 255, green: 241 / 255, blue: 250 / 255, alpha: 1).cgColor
-        logoTile.layer.shadowColor = UIColor(red: 26 / 255, green: 64 / 255, blue: 128 / 255, alpha: 1).cgColor
-        logoTile.layer.shadowOpacity = 0.03
-        logoTile.layer.shadowRadius = 3
-        logoTile.layer.shadowOffset = CGSize(width: 0, height: 1)
-        logoTile.alpha = 0
-        logoTile.translatesAutoresizingMaskIntoConstraints = false
-        logoMotion.addSubview(logoTile)
-
-        logoImageView.contentMode = .scaleAspectFit
-        logoImageView.translatesAutoresizingMaskIntoConstraints = false
-        logoTile.addSubview(logoImageView)
+        logoMarkView.translatesAutoresizingMaskIntoConstraints = false
+        logoMotion.addSubview(logoMarkView)
 
         brandLabel.text = "hopes"
         brandLabel.font = .systemFont(ofSize: 22, weight: .bold)
@@ -95,28 +65,13 @@ final class SplashViewController: UIViewController {
     }
 
     private func configureLogoConstraints() {
-        logoTileTopConstraint = logoTile.topAnchor.constraint(equalTo: logoMotion.topAnchor, constant: 38)
-        logoTileWidthConstraint = logoTile.widthAnchor.constraint(equalToConstant: 40)
-        logoTileHeightConstraint = logoTile.heightAnchor.constraint(equalToConstant: 40)
-        logoWidthConstraint = logoImageView.widthAnchor.constraint(equalToConstant: 16)
-        logoHeightConstraint = logoImageView.heightAnchor.constraint(equalToConstant: 25)
-        brandLabelTopConstraint = brandLabel.topAnchor.constraint(equalTo: logoMotion.topAnchor, constant: 140)
-
         NSLayoutConstraint.activate([
-            logoShadowTile.leadingAnchor.constraint(equalTo: logoTile.leadingAnchor),
-            logoShadowTile.trailingAnchor.constraint(equalTo: logoTile.trailingAnchor),
-            logoShadowTile.topAnchor.constraint(equalTo: logoTile.topAnchor),
-            logoShadowTile.bottomAnchor.constraint(equalTo: logoTile.bottomAnchor),
-            logoTile.centerXAnchor.constraint(equalTo: logoMotion.centerXAnchor),
-            logoTileTopConstraint,
-            logoTileWidthConstraint,
-            logoTileHeightConstraint,
-            logoImageView.centerXAnchor.constraint(equalTo: logoTile.centerXAnchor),
-            logoImageView.centerYAnchor.constraint(equalTo: logoTile.centerYAnchor),
-            logoWidthConstraint,
-            logoHeightConstraint,
+            logoMarkView.centerXAnchor.constraint(equalTo: logoMotion.centerXAnchor),
+            logoMarkView.topAnchor.constraint(equalTo: logoMotion.topAnchor),
+            logoMarkView.widthAnchor.constraint(equalToConstant: 80),
+            logoMarkView.heightAnchor.constraint(equalToConstant: 122),
             brandLabel.centerXAnchor.constraint(equalTo: logoMotion.centerXAnchor),
-            brandLabelTopConstraint,
+            brandLabel.topAnchor.constraint(equalTo: logoMotion.topAnchor, constant: 128),
             brandLabel.heightAnchor.constraint(equalToConstant: 30)
         ])
     }
@@ -170,66 +125,24 @@ final class SplashViewController: UIViewController {
 
     private func animateLogo() {
         guard !UIAccessibility.isReduceMotionEnabled else {
-            setFinalLogoLayout()
-            view.layoutIfNeeded()
-            logoTile.alpha = 1
-            logoShadowTile.alpha = 1
+            logoMarkView.showImmediately()
             brandLabel.alpha = 1
             return
         }
 
-        logoTile.transform = CGAffineTransform(scaleX: 0.4, y: 0.4)
-        logoShadowTile.transform = logoTile.transform
         brandLabel.transform = CGAffineTransform(translationX: 0, y: 6)
-
-        setFinalLogoLayout()
-
-        UIView.animate(
-            withDuration: 0.55,
-            delay: 0,
-            usingSpringWithDamping: 0.55,
-            initialSpringVelocity: 0.8,
-            options: [.curveEaseOut, .beginFromCurrentState]
-        ) {
-            self.view.layoutIfNeeded()
-            self.logoTile.alpha = 1
-            self.logoShadowTile.alpha = 1
-            self.logoTile.transform = CGAffineTransform(scaleX: 1.12, y: 1.12)
-            self.logoShadowTile.transform = self.logoTile.transform
-        }
+        logoMarkView.animateDrawing()
 
         UIView.animate(
-            withDuration: 0.25,
-            delay: 0.55,
-            usingSpringWithDamping: 0.8,
-            initialSpringVelocity: 0.4,
-            options: [.curveEaseOut, .beginFromCurrentState]
-        ) {
-            self.logoTile.transform = .identity
-            self.logoShadowTile.transform = .identity
-        }
-
-        UIView.animate(
-            withDuration: 0.28,
-            delay: 0.52,
-            usingSpringWithDamping: 0.9,
-            initialSpringVelocity: 0.25,
+            withDuration: 0.24,
+            delay: 0.82,
+            usingSpringWithDamping: 1,
+            initialSpringVelocity: 0,
             options: [.curveEaseOut, .beginFromCurrentState]
         ) {
             self.brandLabel.alpha = 1
             self.brandLabel.transform = .identity
         }
-    }
-
-    private func setFinalLogoLayout() {
-        logoTileTopConstraint.constant = 10
-        logoTileWidthConstraint.constant = 96
-        logoTileHeightConstraint.constant = 96
-        logoWidthConstraint.constant = 38
-        logoHeightConstraint.constant = 60
-        brandLabelTopConstraint.constant = 122
-        logoTile.layer.cornerRadius = 21
-        logoShadowTile.layer.cornerRadius = 21
     }
 
     private static func singleLineParagraphStyle(lineHeight: CGFloat) -> NSParagraphStyle {
