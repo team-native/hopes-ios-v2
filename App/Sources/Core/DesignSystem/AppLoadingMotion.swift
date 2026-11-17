@@ -34,6 +34,45 @@ enum AppLoadingMotion {
         view.layer.add(animation, forKey: blinkKey)
     }
 
+    static func makeLoadingDots(color: UIColor = AppStyle.blue, size: CGFloat = 8) -> UIView {
+        let dots = (0..<3).map { _ in
+            let dot = UIView()
+            dot.backgroundColor = color
+            dot.layer.cornerRadius = size / 2
+            dot.widthAnchor.constraint(equalToConstant: size).isActive = true
+            dot.heightAnchor.constraint(equalToConstant: size).isActive = true
+            return dot
+        }
+        let row = UIStackView(arrangedSubviews: dots)
+        row.axis = .horizontal
+        row.spacing = size * 0.75
+        row.alignment = .center
+        row.accessibilityIdentifier = "loading-dots"
+        row.isAccessibilityElement = true
+        row.accessibilityLabel = "답변을 만드는 중"
+        let container = UIView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            row.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            container.heightAnchor.constraint(equalToConstant: size + 12)
+        ])
+        bounce(dots)
+        dots.enumerated().forEach { index, dot in
+            guard isEnabled else { return }
+            let fade = CAKeyframeAnimation(keyPath: "opacity")
+            fade.values = [0.35, 1, 0.35, 0.35]
+            fade.keyTimes = [0, 0.2, 0.4, 1]
+            fade.duration = 1.1
+            fade.beginTime = CACurrentMediaTime() + Double(index) * 0.15
+            fade.repeatCount = .infinity
+            fade.isRemovedOnCompletion = false
+            dot.layer.add(fade, forKey: "app.loading.fade")
+        }
+        return container
+    }
+
     static func bounce(_ dots: [UIView]) {
         guard isEnabled else { return }
         let start = CACurrentMediaTime()

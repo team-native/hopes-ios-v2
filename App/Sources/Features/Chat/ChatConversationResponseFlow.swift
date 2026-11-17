@@ -119,12 +119,8 @@ extension ChatConversationViewController {
 
         let title = AppStyle.label("답변을 만드는 중이에요", size: 18, weight: .semibold)
         let partial = AppStyle.label("선배들의 경험을 모아 질문에 맞게 정리하고 있어요.", size: 15)
-        let cursor = UIView()
-        cursor.backgroundColor = AppStyle.blue
-        cursor.widthAnchor.constraint(equalToConstant: 2).isActive = true
-        cursor.heightAnchor.constraint(equalToConstant: 18).isActive = true
-        AppLoadingMotion.blink(cursor)
-        let content = UIStackView(arrangedSubviews: [title, partial, cursor])
+        let loadingDots = AppLoadingMotion.makeLoadingDots()
+        let content = UIStackView(arrangedSubviews: [title, partial, loadingDots])
         content.axis = .vertical
         content.spacing = 10
         content.isLayoutMarginsRelativeArrangement = true
