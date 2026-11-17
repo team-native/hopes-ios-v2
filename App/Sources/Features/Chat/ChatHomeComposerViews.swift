@@ -176,8 +176,7 @@ extension ChatHomeViewController {
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
         card.accessibilityLabel = question
         card.addAction(UIAction { [weak self] _ in
-            self?.navigationController?.pushViewController(ChatConversationViewController(question: question),
-                animated: true)
+            self?.fillQuestion(question)
         }, for: .touchUpInside)
         return card
     }
