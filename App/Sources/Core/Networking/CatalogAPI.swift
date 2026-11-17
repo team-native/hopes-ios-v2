@@ -43,11 +43,15 @@ enum CatalogAPI {
 
     static func refreshCatalogs() async {
         guard AccessTokenStore.shared.hasToken else { return }
-        if let departments: [CategoryDTO] = try? await client.send("GET", "/api/departments", authenticated: true) {
-            departmentIDs = Dictionary(departments.filter(\.isActive).map { ($0.name, $0.id) }) { first, _ in first }
+        if let departments: ItemsDTO<CategoryDTO> = try? await client.send("GET", "/api/departments",
+            authenticated: true) {
+            let pairs = departments.items.filter(\.isActive).map { ($0.name, $0.id) }
+            departmentIDs = Dictionary(pairs) { first, _ in first }
         }
-        if let specialties: [CategoryDTO] = try? await client.send("GET", "/api/specialties", authenticated: true) {
-            specialtyIDs = Dictionary(specialties.filter(\.isActive).map { ($0.name, $0.id) }) { first, _ in first }
+        if let specialties: ItemsDTO<CategoryDTO> = try? await client.send("GET", "/api/specialties",
+            authenticated: true) {
+            let pairs = specialties.items.filter(\.isActive).map { ($0.name, $0.id) }
+            specialtyIDs = Dictionary(pairs) { first, _ in first }
         }
     }
 
