@@ -123,7 +123,7 @@ final class CommunityPostStore {
     }
 
     func update(_ original: CommunityPost, title: String, body: String, grade: String) -> CommunityPost {
-        let updated = CommunityPost(
+        var updated = CommunityPost(
             grade: grade,
             title: title,
             body: body,
@@ -134,6 +134,10 @@ final class CommunityPostStore {
             detailBody: body == original.body ? original.detailBody : nil,
             authorCohort: original.authorCohort
         )
+        updated.id = original.id
+        updated.boardID = original.boardID
+        updated.isMine = original.isMine
+        updated.likedByMe = original.likedByMe
         if let id = original.id {
             syncWithServer { try await CommunityAPI.updatePost(id: id, title: title, content: body) }
         }
@@ -152,8 +156,8 @@ final class CommunityPostStore {
             return
         }
         let comment = myComments[index]
-        myComments[index] = CommunityComment(board: comment.board, postTitle: comment.postTitle, text: newText,
-            time: comment.time)
+        myComments[index] = CommunityComment(id: comment.id, postID: comment.postID, board: comment.board,
+            postTitle: comment.postTitle, text: newText, time: comment.time)
     }
 
     @discardableResult
@@ -167,15 +171,11 @@ final class CommunityPostStore {
         myComments.remove(at: index)
         posts = posts.map { post in
             guard post.title == postTitle else { return post }
-            return CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time,
-                comments: max(0, post.comments - 1), likes: post.likes, category: post.category,
-                detailBody: post.detailBody, authorCohort: post.authorCohort)
+            return post.withCommentCount(max(0, post.comments - 1))
         }
         myPosts = myPosts.map { post in
             guard post.title == postTitle else { return post }
-            return CommunityPost(grade: post.grade, title: post.title, body: post.body, time: post.time,
-                comments: max(0, post.comments - 1), likes: post.likes, category: post.category,
-                detailBody: post.detailBody, authorCohort: post.authorCohort)
+            return post.withCommentCount(max(0, post.comments - 1))
         }
         return true
     }

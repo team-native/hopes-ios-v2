@@ -13,7 +13,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
     let stopAnswerButton = UIButton(type: .system)
     let networkMonitor = NWPathMonitor()
     let locationManager = CLLocationManager()
-    var isLiked = false
     var generationTimer: DispatchWorkItem?
     var conversationID: Int64?
     var answerTask: Task<Void, Never>?
@@ -94,6 +93,7 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        view.endEditing(true)
         dismissSuccessToast()
         navigationController?.setNavigationBarHidden(false, animated: animated)
         tabBarController?.tabBar.isHidden = false
@@ -121,7 +121,6 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         view.addSubview(scrollView)
         scrollView.addSubview(messagesStack)
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             messagesStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 8),
@@ -376,6 +375,7 @@ private extension ChatConversationViewController {
         let options = UIView.AnimationOptions(rawValue: curve << 16)
         UIView.animate(withDuration: duration, delay: 0, options: options) { [weak self] in
             self?.view.layoutIfNeeded()
+            self?.scrollToLatestMessage()
         }
     }
 }

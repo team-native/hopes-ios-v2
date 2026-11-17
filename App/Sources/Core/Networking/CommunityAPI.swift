@@ -65,6 +65,10 @@ enum CommunityAPI {
         return response.items
     }
 
+    static func post(id: Int64) async throws -> PostPreviewDTO {
+        try await client.send("GET", "\(base)/posts/\(id)", authenticated: true)
+    }
+
     static func posts() async throws -> PageDTO<PostPreviewDTO> {
         try await client.send("GET", "\(base)/posts?page=0&size=100", authenticated: true)
     }

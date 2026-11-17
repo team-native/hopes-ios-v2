@@ -127,7 +127,7 @@ extension InquiryViewController {
         submitButtonConstraints = [
             button.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            button.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset),
+            button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
             scrollView.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -16)
         ]
         NSLayoutConstraint.activate(submitButtonConstraints)

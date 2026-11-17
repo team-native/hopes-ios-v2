@@ -91,6 +91,7 @@ extension ChatConversationViewController {
     }
 
     func sendMessage() {
+        guard inputField.isEnabled, answerTask == nil, pendingAnswerCard == nil else { return }
         guard let text = inputField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !text.isEmpty else { return }
         guard !isOffline || isLocationMeasurementRequest(text) else { return }
@@ -139,6 +140,7 @@ extension ChatConversationViewController {
         inputField.placeholder = "답변을 만드는 중이에요…"
         inputField.isEnabled = false
 
+        scrollToLatestMessage()
         requestServerAnswer(question: pendingQuestion ?? "")
     }
 
@@ -326,6 +328,7 @@ extension ChatConversationViewController {
         } else {
             addFormattedAnswer()
         }
+        focusAfterAnswer()
     }
 
     func stopAnswerGeneration() {

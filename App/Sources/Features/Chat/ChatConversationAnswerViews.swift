@@ -28,7 +28,16 @@ extension ChatConversationViewController {
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 12
-        messagesStack.addArrangedSubview(row)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            row.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            row.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            scrollView.topAnchor.constraint(equalTo: row.bottomAnchor, constant: 8)
+        ])
+        back.accessibilityIdentifier = "chat-conversation-back"
+        back.accessibilityLabel = "뒤로"
     }
 
     func addUserMessage(_ text: String, isLocationRequest: Bool = false) {
@@ -220,69 +229,6 @@ extension ChatConversationViewController {
         return schoolLink
     }
 
-    func addAnswerActions() {
-        let like = actionChip("좋아요", width: 73, selected: isLiked) { [weak self] in
-            guard let self else { return }
-            self.isLiked.toggle()
-            self.refreshAnswerActions()
-        }
-        like.accessibilityIdentifier = "answer-like"
-        let more = actionChip("더 물어보기", width: 100, selected: true) { [weak self] in
-            self?.inputField.becomeFirstResponder()
-        }
-        let share = actionChip("공유", width: 60) { [weak self] in self?.shareAnswer() }
-        let trailingSpace = UIView()
-        trailingSpace.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        let row = UIStackView(arrangedSubviews: [like, more, share, trailingSpace])
-        row.axis = .horizontal
-        row.spacing = 8
-        row.alignment = .center
-        messagesStack.addArrangedSubview(row)
-    }
-
-    func refreshAnswerActions() {
-        let row = messagesStack.arrangedSubviews.first { view in
-            (view as? UIStackView)?.arrangedSubviews.first?.accessibilityIdentifier == "answer-like"
-        } as? UIStackView
-        guard let row, let like = row.arrangedSubviews.first as? UIButton else { return }
-        var configuration = like.configuration ?? UIButton.Configuration.plain()
-        configuration.baseForegroundColor = isLiked ? .white : ChatDetailPalette.ink
-        configuration.background.backgroundColor = isLiked ? ChatDetailPalette.brand : .white
-        configuration.background.strokeColor = isLiked ? .clear : ChatDetailPalette.border
-        configuration.background.strokeWidth = isLiked ? 0 : 1
-        like.configuration = configuration
-    }
-
-    func actionChip(_ title: String, width: CGFloat, selected: Bool = false, action: @escaping () -> Void) -> UIButton {
-        let button = UIButton(type: .system)
-        button.setTitle(title, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        button.setTitleColor(selected ? .white : ChatDetailPalette.ink, for: .normal)
-        button.backgroundColor = selected ? ChatDetailPalette.brand : .white
-        button.layer.cornerRadius = 20
-        button.layer.borderWidth = selected ? 0 : 1
-        button.layer.borderColor = ChatDetailPalette.border.cgColor
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8)
-        configuration.baseForegroundColor = selected ? .white : ChatDetailPalette.ink
-        configuration.background.backgroundColor = selected ? ChatDetailPalette.brand : .white
-        configuration.background.strokeColor = selected ? .clear : ChatDetailPalette.border
-        configuration.background.strokeWidth = selected ? 0 : 1
-        configuration.background.cornerRadius = 20
-        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 14, weight: .medium)
-            return outgoing
-        }
-        button.configuration = configuration
-        button.widthAnchor.constraint(equalToConstant: width).isActive = true
-        button.heightAnchor.constraint(equalToConstant: 40).isActive = true
-        button.setContentHuggingPriority(.required, for: .horizontal)
-        button.setContentCompressionResistancePriority(.required, for: .horizontal)
-        button.addAction(UIAction { _ in action() }, for: .touchUpInside)
-        return button
-    }
-
     func addRelatedQuestions(_ questions: [String] = ["포트폴리오는 언제부터 만들었어?", "전공 동아리 들어가려면 뭐 준비해?"]) {
         let card = AppStyle.card()
         card.layer.cornerRadius = 24
@@ -325,6 +271,7 @@ extension ChatConversationViewController {
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 12
+        row.isUserInteractionEnabled = false
 
         let check = UIImageView(image: UIImage(named: "ChatRelatedCheck")?.withRenderingMode(.alwaysOriginal))
         check.contentMode = .scaleAspectFit
@@ -351,6 +298,7 @@ extension ChatConversationViewController {
             row.bottomAnchor.constraint(equalTo: button.bottomAnchor)
         ])
         button.heightAnchor.constraint(equalToConstant: 48).isActive = true
+        button.accessibilityIdentifier = "chat-related-question"
         button.accessibilityLabel = question
         button.addAction(UIAction { [weak self] _ in
             guard let self, self.inputField.isEnabled else { return }

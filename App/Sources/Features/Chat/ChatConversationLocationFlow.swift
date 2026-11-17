@@ -366,13 +366,4 @@ extension ChatConversationViewController {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         showLocationFailure()
     }
-
-    func scrollToLatestMessage() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            let bottom = CGPoint(x: 0, y: max(0, self.scrollView.contentSize.height - self.scrollView.bounds.height))
-            self.scrollView.setContentOffset(bottom, animated: true)
-        }
-    }
-
 }
