@@ -1,7 +1,13 @@
 import Foundation
 import Security
 
-final class AccessTokenStore: @unchecked Sendable {
+protocol AccessTokenStoring: Sendable {
+    var token: String? { get }
+    func save(_ token: String)
+    func clear()
+}
+
+final class AccessTokenStore: AccessTokenStoring, @unchecked Sendable {
     static let shared = AccessTokenStore()
 
     private let service = "kr.hs.gsm.hopes.auth"

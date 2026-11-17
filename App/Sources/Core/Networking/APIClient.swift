@@ -36,14 +36,14 @@ final class APIClient: @unchecked Sendable {
 
     private let baseURL: URL
     private let session: URLSession
-    private let tokenStore: AccessTokenStore
+    private let tokenStore: any AccessTokenStoring
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
     init(
         baseURL: URL = APIClient.productionBaseURL,
         session: URLSession = .shared,
-        tokenStore: AccessTokenStore = .shared
+        tokenStore: any AccessTokenStoring = AccessTokenStore.shared
     ) {
         self.baseURL = baseURL
         self.session = session

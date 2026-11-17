@@ -3,17 +3,9 @@ import XCTest
 
 final class SessionUnauthorizedTests: XCTestCase {
     func testUnauthorizedResponseRespectsSessionExpiryPolicy() async throws {
-        let tokenStore = AccessTokenStore.shared
-        let previousToken = tokenStore.token
+        let tokenStore = InMemoryAccessTokenStore()
         let testToken = "session-policy-test-token"
         tokenStore.save(testToken)
-        defer {
-            if let previousToken {
-                tokenStore.save(previousToken)
-            } else {
-                tokenStore.clear()
-            }
-        }
 
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [UnauthorizedStubURLProtocol.self]
@@ -31,7 +23,11 @@ final class SessionUnauthorizedTests: XCTestCase {
         }
         defer { UnauthorizedStubURLProtocol.requestHandler = nil }
 
-        let client = APIClient(baseURL: URL(string: "https://example.test")!, session: session)
+        let client = APIClient(
+            baseURL: URL(string: "https://example.test")!,
+            session: session,
+            tokenStore: tokenStore
+        )
 
         do {
             try await client.send(
@@ -51,6 +47,29 @@ final class SessionUnauthorizedTests: XCTestCase {
             XCTAssertEqual(error, .unauthorized(message: "비밀번호가 일치하지 않습니다"))
         }
         XCTAssertNil(tokenStore.token)
+    }
+}
+
+private final class InMemoryAccessTokenStore: AccessTokenStoring, @unchecked Sendable {
+    private let lock = NSLock()
+    private var storedToken: String?
+
+    var token: String? {
+        lock.lock()
+        defer { lock.unlock() }
+        return storedToken
+    }
+
+    func save(_ token: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        storedToken = token
+    }
+
+    func clear() {
+        lock.lock()
+        defer { lock.unlock() }
+        storedToken = nil
     }
 }
 
