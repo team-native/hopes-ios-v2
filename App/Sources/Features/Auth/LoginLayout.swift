@@ -110,7 +110,6 @@ extension LoginViewController {
         emailGroup.spacing = 6
         emailGroup.addArrangedSubview(makeFieldLabel("이메일"))
         emailGroup.addArrangedSubview(emailField)
-        emailGroup.heightAnchor.constraint(equalToConstant: 80).isActive = true
 
         passwordGroup.axis = .vertical
         passwordGroup.alignment = .leading
@@ -119,7 +118,15 @@ extension LoginViewController {
         passwordGroup.addArrangedSubview(passwordField)
         passwordGroup.addArrangedSubview(errorRow)
         passwordGroupHeightConstraint = passwordGroup.heightAnchor.constraint(equalToConstant: 80)
+        passwordGroupHeightConstraint.priority = .defaultLow
         passwordGroupHeightConstraint.isActive = true
+        for field in [emailField, passwordField] {
+            field.setContentHuggingPriority(.required, for: .vertical)
+            field.setContentCompressionResistancePriority(.required, for: .vertical)
+        }
+        for group in [emailGroup, passwordGroup] {
+            group.setContentHuggingPriority(.required, for: .vertical)
+        }
 
         sheetStack.addArrangedSubview(makeSpacer(height: 14))
         sheetStack.addArrangedSubview(emailGroup)
@@ -186,8 +193,8 @@ extension LoginViewController {
         sheetStack.addArrangedSubview(keepRowSpacer)
         sheetStack.addArrangedSubview(keepRow)
         bottomSpacer.translatesAutoresizingMaskIntoConstraints = false
-        bottomSpacer.setContentHuggingPriority(.defaultLow, for: .vertical)
-        bottomSpacer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        bottomSpacer.setContentHuggingPriority(UILayoutPriority(1), for: .vertical)
+        bottomSpacer.setContentCompressionResistancePriority(UILayoutPriority(1), for: .vertical)
         bottomSpacer.heightAnchor.constraint(greaterThanOrEqualToConstant: 0).isActive = true
         sheetStack.addArrangedSubview(bottomSpacer)
     }
@@ -300,8 +307,13 @@ extension LoginViewController {
             sheet.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             sheetStackLeadingConstraint,
             sheetStackTrailingConstraint,
-            sheetStack.bottomAnchor.constraint(equalTo: sheet.safeAreaLayoutGuide.bottomAnchor, constant: -1)
+            sheetStack.bottomAnchor.constraint(
+                lessThanOrEqualTo: sheet.safeAreaLayoutGuide.bottomAnchor, constant: -1)
         ])
+        let fillBottom = sheetStack.bottomAnchor.constraint(
+            equalTo: sheet.safeAreaLayoutGuide.bottomAnchor, constant: -1)
+        fillBottom.priority = UILayoutPriority(249)
+        fillBottom.isActive = true
         sheetStackTopConstraint = sheetStack.topAnchor.constraint(equalTo: sheet.topAnchor, constant: 12)
         sheetStackTopConstraint.isActive = true
         sheetTopConstraint = sheet.topAnchor.constraint(equalTo: sheetTopGuide.bottomAnchor)
