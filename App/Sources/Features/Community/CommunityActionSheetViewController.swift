@@ -119,6 +119,7 @@ final class CommunityActionSheetViewController: UIViewController, UIGestureRecog
         content.axis = .vertical
         content.spacing = 16
         content.isLayoutMarginsRelativeArrangement = true
+        content.insetsLayoutMarginsFromSafeArea = false
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 0, trailing: 20)
         content.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
