@@ -196,10 +196,8 @@ final class ChatConversationViewController: UIViewController, UITextFieldDelegat
         let attach = UIButton(type: .system)
         attach.setImage(UIImage(named: "ChatComposerPlusFigma")?.withRenderingMode(.alwaysOriginal), for: .normal)
         attach.imageView?.contentMode = .scaleAspectFit
-        attach.backgroundColor = .white
-        attach.layer.cornerRadius = 20
-        attach.layer.borderWidth = 1
-        attach.layer.borderColor = LocationMapStyle.subtleBorder.cgColor
+        attach.accessibilityLabel = "첨부"
+        attach.accessibilityIdentifier = "chat-conversation-attach"
         attach.widthAnchor.constraint(equalToConstant: 40).isActive = true
         attach.heightAnchor.constraint(equalToConstant: 40).isActive = true
         attach.addAction(UIAction { [weak self] _ in

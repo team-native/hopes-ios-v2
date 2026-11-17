@@ -269,9 +269,6 @@ extension ChatHomeViewController {
         let button = UIButton(type: .system)
         button.setImage(UIImage(named: "chat-plus-icon")?.withRenderingMode(.alwaysOriginal), for: .normal)
         button.imageView?.contentMode = .scaleAspectFit
-        button.layer.cornerRadius = 20
-        button.layer.borderWidth = 1
-        button.layer.borderColor = line.cgColor
         button.accessibilityLabel = "첨부"
         button.accessibilityIdentifier = "chat-attach"
         button.addTarget(self, action: #selector(openAttachmentPicker), for: .touchUpInside)
