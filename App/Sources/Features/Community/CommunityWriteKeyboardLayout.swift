@@ -9,6 +9,7 @@ final class CommunityWriteKeyboardLayout {
     private var isKeyboardVisible = false
     private var hasBodyValidationError = false
     private var hasRegistrationFailure = false
+    var minimumContentHeight: NSLayoutConstraint?
 
     init(
         view: UIView,
@@ -73,6 +74,7 @@ final class CommunityWriteKeyboardLayout {
                 self.isKeyboardVisible = isVisible
                 self.updateBodyHeight()
                 self.privacyNotice.isHidden = isVisible
+                self.minimumContentHeight?.isActive = !isVisible
                 UIView.animate(withDuration: duration) {
                     self.hostView.layoutIfNeeded()
                 }

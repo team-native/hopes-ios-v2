@@ -27,6 +27,22 @@
           controller.publish()
         }
       },
+      "writeexit": {
+        afterWrite { controller in
+          controller.titleField.text = "기숙사 와이파이 다들 잘 돼?"
+          (controller.view.firstDescendant(id: "community-write-close") as? UIButton)?.sendActions(for: .touchUpInside)
+        }
+      },
+      "writefail": {
+        afterWrite { controller in
+          controller.titleField.text = "기숙사 와이파이 다들 잘 돼?"
+          controller.showRegistrationFailure()
+        }
+      },
+      "writedone": {
+        CommunityPostStore.shared.markPostPublished(board: "10기")
+        return CommunityViewController()
+      },
       "postedit": { CommunityPostEditViewController(post: CommunityPostStore.shared.myPosts[0]) },
       "reportdone": {
         let controller = CommunityPostDetailViewController(post: CommunityPostStore.shared.posts[0])

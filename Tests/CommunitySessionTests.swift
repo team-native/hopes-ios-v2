@@ -26,3 +26,13 @@ final class CommunitySessionTests: XCTestCase {
         XCTAssertEqual(card.subviews.first?.subviews.count, 4)
     }
 }
+
+@MainActor
+final class CommunityPublishBoardTests: XCTestCase {
+    func testPublishedBoardIsConsumedOnce() {
+        let store = CommunityPostStore.shared
+        store.markPostPublished(board: "10기")
+        XCTAssertEqual(store.consumePublishedBoard(), "10기")
+        XCTAssertNil(store.consumePublishedBoard())
+    }
+}
