@@ -225,7 +225,7 @@
         tabs.selectedIndex = 0
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
           MainActor.assumeIsolated {
-            guard let make = controllers[name],
+            guard let make = controllers[name] ?? ZZFlowHarnessExtra.controllers[name],
               let nav = tabs.selectedViewController as? UINavigationController
             else { return }
             let controller = make()
