@@ -41,8 +41,30 @@ final class CommunityPostStore {
     var reportedPostKeys = Set<String>()
     var reportedCommentIDs = Set<Int64>()
     var boards: [BoardDTO] = []
+    private(set) var hasLoadedFromServer = false
 
-    private init() {}
+    private init() {
+        if AccessTokenStore.shared.hasToken { clearSessionData() }
+    }
+
+    func resetForNewSession() {
+        clearSessionData()
+        shouldShowPublishedToast = false
+    }
+
+    func markLoadedFromServer() {
+        hasLoadedFromServer = true
+    }
+
+    private func clearSessionData() {
+        posts = []
+        myPosts = []
+        myComments = []
+        boards = []
+        reportedPostKeys = []
+        reportedCommentIDs = []
+        hasLoadedFromServer = false
+    }
 
     func markPostPublished() {
         shouldShowPublishedToast = true
