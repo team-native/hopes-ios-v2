@@ -173,8 +173,7 @@ final class OnboardingViewController: UIViewController {
     }
 
     @objc private func startChat() {
-        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-              let window = appDelegate.window else { return }
+        guard let window = view.window else { return }
         CommunityPostStore.shared.resetForNewSession()
         let tabs = AppTabBarController()
         tabs.selectedIndex = 1

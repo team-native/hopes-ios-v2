@@ -33,9 +33,8 @@ final class SplashViewController: UIViewController {
         animateLogo()
         guard !ProcessInfo.processInfo.arguments.contains("--splash-preview") else { return }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.15) {
-            guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-                  let window = appDelegate.window else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.15) { [weak self] in
+            guard let window = self?.view.window else { return }
             if AccessTokenStore.shared.hasToken {
                 window.rootViewController = AppTabBarController()
                 Task { await AuthAPI.syncProfile() }

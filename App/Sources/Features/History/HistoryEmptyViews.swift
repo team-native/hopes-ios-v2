@@ -70,7 +70,7 @@ extension HistoryViewController {
             contentStack.setCustomSpacing(14, after: heading)
         }
         contentStack.addArrangedSubview(container)
-        container.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, constant: -100)
+        container.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, multiplier: 0.72)
             .isActive = true
     }
 

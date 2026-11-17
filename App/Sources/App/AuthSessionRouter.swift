@@ -62,8 +62,10 @@ enum AuthSessionRouter {
     }
 
     private static func replaceRoot(with controller: UIViewController) {
-        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-              let window = appDelegate.window else { return }
+        guard let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow) else { return }
         window.rootViewController = controller
         window.makeKeyAndVisible()
     }
