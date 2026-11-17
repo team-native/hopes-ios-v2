@@ -36,10 +36,12 @@ final class ChatLocationFailureCardView: UIView {
             color: LocationMapStyle.secondary,
             lineHeight: 20
         )
-        let actions = UIStackView(arrangedSubviews: [
-            makeActionButton("설정 열기", action: onSettingsRequested),
-            makeActionButton("다시 시도", action: onRetryRequested)
-        ])
+        let settingsButton = makeActionButton("설정 열기", action: onSettingsRequested)
+        let retryButton = makeActionButton("다시 시도", action: onRetryRequested)
+        [settingsButton, retryButton].forEach { $0.setContentHuggingPriority(.required, for: .horizontal) }
+        let trailingSpace = UIView()
+        trailingSpace.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let actions = UIStackView(arrangedSubviews: [settingsButton, retryButton, trailingSpace])
         actions.axis = .horizontal
         actions.alignment = .leading
         actions.spacing = 8

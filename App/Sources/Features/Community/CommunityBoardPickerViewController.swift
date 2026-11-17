@@ -59,6 +59,7 @@ final class CommunityBoardPickerViewController: UIViewController {
         content.axis = .vertical
         content.spacing = 12
         content.isLayoutMarginsRelativeArrangement = true
+        content.insetsLayoutMarginsFromSafeArea = false
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 24, leading: 20, bottom: 20, trailing: 20)
         content.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(content)
@@ -82,6 +83,7 @@ final class CommunityBoardPickerViewController: UIViewController {
         row.axis = .horizontal
         row.alignment = .center
         row.isLayoutMarginsRelativeArrangement = true
+        row.insetsLayoutMarginsFromSafeArea = false
         row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
         button.addSubview(row)
         row.translatesAutoresizingMaskIntoConstraints = false

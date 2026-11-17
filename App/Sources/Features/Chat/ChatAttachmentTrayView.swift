@@ -111,6 +111,7 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
         content.axis = .vertical
         content.spacing = 12
         content.isLayoutMarginsRelativeArrangement = true
+        content.insetsLayoutMarginsFromSafeArea = false
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 21, bottom: 0, trailing: 21)
         countLabel.accessibilityIdentifier = "chat-attachment-count"
         countLabel.heightAnchor.constraint(equalToConstant: 20).isActive = true
@@ -219,8 +220,8 @@ final class ChatAttachmentTrayView: UIView, UITextFieldDelegate {
         let hasUnsupportedAttachment = attachments.contains { $0.validationState == .unsupportedFormat }
         let hasInvalidAttachment = error != nil || hasUnsupportedAttachment
         unsupportedFormatBanner.isHidden = !hasInvalidAttachment
-        bannerMessageLabel.text = validationError?.errorDescription
-            ?? itemWithError?.validationState.validationMessage
+        bannerMessageLabel.text = itemWithError?.validationState.validationMessage
+            ?? validationError?.errorDescription
             ?? "이미지와 PDF만 첨부할 수 있어요."
         bannerMessageLabel.textColor = UIColor(red: 0.937, green: 0.267, blue: 0.345, alpha: 1)
         sendButton.isEnabled = !hasInvalidAttachment && !isSending
@@ -319,6 +320,7 @@ private extension ChatAttachmentTrayView {
         unsupportedFormatBanner.alignment = .center
         unsupportedFormatBanner.spacing = 8
         unsupportedFormatBanner.isLayoutMarginsRelativeArrangement = true
+        unsupportedFormatBanner.insetsLayoutMarginsFromSafeArea = false
         unsupportedFormatBanner.directionalLayoutMargins = NSDirectionalEdgeInsets(
             top: 12, leading: 16, bottom: 12, trailing: 16
         )

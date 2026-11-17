@@ -157,6 +157,7 @@ final class CommunityReportFlowViewController: UIViewController, UIGestureRecogn
         contentStack.arrangedSubviews.forEach { contentStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         contentStack.spacing = spacing
         contentStack.isLayoutMarginsRelativeArrangement = true
+        contentStack.insetsLayoutMarginsFromSafeArea = false
         contentStack.directionalLayoutMargins = insets
         views.forEach(contentStack.addArrangedSubview)
     }

@@ -157,6 +157,7 @@ extension SignupViewController {
         row.axis = .horizontal
         row.alignment = .center
         row.isLayoutMarginsRelativeArrangement = true
+        row.insetsLayoutMarginsFromSafeArea = false
         row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 0, bottom: 14, trailing: 0)
         row.heightAnchor.constraint(equalToConstant: 52).isActive = true
 

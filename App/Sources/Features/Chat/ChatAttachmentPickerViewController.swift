@@ -251,10 +251,18 @@ private extension ChatAttachmentPickerViewController {
             size: 12,
             color: ChatDetailPalette.placeholder
         )
-        let content = UIStackView(arrangedSubviews: [handle, title, makeOptionRows(), footer])
+        let handleContainer = UIView()
+        handleContainer.addSubview(handle)
+        NSLayoutConstraint.activate([
+            handle.topAnchor.constraint(equalTo: handleContainer.topAnchor),
+            handle.bottomAnchor.constraint(equalTo: handleContainer.bottomAnchor),
+            handle.centerXAnchor.constraint(equalTo: handleContainer.centerXAnchor)
+        ])
+        let content = UIStackView(arrangedSubviews: [handleContainer, title, makeOptionRows(), footer])
         content.axis = .vertical
         content.spacing = 16
         content.isLayoutMarginsRelativeArrangement = true
+        content.insetsLayoutMarginsFromSafeArea = false
         content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 38, trailing: 20)
         content.translatesAutoresizingMaskIntoConstraints = false
         return content
