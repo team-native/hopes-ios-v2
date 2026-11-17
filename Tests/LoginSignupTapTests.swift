@@ -27,12 +27,15 @@ final class LoginSignupTapTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(row.bounds.inset(by: row.touchInsets).height, 44)
     }
 
-    func testSignupButtonOpensSignup() {
+    func testSignupButtonOpensSignupWithoutSlidingLoginAway() {
         let (login, nav) = makeLogin()
         let button = login.signupRow.arrangedSubviews.compactMap { $0 as? UIButton }.first
         XCTAssertEqual(button?.accessibilityIdentifier, "login-signup")
         button?.sendActions(for: .touchUpInside)
         RunLoop.main.run(until: Date().addingTimeInterval(0.6))
-        XCTAssertTrue(nav.viewControllers.last is SignupViewController)
+        XCTAssertEqual(nav.viewControllers.count, 1)
+        let presented = login.presentedViewController as? UINavigationController
+        XCTAssertTrue(presented?.viewControllers.first is SignupViewController)
+        XCTAssertEqual(presented?.modalTransitionStyle, .crossDissolve)
     }
 }
