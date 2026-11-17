@@ -224,6 +224,33 @@ extension ChatConversationViewController {
         inputField.placeholder = "추가 질문 입력…"
     }
 
+    func loadRelatedQuestions(excluding question: String?) {
+        guard AccessTokenStore.shared.hasToken, let actionRow = messagesStack.arrangedSubviews.last else { return }
+        let defaults = UserDefaults.standard
+        Task { [weak self] in
+            let result = try? await CatalogAPI.recommendations(
+                department: defaults.string(forKey: "chat.selectedDepartment"),
+                specialty: defaults.string(forKey: "chat.selectedMajor"),
+                refreshToken: nil,
+                excludeIDs: []
+            )
+            guard let self, let result, self.messagesStack.arrangedSubviews.last === actionRow else { return }
+            let questions = Self.relatedQuestions(from: result.items.map(\.content), excluding: question)
+            guard !questions.isEmpty else { return }
+            self.addRelatedQuestions(questions)
+        }
+    }
+
+    nonisolated static func relatedQuestions(from candidates: [String], excluding question: String?) -> [String] {
+        let current = question?.trimmingCharacters(in: .whitespacesAndNewlines)
+        var seen = Set<String>()
+        return candidates
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && $0 != current && seen.insert($0).inserted }
+            .prefix(2)
+            .map { $0 }
+    }
+
     func addMarkdownAnswer(_ markdown: String, showsActions: Bool = true) {
         lastAnswerText = markdown
         let card = AppStyle.card()
@@ -235,20 +262,19 @@ extension ChatConversationViewController {
         card.layer.shadowRadius = 14
         card.layer.shadowOffset = CGSize(width: 0, height: 6)
 
-        let label = UILabel()
-        label.numberOfLines = 0
-        label.attributedText = MarkdownText.attributed(markdown, size: 15, color: ChatDetailPalette.ink)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(label)
+        let content = makeMarkdownAnswerStack(markdown)
+        content.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(content)
         NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            label.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            label.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            label.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            content.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
+            content.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            content.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            content.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
         ])
         messagesStack.addArrangedSubview(card)
         if showsActions {
             addAnswerActions()
+            loadRelatedQuestions(excluding: pendingQuestion)
         }
     }
 }
