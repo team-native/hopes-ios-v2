@@ -129,14 +129,19 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
                 guard let self,
                       let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
                 else { return }
-                let local = self.view.convert(frame, from: nil)
-                let visible = local.minY < self.view.bounds.maxY - 1
-                if visible, self.feedback == .none {
-                    self.setLayoutMode(.keyboard)
-                } else if !visible {
-                    self.applyFeedback()
-                }
+                self.handleKeyboardFrame(frame)
             }
+        }
+    }
+
+    func handleKeyboardFrame(_ frame: CGRect) {
+        let local = view.convert(frame, from: nil)
+        let visible = local.minY < view.bounds.maxY - 1
+        let ownsKeyboard = emailField.isFirstResponder || passwordField.isFirstResponder
+        if visible, ownsKeyboard, feedback == .none {
+            setLayoutMode(.keyboard)
+        } else if !visible, mode == .keyboard {
+            applyFeedback()
         }
     }
 
@@ -256,7 +261,12 @@ final class LoginViewController: UIViewController, UITextFieldDelegate {
     }
 
     @objc func openSignUp() {
-        navigationController?.pushViewController(SignupViewController(), animated: true)
+        view.endEditing(true)
+        let navigation = UINavigationController(rootViewController: SignupViewController())
+        navigation.setNavigationBarHidden(true, animated: false)
+        navigation.modalPresentationStyle = .fullScreen
+        navigation.modalTransitionStyle = .crossDissolve
+        present(navigation, animated: true)
     }
 
     @objc func openPasswordReset() {
