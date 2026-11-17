@@ -21,3 +21,14 @@ final class LoadingMotionTests: XCTestCase {
         XCTAssertLessThan(begins[1], begins[2])
     }
 }
+
+@MainActor
+final class AnswerLoadingDotsTests: XCTestCase {
+    func testLoadingDotsHaveThreeAnimatedDots() throws {
+        try XCTSkipIf(!AppLoadingMotion.isEnabled)
+        let container = AppLoadingMotion.makeLoadingDots()
+        let row = try XCTUnwrap(container.subviews.first as? UIStackView)
+        XCTAssertEqual(row.arrangedSubviews.count, 3)
+        XCTAssertTrue(row.arrangedSubviews.allSatisfy { $0.layer.animation(forKey: AppLoadingMotion.bounceKey) != nil })
+    }
+}
