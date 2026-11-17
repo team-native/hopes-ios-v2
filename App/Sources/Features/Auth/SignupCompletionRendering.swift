@@ -22,7 +22,8 @@ extension SignupViewController {
         NSLayoutConstraint.activate([
             actionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             actionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            actionButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset),
+            actionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+                constant: -AppStyle.bottomActionSafeInset),
             centerGuide.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             centerGuide.bottomAnchor.constraint(equalTo: actionButton.topAnchor),
             content.centerYAnchor.constraint(equalTo: centerGuide.centerYAnchor),

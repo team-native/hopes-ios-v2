@@ -158,7 +158,8 @@ final class InquiryCompletionViewController: UIViewController {
             content.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
             confirm.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             confirm.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            confirm.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+            confirm.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+                constant: -AppStyle.bottomActionSafeInset),
             confirm.heightAnchor.constraint(equalToConstant: 50)
         ])
     }

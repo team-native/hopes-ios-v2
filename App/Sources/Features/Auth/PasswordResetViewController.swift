@@ -154,7 +154,8 @@ final class PasswordResetViewController: UIViewController, UITextFieldDelegate {
         actionButtonConstraints = [
             actionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             actionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            actionButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -AppStyle.bottomActionInset)
+            actionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+                constant: -AppStyle.bottomActionSafeInset)
         ]
         NSLayoutConstraint.activate(actionButtonConstraints)
     }

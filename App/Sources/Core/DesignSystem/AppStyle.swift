@@ -2,6 +2,7 @@ import UIKit
 
 enum AppStyle {
     static let bottomActionInset: CGFloat = 37
+    static let bottomActionSafeInset: CGFloat = 65
     static let ink = UIColor(red: 20 / 255, green: 27 / 255, blue: 43 / 255, alpha: 1)
     static let muted = UIColor(red: 107 / 255, green: 120 / 255, blue: 144 / 255, alpha: 1)
     static let blue = UIColor(red: 47 / 255, green: 134 / 255, blue: 245 / 255, alpha: 1)

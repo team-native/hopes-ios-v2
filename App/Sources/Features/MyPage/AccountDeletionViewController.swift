@@ -316,8 +316,8 @@ private extension AccountDeletionViewController {
         deleteButton.addAction(UIAction { [weak self] _ in self?.confirmDeletion() }, for: .touchUpInside)
         deleteButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(deleteButton)
-        buttonBottomConstraint = deleteButton.bottomAnchor.constraint(equalTo: view.bottomAnchor,
-            constant: -AppStyle.bottomActionInset)
+        buttonBottomConstraint = deleteButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+            constant: -AppStyle.bottomActionSafeInset)
         buttonBelowCardConstraint = deleteButton.topAnchor.constraint(equalTo: passwordCard.bottomAnchor, constant: 16)
         scrollBottomToButton = scrollView.bottomAnchor.constraint(equalTo: deleteButton.topAnchor, constant: -16)
         scrollBottomToKeyboard = scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
