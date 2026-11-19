@@ -150,6 +150,16 @@ final class APIClient: @unchecked Sendable {
             (data, response) = try await send(request, body: rawBody, uploadProgress: uploadProgress)
         } catch {
             if error is CancellationError { throw error }
+            if let urlError = error as? URLError,
+               [
+                   .secureConnectionFailed,
+                   .serverCertificateHasBadDate,
+                   .serverCertificateUntrusted,
+                   .serverCertificateHasUnknownRoot,
+                   .serverCertificateNotYetValid
+               ].contains(urlError.code) {
+                throw APIError.insecureTransport
+            }
             throw APIError.network
         }
         return try await validate(data: data, response: response, authenticated: authenticated,

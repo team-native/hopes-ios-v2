@@ -5,6 +5,7 @@ enum LoginFailure: Equatable {
     case offline
     case rateLimited
     case serverError
+    case insecureTransport
 
     static func classify(_ error: Error) -> LoginFailure {
         guard let error = error as? APIError else { return .serverError }
@@ -17,6 +18,8 @@ enum LoginFailure: Equatable {
             return status == 429 ? .rateLimited : .serverError
         case .decoding:
             return .serverError
+        case .insecureTransport:
+            return .insecureTransport
         }
     }
 
@@ -26,6 +29,7 @@ enum LoginFailure: Equatable {
         case .offline: "인터넷 연결이 끊겼어요. 연결을 확인하고 다시 시도해 주세요."
         case .rateLimited: "로그인 시도가 많아요. 잠시 후 다시 시도해 주세요."
         case .serverError: "로그인에 실패했어요. 잠시 후 다시 시도해 주세요."
+        case .insecureTransport: "보안 연결을 사용할 수 없어요. 서버의 HTTPS 설정을 확인해 주세요."
         }
     }
 
@@ -33,7 +37,7 @@ enum LoginFailure: Equatable {
         switch self {
         case .invalidCredentials: .invalidCredentials
         case .offline: .offline
-        case .rateLimited, .serverError: .serverError
+        case .rateLimited, .serverError, .insecureTransport: .serverError
         }
     }
 }
