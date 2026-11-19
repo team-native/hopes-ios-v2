@@ -27,9 +27,8 @@ final class APIClient: @unchecked Sendable {
             return url
         }
         var components = URLComponents()
-        components.scheme = "http"
+        components.scheme = "https"
         components.host = "service.gsmsv.site"
-        components.port = 22116
         guard let url = components.url else { preconditionFailure("Invalid API base URL") }
         return url
     }()
@@ -128,7 +127,10 @@ final class APIClient: @unchecked Sendable {
         expiresSessionOnUnauthorized: Bool = true,
         uploadProgress: (@Sendable (Int64, Int64) -> Void)? = nil
     ) async throws -> Data {
-        guard let url = URL(string: path, relativeTo: baseURL) else { throw APIError.decoding }
+        guard let url = URL(string: path, relativeTo: baseURL),
+              url.scheme?.lowercased() == "https" else {
+            throw APIError.insecureTransport
+        }
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.timeoutInterval = 60
@@ -148,6 +150,16 @@ final class APIClient: @unchecked Sendable {
             (data, response) = try await send(request, body: rawBody, uploadProgress: uploadProgress)
         } catch {
             if error is CancellationError { throw error }
+            if let urlError = error as? URLError,
+               [
+                   .secureConnectionFailed,
+                   .serverCertificateHasBadDate,
+                   .serverCertificateUntrusted,
+                   .serverCertificateHasUnknownRoot,
+                   .serverCertificateNotYetValid
+               ].contains(urlError.code) {
+                throw APIError.insecureTransport
+            }
             throw APIError.network
         }
         return try await validate(data: data, response: response, authenticated: authenticated,

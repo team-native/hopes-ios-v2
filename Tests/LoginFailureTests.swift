@@ -13,6 +13,11 @@ final class LoginFailureTests: XCTestCase {
         XCTAssertEqual(LoginFailure.classify(APIError.network), .offline)
     }
 
+    func testInsecureTransportIsShownAsSecurityFailure() {
+        XCTAssertEqual(LoginFailure.classify(APIError.insecureTransport), .insecureTransport)
+        XCTAssertTrue(LoginFailure.insecureTransport.message.contains("HTTPS"))
+    }
+
     func testRateLimitIsRetryableServerFailure() {
         XCTAssertEqual(LoginFailure.classify(serverError(status: 429)), .rateLimited)
     }
